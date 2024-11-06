@@ -1,4 +1,4 @@
-const apiClient = async (url, data, method = 'GET')=> {
+const apiClient = async (url, method = 'GET', data = null)=> {
     try {
         let options = {
             method,
@@ -9,7 +9,7 @@ const apiClient = async (url, data, method = 'GET')=> {
         };
 
         const response = await axios(`${window.location.origin}/${url}`, options);
-        return response;
+        return response.data;
     } catch (error) {
         return error.response.data;
     }

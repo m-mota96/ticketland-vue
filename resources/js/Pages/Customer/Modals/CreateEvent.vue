@@ -145,7 +145,7 @@
         <template #footer>
             <div class="dialog-footer">
                 <el-button @click="showHideModal">Cancelar</el-button>
-                <el-button type="primary" @click="saveEvent">Crear evento</el-button>
+                <el-button type="primary" @click="saveEvent" :disabled="isDisabled">Crear evento</el-button>
             </div>
         </template>
     </el-dialog>
@@ -182,7 +182,8 @@ export default {
             },
             errors: [],
             dates: [],
-            minutes: ['00', '15', '30', '45']
+            minutes: ['00', '15', '30', '45'],
+            isDisabled: false
         }
     },
     beforeMount() {
@@ -199,11 +200,14 @@ export default {
     // Aqui van los métodos
         async saveEvent() {
             if (this.validate()) {
-                const response = await apiClient('customer/event', this.event, 'POST');
+                this.isDisabled = true;
+                const response = await apiClient('customer/event', 'POST', this.event);
                 if (response.error) {
+                    this.isDisabled = false;
                     showNotification('¡Error!', response.msj, 'error');
                     return false;
                 }
+                this.isDisabled = false;
                 this.showHideModal();
                 showNotification('¡Correcto!', response.msj, 'success');
             }

@@ -28,6 +28,9 @@ Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'role:customer']
     Route::get('mis_eventos', [EventController::class, 'index'])->name('mis_eventos');
 });
 
-Route::post('customer/event', [EventController::class, 'createEvent']);
+Route::middleware('auth')->group(function () {
+    Route::post('customer/event', [EventController::class, 'createEvent']);
+    Route::post('customer/events', [EventController::class, 'getEvents']);
+});
 
 require __DIR__.'/auth.php';
