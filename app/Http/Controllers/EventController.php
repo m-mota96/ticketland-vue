@@ -140,4 +140,45 @@ class EventController extends Controller {
             ], 500);
         }
     }
+
+    public function changeStatusEvent(Request $request) {
+        try {
+            $event = Event::where('id', $request->event_id)->first();
+            $event->status = ($request->status) ? 1 : 0;
+            $event->save();
+
+            return response([
+                'error' => false,
+                'data'  => '',
+                'msj'   => 'El estatus se cambio correctamente.'
+            ], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response([
+                'error' => true,
+                'data'  => 'Ocurrio un error '.$th->getMessage(),
+                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
+            ], 500);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response([
+                'error' => true,
+                'data'  => 'Ocurrio un error '.$e->getMesssage(),
+                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
+            ], 500);
+        }
+    }
+
+    public function event($id) {
+        $event = Event::with(['profile', 'logo', 'eventDates', 'location', 'category'])->where('user_id', auth()->user()->id)->first();
+        if (empty($event)) {
+            return redirect(route('cliente.mis_eventos'));
+        }
+
+        $categories = Category::all();
+        return Inertia::render('Customer/Event', [
+            'event'      => $event,
+            'categories' => $categories
+        ]);
+    }
 }

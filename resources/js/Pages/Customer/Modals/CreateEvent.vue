@@ -227,7 +227,7 @@ export default {
             this.event.name = 'Petweekend';
             this.event.website = 'petweekend';
             this.event.capacity = 3000;
-            this.event.category = '1';
+            this.event.category = '';
             this.event.type = 'paid';
             this.event.dates = [];
             this.event.allDates = [];

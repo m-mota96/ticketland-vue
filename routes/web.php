@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -24,13 +23,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'role:customer'])->group(function() {
-    Route::get('mis_eventos', [EventController::class, 'index'])->name('mis_eventos');
-});
-
-Route::middleware('auth')->group(function () {
-    Route::post('customer/event', [EventController::class, 'createEvent']);
-    Route::post('customer/events', [EventController::class, 'getEvents']);
-});
+require __DIR__.'/customer.php';
 
 require __DIR__.'/auth.php';

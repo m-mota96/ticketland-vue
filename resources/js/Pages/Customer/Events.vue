@@ -9,60 +9,61 @@
                 <el-input placeholder="Buscar por nombre de evento" size="large" v-model="paramsGetEvents.search" @keyup="searchEvent" />
                 <el-row class="mt-5" :gutter="20">
                     <el-col class="mb-5" :span="6">
-                        <span class="subtitle is-6 has-text-success pointer" @click="changeStatus(1)"><b>ACTIVOS ({{ count.active }})</b></span>
+                        <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == 1}" @click="changeStatus(1)"><b>ACTIVOS ({{ count.active }})</b></span>
                     </el-col>
                     <el-col class="mb-5" :span="6">
-                        <span class="subtitle is-6 has-text-success pointer" @click="changeStatus(0)"><b>INACTIVOS ({{ count.inactive }})</b></span>
+                        <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == 0}" @click="changeStatus(0)"><b>INACTIVOS ({{ count.inactive }})</b></span>
                     </el-col>
                     <el-col class="mb-5" :span="6">
-                        <span class="subtitle is-6 has-text-success pointer" @click="changeStatus(2)"><b>PASADOS ({{ count.past }})</b></span>
+                        <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == 2}" @click="changeStatus(2)"><b>PASADOS ({{ count.past }})</b></span>
                     </el-col>
                     <el-col class="mb-5" :span="6">
-                        <span class="subtitle is-6 has-text-success pointer" @click="changeStatus()"><b>TODOS ({{ count.all }})</b></span>
+                        <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == null}" @click="changeStatus()"><b>TODOS ({{ count.all }})</b></span>
                     </el-col>
                     <el-col :span="24">
                         <h2 class="title is-4 has-text-grey mt-5 text-center w-100" v-if="!events.length">Lo sentimos, no hay eventos con este filtro.</h2>
-                        <el-card class="mb-5 p-0" v-for="(event, index) in events" :key="event.id" body-class="p-0">
+                        <el-card class="mb-5 p-0" v-for="(e, index) in events" :key="index" body-class="p-0">
                             <div>
                                 <el-row class="p-0" :gutter="5">
                                     <el-col :span="6">
-                                        <img v-if="!event.profile" class="w-100" src="/general/not_image.png" alt="{{ event.name }}">
-                                        <img v-if="event.profile" class="w-100" src="/general/{{ event.profile.name }}" alt="{{ event.name }}">
+                                        <img v-if="!e.profile" class="w-100" src="/general/not_image.png" alt="{{ e.name }}">
+                                        <img v-if="e.profile" class="w-100" src="/general/{{ e.profile.name }}" alt="{{ e.name }}">
                                     </el-col>
                                     <el-col class="pt-5 pl-5" :span="14">
-                                        <h4 class="title is-4 has-text-dark mb-0"><b>{{ event.name }}</b></h4>
+                                        <a class="title is-4 has-text-dark mb-0" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></a><br>
                                         <span class="has-text-dark mt-0">
                                             {{ 
-                                                parseDate(event.event_dates[0].date, 1, ' ')
+                                                parseDate(e.event_dates[0].date, 1, ' ')
                                                 + ' - ' +
-                                                parseTime(event.event_dates[0].initial_time)
+                                                parseTime(e.event_dates[0].initial_time)
                                                 + ' a ' +
-                                                parseDate(event.event_dates[event.event_dates.length - 1].date, 1, ' ') 
+                                                parseDate(e.event_dates[e.event_dates.length - 1].date, 1, ' ') 
                                                 + ' - ' +
-                                                parseTime(event.event_dates[event.event_dates.length - 1].final_time)
+                                                parseTime(e.event_dates[e.event_dates.length - 1].final_time)
                                             }}
                                         </span>
                                         <div class="w-100 mt-3">
-                                            <span class="has-text-grey">EDITAR</span>
-                                            <span class="has-text-grey ml-6" v-if="event.sales == 0">ELIMINAR</span>
+                                            <a class="has-text-grey" :href="route('cliente.evento', e.id)">EDITAR</a>
+                                            <span class="has-text-grey ml-6" v-if="e.sales == 0">ELIMINAR</span>
                                             <el-switch
-                                                v-if="event.status == 1 || event.status == 0"
+                                                v-if="e.status == 1 || e.status == 0"
                                                 size="large"
-                                                v-model="event.status"
+                                                v-model="e.status"
                                                 :active-value="1"
                                                 :inactive-value="0"
                                                 class="ml-6"
                                                 inline-prompt
                                                 style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                                                :loading="loading"
                                                 active-text="Activo"
                                                 inactive-text="Inactivo"
-                                                :before-change="beforeChange2"
+                                                :before-change="(event) => validateInfo(event, e.id, !e.status)"
                                             />
                                         </div>
                                     </el-col>
                                     <el-col class="pt-5 pr-5 text-right" :span="4">
                                         <h3 class="subtitle mb-0 is-3 w-100 text-right">
-                                            <span class="has-text-blue-400 has-text-weight-light">{{ event.sales }}/</span><span class="has-text-blue-300 has-text-weight-light">{{ event.quantity_tickets }}</span>
+                                            <span class="has-text-blue-400 has-text-weight-light">{{ e.sales }}/</span><span class="has-text-blue-300 has-text-weight-light">{{ e.quantity_tickets }}</span>
                                         </h3>
                                         <h3 class="subtitle is-7 has-text-grey mt-1">BOLETOS RESERVADOS</h3>
                                     </el-col>
@@ -108,6 +109,7 @@ import Menu from './Menu.vue';
 import CreateEvent from './Modals/CreateEvent.vue';
 import apiClient from '@/apiClient';
 import { dateEs, time } from '@/dateEs';
+import { showNotification } from '@/notification';
   
 export default {
     components: {
@@ -121,20 +123,22 @@ export default {
             events: [],
             paramsGetEvents: {
                 currentPage: 1,
-                sizePage: 20,
+                sizePage: 10,
                 search: '',
-                status: 0
+                status: 1
             },
             count: {},
             parseDate: dateEs,
-            parseTime: time
+            parseTime: time,
+            loading: false
         }
     },
     beforeMount() {
         //Aqui se pueden mandar llamar metodos antes de que se monte el componente
     },
     mounted() {
-        this.getevents();
+        document.title = 'Ticketland - Mis eventos';
+        this.getEvents();
     },
     created() {
         //Aqui se pueden mandar llamar métodos, cuando se crea el componente
@@ -142,52 +146,37 @@ export default {
    
     methods: {
         // Aqui van los métodos
-        async getevents() {
-            const response = await apiClient('customer/events', 'POST', this.paramsGetEvents);
+        async getEvents() {
+            const response = await apiClient('customer/events', 'GET', this.paramsGetEvents);
             this.events = response.data.events;
-            // this.events.forEach(e => {
-            //     switch (e.status) {
-            //         case 1:
-            //             e.status_aditional = true;
-            //         break;
-            //         case 0:
-            //             e.status_aditional = false;
-            //         break;
-            //         default:
-            //             e.status_aditional = e.status;
-            //         break;
-            //     }
-            // });
             this.count  = response.data.count;
         },
         handleCurrentChange(val) {
             this.paramsGetEvents.currentPage = val;
-            this.getevents();
+            this.getEvents();
         },
         changeStatus(status = null) {
             this.paramsGetEvents.status = status;
-            this.getevents();
+            this.getEvents();
         },
         searchEvent() {
-            if (this.paramsGetEvents.search.length > 3 || !this.paramsGetEvents.search) this.getevents()
+            if (this.paramsGetEvents.search.length > 3 || !this.paramsGetEvents.search) this.getEvents()
         },
         parseStatus(status) {
             return (status == 1) ? true : false;
         },
-        activeDiableEvent(index) {
-            console.log(this.events[index].status_aditional);
-            this.events[index].status_aditional = !this.events[index].status_aditional;
-            console.log(this.events);
-            // return !this.events[index].status;
-        },
-        beforeChange2() {
-            console.log('ENTRE');
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                this.events[0].status = !this.events[0].status;
-                // ElMessage.error('Switch failed')
-                return resolve(true)
-                }, 1000)
+        validateInfo(event, event_id, status) {
+            this.loading = true
+            return new Promise(async (resolve, reject) => {
+                const response = await apiClient('customer/changeStatusEvent', 'PUT', {event_id, status});
+                this.loading = false;
+                if (!response.error) {
+                    this.getEvents();
+                    showNotification('¡Correcto!', response.msj, 'success');
+                    return resolve(true);
+                }
+                showNotification('¡Error!', response.msj, 'error');
+                return reject(new Error(response.msj));
             })
         }
     }
@@ -195,6 +184,9 @@ export default {
 </script>
   
 <style>
+    .active {
+        text-decoration: underline;
+    }
     .w-100 {
         width: 100% !important;
     }
