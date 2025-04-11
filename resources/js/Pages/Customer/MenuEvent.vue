@@ -6,7 +6,7 @@
         background-color="#100e0d"
         text-color="white"
     >
-        <el-menu-item index="0" class="ms-10"><font-awesome-icon :icon="['fas', 'link']" /> <a class="ml-1 mt-1" :href="'../../'+$page.props.event.url" target="_blank">https://ticketland.mx/{{$page.props.event.url}}</a></el-menu-item>
+        <el-menu-item index="0" class="ms-10"><font-awesome-icon :icon="['fas', 'link']" /> <a class="ml-1 mt-1" :href="'../../'+$page.props.event.url" target="_blank">{{appUrl}}/{{$page.props.event.url}}</a></el-menu-item>
         <el-menu-item index="1"><font-awesome-icon :icon="['fas', 'house-chimney']" /><a class="ml-1 mt-1" :href="route('cliente.mis_eventos')">Dashboard</a></el-menu-item>
         <el-sub-menu index="2" class="me-10 mt-1">
             <template #title>{{ $page.props.auth.user.name }}</template>
@@ -31,6 +31,11 @@ export default {
         //Aqui se agregan los componentes, en dado caso que quiereas usar, para separar código, yo separo los modales y aqui los agrego
         ResponsiveNavLink
     },
+    data() {
+        return {
+            appUrl: window.location.origin
+        }
+    }
 }
 </script>
 <style scoped>

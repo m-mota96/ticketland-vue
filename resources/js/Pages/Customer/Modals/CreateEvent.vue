@@ -135,7 +135,7 @@
                     placeholder=""
                 />
             </el-col>
-            <el-col :span="24" v-if="errors.length">
+            <el-col class="mt-3" :span="24" v-if="errors.length">
                 <b>Por favor, corrija los siguientes errores:</b>
                 <ul>
                     <li v-for="error in errors" :key="error.id">- {{ error }}</li>
@@ -163,6 +163,7 @@ export default {
     data() {
         return {
             //Aquí se declaran las variables
+            appUrl: window.location.origin,
             isActive: false,
             categories: this.$page.props.categories,
             event: {
@@ -207,8 +208,7 @@ export default {
                     showNotification('¡Error!', response.msj, 'error');
                     return false;
                 }
-                this.isDisabled = false;
-                this.showHideModal();
+                location.href = this.appUrl+'/cliente/evento/'+response.data.id;
                 showNotification('¡Correcto!', response.msj, 'success');
             }
         },
