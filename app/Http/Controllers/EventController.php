@@ -12,10 +12,11 @@ use App\Models\EventDate;
 use App\Models\Payment;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Http\Traits\ResponseTrait;
 
 class EventController extends Controller {
     public function index() {
-        $categories = Category::all();
+        $categories = Category::orderBy('name')->get();
         return Inertia::render('Customer/Events', [
             'categories' => $categories
         ]);
@@ -49,31 +50,18 @@ class EventController extends Controller {
             $past     = Event::where('user_id', auth()->user()->id)->where('status', 2)->count();
             $all      = Event::where('user_id', auth()->user()->id)->count();
 
-            return response([
-                'error' => false,
-                'data'  => [
-                    'events' => $events,
-                    'count'  => [
-                        'active'   => $active,
-                        'inactive' => $inactive,
-                        'past'     => $past,
-                        'all'      => $all
-                    ]
-                ],
-                'msj'   => null
-            ], 200);
+            $data  = [
+                'events' => $events,
+                'count'  => [
+                    'active'   => $active,
+                    'inactive' => $inactive,
+                    'past'     => $past,
+                    'all'      => $all
+                ]
+            ];
+            return ResponseTrait::response(null, $data);
         } catch (\Throwable $th) {
-            return response([
-                'error' => true,
-                'data'  => 'Ocurrio un error '.$th->getMessage(),
-                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
-            ], 500);
-        } catch (\Exception $e) {
-            return response([
-                'error' => true,
-                'data'  => 'Ocurrio un error '.$e->getMesssage(),
-                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
-            ], 500);
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
     }
 
@@ -81,10 +69,7 @@ class EventController extends Controller {
         try {
             $event = Event::where('name', 'LIKE', '%'.$request->name.'%')->where('user_id', '<>', auth()->user()->id)->first();
             if ($event) {
-                return response([
-                    'error' => true,
-                    'msj'   => 'El nombre del evento que intenta crear se encuentra en uso. Por favor contacte a soporte.'
-                ], 409);
+                return ResponseTrait::response('El nombre del evento que intenta crear se encuentra en uso.<br>Por favor contacte a soporte.', null, true, 409);
             }
 
             DB::beginTransaction();
@@ -119,66 +104,54 @@ class EventController extends Controller {
             ]);
 
             DB::commit();
-            return response([
-                'error' => false,
-                'data'  => $event,
-                'msj'   => 'El evento se creo correctamente'
-            ], 200);
+            return ResponseTrait::response('El evento se creo correctamente.', $event);
         } catch (\Throwable $th) {
             DB::rollBack();
-            return response([
-                'error' => true,
-                'data'  => 'Ocurrio un error '.$th->getMessage(),
-                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
-            ], 500);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response([
-                'error' => true,
-                'data'  => 'Ocurrio un error '.$e->getMesssage(),
-                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
-            ], 500);
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
     }
 
     public function changeStatusEvent(Request $request) {
         try {
-            $event = Event::where('id', $request->event_id)->first();
+            $event         = Event::find($request->event_id);
             $event->status = ($request->status) ? 1 : 0;
             $event->save();
 
-            return response([
-                'error' => false,
-                'data'  => '',
-                'msj'   => 'El estatus se cambio correctamente.'
-            ], 200);
+            return ResponseTrait::response('El estatus se cambio correctamente.');
         } catch (\Throwable $th) {
-            DB::rollBack();
-            return response([
-                'error' => true,
-                'data'  => 'Ocurrio un error '.$th->getMessage(),
-                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
-            ], 500);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response([
-                'error' => true,
-                'data'  => 'Ocurrio un error '.$e->getMesssage(),
-                'msj'   => 'Lo sentimos ocurrio un error. Si el problema persiste contacte a soporte'
-            ], 500);
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
     }
 
     public function event($id) {
-        $event = Event::with(['profile', 'logo', 'eventDates', 'location', 'category'])->where('user_id', auth()->user()->id)->first();
-        if (empty($event)) {
-            return redirect(route('cliente.mis_eventos'));
-        }
-
-        $categories = Category::all();
+        $event      = Event::with(['profile', 'logo', 'eventDates', 'location', 'category'])->where('id', $id)->first();
+        $categories = Category::orderBy('name')->get();
         return Inertia::render('Customer/Event', [
             'event'      => $event,
             'categories' => $categories
         ]);
+    }
+
+    public function editEvent(Request $request) {
+        try {
+            $event               = Event::find($request->id);
+            $event->name         = trim($request->name);
+            $event->url          = trim($request->url);
+            $event->quantity     = trim($request->quantity);
+            $event->category_id  = trim($request->category_id);
+            $event->save();
+            return ResponseTrait::response('La información se modificó correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function uploadImages(Request $request) {
+        try {
+            dd($request->all());
+            return ResponseTrait::response('La imagen se cargo correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
     }
 }

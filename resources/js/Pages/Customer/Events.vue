@@ -202,21 +202,4 @@ export default {
     .has-text-blue-400 {
         color: #409cff !important;
     }
-    input[type='text']:focus,
-    input[type='email']:focus,
-    input[type='url']:focus,
-    input[type='password']:focus,
-    input[type='number']:focus,
-    input[type='date']:focus,
-    input[type='datetime-local']:focus,
-    input[type='month']:focus,
-    input[type='search']:focus,
-    input[type='tel']:focus,
-    input[type='time']:focus,
-    input[type='week']:focus,
-    input[multiple]:focus,
-    /* textarea:focus, */
-    select:focus {
-        box-shadow: unset !important;
-    }
 </style>

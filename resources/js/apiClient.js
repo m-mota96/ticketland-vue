@@ -22,7 +22,11 @@ const apiClient = async (url, method = 'GET', data = null) => {
         const response = await axios(`${window.location.origin}/${url}`, options);
         return (response.data) ? response.data : response;
     } catch (error) {
-        return error.response.data;
+        return {
+            error: true,
+            msj: error.response.data.msj,
+            data: `Ocurrio un error ${error.response.data.data}`
+        }
     }
 }
 

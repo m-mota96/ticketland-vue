@@ -2,6 +2,7 @@ import '../css/app.css';
 import './bootstrap';
 import 'element-plus/dist/index.css';
 import 'bulma/css/bulma.css';
+import '../css/generalStyles.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';

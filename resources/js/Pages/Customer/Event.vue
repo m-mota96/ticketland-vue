@@ -3,7 +3,7 @@
     <Submenu></Submenu>
     <el-row :gutter="20">
         <el-col :span="14" :offset="5" class="p-0 bg-profile" style="background-image: url('../../../../general/not_image.png');">
-            <div class="action-profile">
+            <div class="action-profile" @click="$refs.UploadImages.showUploadImages('profile')">
                 <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
                 Cambiar imagen de fondo
             </div>
@@ -16,7 +16,7 @@
                         <h5 class="subtitle is-5 mt-5 text-logo">Agregar Logo</h5>
                     </div>
                 </div>
-                <div class="action-event">
+                <div class="action-event" @click="$refs.EditEvent.activeEditEvent = true">
                     <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
                     Editar nombre y sitio de ventas
                 </div>
@@ -66,19 +66,23 @@
             </el-card>
         </el-col>
     </el-row>
+    <EditEvent ref="EditEvent" v-bind:dadEvent="event"></EditEvent>
+    <UploadImages ref="UploadImages" v-bind:dadEvent="event"></UploadImages>
 </template>
 
 <script>
 import MenuEvent from './MenuEvent.vue';
 import Submenu from './Submenu.vue';
-import apiClient from '@/apiClient';
+import EditEvent from './Modals/EditEvent.vue';
+import UploadImages from './Modals/UploadImages.vue';
 import { dateEs, time } from '@/dateEs';
-import { showNotification } from '@/notification';
 
 export default {
     components: {
         MenuEvent,
-        Submenu
+        Submenu,
+        EditEvent,
+        UploadImages
     },
     data() {
         return {
@@ -91,7 +95,7 @@ export default {
         //Aqui se pueden mandar llamar metodos antes de que se monte el componente
     },
     mounted() {
-        console.log(this.event);
+        
     },
     created() {
         //Aqui se pueden mandar llamar métodos, cuando se crea el componente
