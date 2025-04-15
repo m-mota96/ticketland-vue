@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -9,6 +10,7 @@ use App\Models\Access;
 use App\Models\Category;
 use App\Models\Event;
 use App\Models\EventDate;
+use App\Models\GalleryEvent;
 use App\Models\Payment;
 use App\Models\Ticket;
 use App\Models\User;
@@ -126,7 +128,7 @@ class EventController extends Controller {
     public function event($id) {
         $event      = Event::with(['profile', 'logo', 'eventDates', 'location', 'category'])->where('id', $id)->first();
         $categories = Category::orderBy('name')->get();
-        return Inertia::render('Customer/Event', [
+        return Inertia::render('Customer/Event/Event', [
             'event'      => $event,
             'categories' => $categories
         ]);
@@ -148,8 +150,74 @@ class EventController extends Controller {
 
     public function uploadImages(Request $request) {
         try {
-            dd($request->all());
-            return ResponseTrait::response('La imagen se cargo correctamente.');
+            $request->validate([
+                'file' => 'required|file|mimes:jpg,jpeg,png|max:1024', // tamaño en kilobytes (1024 KB = 1 MB)
+            ]);
+
+            $type            = ($request->type == 'profile') ? 'index' : 'logo';
+            $file            = $request->file;
+            $extension       = $file->getClientOriginalExtension();
+            $fileName        = uniqid().'.'.$extension;
+            $destinationPath = public_path('events/images');
+            
+            $gallery = GalleryEvent::where('event_id', $request->event_id)->where('type', $type)->first();
+
+            DB::beginTransaction();
+            if ($gallery) {
+                if (file_exists('events/images/' . $gallery->name)) {
+                    unlink('events/images/' . $gallery->name);
+                }
+                $gallery->name = $fileName;
+                $gallery->save();
+            } else {
+                GalleryEvent::create([
+                    'event_id' => $request->event_id,
+                    'type'     => $type,
+                    'name'     => $fileName
+                ]);
+            }
+
+            // Crear carpeta si no existe
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            // Mover el archivo
+            $file->move($destinationPath, $fileName);
+
+            // URL pública del archivo
+            $url = asset('events/images/' . $fileName);
+
+            DB::commit();
+            return ResponseTrait::response('La imagen se cargo correctamente.', $url);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return ResponseTrait::response($th->getMessage(), 'La imagen debe estar en formato<br>JPG o PNG y pesar menos de 1MB.', true, 422);
+        }
+    }
+
+    public function deleteLogo(Request $request) {
+        try {
+            $logo = GalleryEvent::where('event_id', $request->event_id)->where('type', 'logo')->first();
+            if ($logo) {
+                if (file_exists('events/images/' . $logo->name)) {
+                    unlink('events/images/' . $logo->name);
+                }
+                $logo->delete();
+                return ResponseTrait::response('El logo se eliminó correctamente.');
+            }
+            return ResponseTrait::response('No es posible eliminar el logo.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function editDescription(Request $request) {
+        try {
+            $event = Event::find($request->event_id);
+            $event->description = $request->description;
+            $event->save();
+            return ResponseTrait::response('La descripción de modificó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

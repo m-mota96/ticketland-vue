@@ -27,4 +27,6 @@ Route::prefix('customer')->middleware(['auth', ValidateEvent::class.':request'])
     Route::put('changeStatusEvent', [EventController::class, 'changeStatusEvent']);
     Route::put('editEvent', [EventController::class, 'editEvent']);
     Route::post('uploadImages', [EventController::class, 'uploadImages']);
+    Route::delete('deleteLogo', [EventController::class, 'deleteLogo']);
+    Route::put('editDescription', [EventController::class, 'editDescription']);
 });

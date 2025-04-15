@@ -2,7 +2,7 @@
     <MenuEvent></MenuEvent>
     <Submenu></Submenu>
     <el-row :gutter="20">
-        <el-col :span="14" :offset="5" class="p-0 bg-profile" style="background-image: url('../../../../general/not_image.png');">
+        <el-col :span="14" :offset="5" class="p-0 bg-profile" :style="{ 'background-image': `url(${imageProfile})` }">
             <div class="action-profile" @click="$refs.UploadImages.showUploadImages('profile')">
                 <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
                 Cambiar imagen de fondo
@@ -11,10 +11,22 @@
                 <h1 class="title is-1 has-text-white mb-2">{{ event.name }}</h1>
                 <h5 class="title is-5 has-text-white mb-2">Categoría: {{ event.category.name }}</h5>
                 <h5 class="title is-5 has-text-white"><a class="text-white" :href="'../../'+event.url" target="_blank">Ver sitio web</a></h5>
-                <div class="content-logo">
-                    <div class="text-center pt-4 container-logo">
+                <div class="content-logo" :style="{ 'background-image': imageLogo == '' ? 'unset': `url(${imageLogo})` }">
+                    <div class="text-center pt-4 container-logo" v-if="imageLogo == ''" @click="$refs.UploadImages.showUploadImages('logo')">
                         <h5 class="subtitle is-5 mt-5 text-logo">Agregar Logo</h5>
                     </div>
+                    <span class="p-1 edit-logo pointer" v-if="imageLogo != ''" @click="$refs.UploadImages.showUploadImages('logo')">
+                        <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
+                        Editar logo
+                    </span>
+                    <el-tooltip
+                        class="box-item"
+                        content="Eliminar logo"
+                        placement="top"
+                        v-if="imageLogo != ''"
+                    >
+                        <el-button class="p-2 btn-delete-logo" type="danger" @click="deleteLogo"><font-awesome-icon :icon="['fas', 'trash-can']" /></el-button>
+                    </el-tooltip>
                 </div>
                 <div class="action-event" @click="$refs.EditEvent.activeEditEvent = true">
                     <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
@@ -26,7 +38,7 @@
             <el-card class="pt-3 mb-6">
                 <el-row :gutter="30">
                     <el-col :span="16">
-                        <h3 class="title is-3 has-text-dark">Acerca de <span class="subtitle is-6 ml-4 pointer"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span></h3>
+                        <h3 class="title is-3 has-text-dark">Acerca de <span class="subtitle is-6 ml-4 pointer" @click="$refs.EditDescription.activeEditDescription = true"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span></h3>
                         <p class="has-text-grey justify">
                             {{event.description}}
                         </p>
@@ -47,6 +59,9 @@
                             <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['fas', 'location-dot']" /> DÓNDE</span>
                                 <span class="text-edit has-text-dark bold ml-5 pointer"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                <div v-html="event.location.iframe" style="width: 100%;">
+
+                                </div>
                             </div>
                             <hr>
                             <div>
@@ -67,32 +82,52 @@
         </el-col>
     </el-row>
     <EditEvent ref="EditEvent" v-bind:dadEvent="event"></EditEvent>
-    <UploadImages ref="UploadImages" v-bind:dadEvent="event"></UploadImages>
+    <EditDescription ref="EditDescription" v-bind:dadEvent="event"></EditDescription>
+    <UploadImages 
+        ref="UploadImages"
+        :dadEvent="event"
+        :dadImageProfile="imageProfile"
+        :dadImageLogo="imageLogo"
+        @update-profile="imageProfile = $event"
+        @update-logo="imageLogo = $event"
+    >
+    </UploadImages>
 </template>
 
 <script>
-import MenuEvent from './MenuEvent.vue';
-import Submenu from './Submenu.vue';
-import EditEvent from './Modals/EditEvent.vue';
-import UploadImages from './Modals/UploadImages.vue';
+import apiClient from '@/apiClient';
+import { showNotification } from '@/notification';
 import { dateEs, time } from '@/dateEs';
+import MenuEvent from '../MenuEvent.vue';
+import Submenu from '../Submenu.vue';
+import { EditEvent, UploadImages, EditDescription } from './Modals';
 
 export default {
     components: {
         MenuEvent,
         Submenu,
         EditEvent,
-        UploadImages
+        UploadImages,
+        EditDescription
     },
     data() {
         return {
             //Aquí se declaran las variables
+            appUrl: window.location.origin,
             isActive: false,
-            event: this.$page.props.event
+            event: this.$page.props.event,
+            imageProfile: `${window.location.origin}/general/not_image.png`,
+            imageLogo: ''
         }
     },
     beforeMount() {
         //Aqui se pueden mandar llamar metodos antes de que se monte el componente
+        if (this.event.profile) {
+            this.imageProfile = this.appUrl+'/events/images/'+this.event.profile.name;
+        }
+        if (this.event.logo) {
+            this.imageLogo = this.appUrl+'/events/images/'+this.event.logo.name;
+        }
     },
     mounted() {
         
@@ -101,6 +136,15 @@ export default {
         //Aqui se pueden mandar llamar métodos, cuando se crea el componente
     },
     methods: {
+        async deleteLogo() {
+            const response = await apiClient('customer/deleteLogo', 'DELETE', {event_id: this.event.id});
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error');
+                return false;
+            }
+            this.imageLogo = '';
+            showNotification('¡Correcto!', response.msj, 'success');
+        },
         formatDate(_date) {
             return dateEs(_date, 1, ' ');
         },
@@ -147,6 +191,7 @@ export default {
         height: 45vh;
         background-size: 100%;
         background-position: center;
+        background-repeat: no-repeat;
         position: relative;
         margin-top: -1px !important;
     }
@@ -174,10 +219,13 @@ export default {
         position: absolute;
         top: -1vh;
         left: 2vh;
-        height: 17vh;
+        height: 16vh;
         width: 15vh;
         background-color: white;
         padding: 0.5rem;
+        background-size: 90%;
+        background-position: center;
+        background-repeat: no-repeat;
     }
     .container-logo {
         width: 100%;
@@ -188,5 +236,18 @@ export default {
         color: #55504f !important;
         font-weight: bold !important;
         cursor: pointer;
+    }
+    .edit-logo {
+        background-color: black;
+        font-size: 0.75rem;
+        text-align: right;
+        position: absolute;
+        top: 0px;
+        right: 0px;
+    }
+    .btn-delete-logo {
+        position: absolute;
+        bottom: 0px;
+        right: 0px;
     }
 </style>
