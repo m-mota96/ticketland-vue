@@ -1,6 +1,6 @@
 <template>
     <MenuEvent></MenuEvent>
-    <Submenu></Submenu>
+    <Submenu :dadEvent="event"></Submenu>
     <el-row :gutter="20">
         <el-col :span="14" :offset="5" class="p-0 bg-profile" :style="{ 'background-image': `url(${imageProfile})` }">
             <div class="action-profile" @click="$refs.UploadImages.showUploadImages('profile')">
@@ -35,10 +35,10 @@
             </el-col>
         </el-col>
         <el-col :span="12" :offset="6">
-            <el-card class="pt-3 mb-6">
+            <el-card class="pt-3">
                 <el-row :gutter="30">
                     <el-col :span="16">
-                        <h3 class="title is-3 has-text-dark">Acerca de <span class="subtitle is-6 ml-4 pointer" @click="$refs.EditDescription.activeEditDescription = true"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span></h3>
+                        <h3 class="title is-3 has-text-dark">Acerca de <span class="subtitle is-6 ml-4 pointer" @click="$refs.EditDescription.showModal()"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span></h3>
                         <p class="has-text-grey justify">
                             {{event.description}}
                         </p>
@@ -47,7 +47,7 @@
                         <el-card class="card-personalized pb-3">
                             <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['fas', 'calendar-days']" /> CUÁNDO</span>
-                                <span class="text-edit has-text-dark bold ml-5 pointer"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                <!-- <span class="text-edit has-text-dark bold ml-5 pointer"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span> -->
                                 <div class="mt-2 mb-0">
                                     <span class="normal">DE: </span>
                                     <span class="hast-text-dark bold">{{ formatDate(event.event_dates[0].date, 1) }} - {{ formatTime(event.event_dates[0].initial_time) }}</span><br>
@@ -58,21 +58,33 @@
                             <hr>
                             <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['fas', 'location-dot']" /> DÓNDE</span>
-                                <span class="text-edit has-text-dark bold ml-5 pointer"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
-                                <div v-html="event.location.iframe" style="width: 100%;">
-
+                                <span class="text-edit has-text-dark bold ml-5 pointer" @click="$refs.EditLocation.showModal()"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                <div class="mt-2 mb-0" v-if="event.location">
+                                    <span class="bold">{{ event.location.name }}</span><br>
+                                    <span class="bold">{{ event.location.address }}</span>
+                                    <div class="w-100" v-html="event.location.iframe">
+    
+                                    </div>
                                 </div>
                             </div>
                             <hr>
                             <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['fas', 'address-card']" /> CONTACTO</span>
-                                <span class="text-edit has-text-dark bold ml-5 pointer"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                <span class="text-edit has-text-dark bold ml-5 pointer" @click="$refs.EditContact.activeEditContact = true"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                <div class="mt-2 mb-0" v-if="event.email || event.phone || event.twitter || event.facebook || event.instagram || event.website">
+                                    <p class="size-contact mb-1" v-if="event.email"><font-awesome-icon class="bold" :icon="['fas', 'envelope']" /> {{ event.email }}</p>
+                                    <p class="size-contact mb-1" v-if="event.phone"><font-awesome-icon class="bold" :icon="['fas', 'phone-flip']" /> {{ event.phone }}</p>
+                                    <p class="size-contact mb-1" v-if="event.twitter"><a class="has-text-dark links" :href="`https://x.com/${event.twitter}`" target="_blank"><font-awesome-icon :icon="['fab', 'x-twitter']" /> X (Twitter)</a></p>
+                                    <p class="size-contact mb-1" v-if="event.facebook"><a class="has-text-dark links" :href="event.facebook" target="_blank"><font-awesome-icon class="bold" :icon="['fab', 'facebook-f']" /> Facebook</a></p>
+                                    <p class="size-contact mb-1" v-if="event.instagram"><a class="has-text-dark links" :href="event.instagram" target="_blank"><font-awesome-icon class="bold" :icon="['fab', 'instagram']" /> Instagram</a></p>
+                                    <p class="size-contact mb-1" v-if="event.website"><a class="has-text-dark links" :href="event.website" target="_blank"><font-awesome-icon class="bold" :icon="['fas', 'link']" /> {{ event.website }}</a></p>
+                                </div>
                             </div>
                             <hr>
                             <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['fas', 'circle-dollar-to-slot']" /> TIPO DE EVENTO</span>
                                 <div class="mt-2 mb-0">
-                                    {{ event.cost_type == 'paid' ? 'DE CONSUMO' : 'DE REGISTRO' }}
+                                    <span>{{ event.cost_type == 'paid' ? 'DE CONSUMO' : 'DE REGISTRO' }}</span>
                                 </div>
                             </div>
                         </el-card>
@@ -81,8 +93,11 @@
             </el-card>
         </el-col>
     </el-row>
+    <Footer></Footer>
     <EditEvent ref="EditEvent" v-bind:dadEvent="event"></EditEvent>
     <EditDescription ref="EditDescription" v-bind:dadEvent="event"></EditDescription>
+    <EditLocation ref="EditLocation" v-bind:dadEvent="event"></EditLocation>
+    <EditContact ref="EditContact" v-bind:dadEvent="event"></EditContact>
     <UploadImages 
         ref="UploadImages"
         :dadEvent="event"
@@ -100,21 +115,24 @@ import { showNotification } from '@/notification';
 import { dateEs, time } from '@/dateEs';
 import MenuEvent from '../MenuEvent.vue';
 import Submenu from '../Submenu.vue';
-import { EditEvent, UploadImages, EditDescription } from './Modals';
+import Footer from '../Footer.vue';
+import { EditEvent, UploadImages, EditDescription, EditLocation, EditContact } from './Modals';
 
 export default {
     components: {
         MenuEvent,
         Submenu,
+        Footer,
         EditEvent,
         UploadImages,
-        EditDescription
+        EditDescription,
+        EditLocation,
+        EditContact
     },
     data() {
         return {
             //Aquí se declaran las variables
             appUrl: window.location.origin,
-            isActive: false,
             event: this.$page.props.event,
             imageProfile: `${window.location.origin}/general/not_image.png`,
             imageLogo: ''
@@ -164,18 +182,6 @@ export default {
     }
     .text-edit {
         font-size: 0.8rem;
-    }
-    .bold {
-        font-weight: bold !important;
-    }
-    .normal {
-        font-weight: normal !important;
-    }
-    .justify {
-        text-align: justify;
-    }
-    .pointer {
-        cursor: pointer;
     }
     .action-profile {
         position: absolute;
@@ -249,5 +255,11 @@ export default {
         position: absolute;
         bottom: 0px;
         right: 0px;
+    }
+    .size-contact {
+        font-size: 0.75rem;
+    }
+    .links:hover {
+        text-decoration: underline;
     }
 </style>

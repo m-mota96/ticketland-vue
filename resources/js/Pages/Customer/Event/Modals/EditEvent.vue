@@ -4,7 +4,7 @@
         title="Edita el nombre y sitio de ventas de tu evento"
         width="500"
         align-center
-        style="margin-top: 5% !important;"
+        style="margin-top: 2% !important;"
     >
         <el-row class="mb-4" :gutter="20">
             <el-col class="mb-3" :span="24">

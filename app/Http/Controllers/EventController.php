@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Http\Traits\ResponseTrait;
 use App\Models\Access;
 use App\Models\Category;
 use App\Models\Event;
 use App\Models\EventDate;
 use App\Models\GalleryEvent;
+use App\Models\LocationEvent;
 use App\Models\Payment;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Http\Traits\ResponseTrait;
 
 class EventController extends Controller {
     public function index() {
@@ -217,7 +217,47 @@ class EventController extends Controller {
             $event = Event::find($request->event_id);
             $event->description = $request->description;
             $event->save();
-            return ResponseTrait::response('La descripción de modificó correctamente.');
+            return ResponseTrait::response('La descripción se modificó correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function editLocation(Request $request) {
+        try {
+            $location = LocationEvent::where('event_id', $request->event_id)->first();
+            if ($location) {
+                $location->name    = trim($request->name);
+                $location->address = trim($request->address);
+                $location->iframe  = trim($request->iframe);
+                $location->save();
+                $txt = 'modificó';
+            } else {
+                $location = LocationEvent::create([
+                    'event_id' => $request->event_id,
+                    'name'     => trim($request->name),
+                    'address'  => trim($request->address),
+                    'iframe'   => trim($request->iframe)
+                ]);
+                $txt = 'guardó';
+            }
+            return ResponseTrait::response('La dirección se '.$txt.' correctamente.', $location);
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function editContact(Request $request) {
+        try {
+            $event            = Event::find($request->event_id);
+            $event->email     = $request->email;
+            $event->phone     = $request->phone;
+            $event->twitter   = $request->twitter;
+            $event->facebook  = $request->facebook;
+            $event->instagram = $request->instagram;
+            $event->website   = $request->website;
+            $event->save();
+            return ResponseTrait::response('La información de contacto se guardó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

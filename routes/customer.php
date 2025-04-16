@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\ValidateEvent;
 
@@ -15,6 +16,7 @@ Route::get('cliente/mis_eventos', [EventController::class, 'index'])->middleware
 
 Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'role:customer', ValidateEvent::class.':view'])->group(function() {
     Route::get('evento/{id}', [EventController::class, 'event'])->name('evento');
+    Route::get('boletos/{id}', [TicketController::class, 'tickets'])->name('boletos');
 });
 
 
@@ -29,4 +31,6 @@ Route::prefix('customer')->middleware(['auth', ValidateEvent::class.':request'])
     Route::post('uploadImages', [EventController::class, 'uploadImages']);
     Route::delete('deleteLogo', [EventController::class, 'deleteLogo']);
     Route::put('editDescription', [EventController::class, 'editDescription']);
+    Route::put('editLocation', [EventController::class, 'editLocation']);
+    Route::put('editContact', [EventController::class, 'editContact']);
 });

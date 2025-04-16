@@ -18,3 +18,34 @@ select:focus {
 body {
     width: 100% !important;
 }
+.text-error {
+    color: var(--el-color-danger) !important;
+    font-size: 13px !important;
+}
+.el-menu-item svg {
+    vertical-align: text-top;
+}
+.bold {
+    font-weight: bold !important;
+}
+.normal {
+    font-weight: normal !important;
+}
+.pointer {
+    cursor: pointer !important;
+}
+.w-100 {
+    width: 100% !important;
+}
+.w-75 {
+    width: 75% !important;
+}
+.w-50 {
+    width: 50% !important;
+}
+.w-25 {
+    width: 25% !important;
+}
+.justify {
+    text-align: justify;
+}

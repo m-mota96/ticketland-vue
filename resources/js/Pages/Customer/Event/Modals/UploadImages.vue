@@ -76,7 +76,7 @@ export default {
                     this.textSize    = '1530px x 630px';
                     break;
                 case 'logo':
-                    this.titleDialog = 'Edita el logo del evento';
+                    this.titleDialog = 'Edita el logo de tu evento';
                     this.textLabel   = 'Logo';
                     this.textSize    = '250px x 250px';
                     break;

@@ -4,7 +4,7 @@
         title="Crear evento"
         width="900"
         align-center
-        style="margin-top: 5% !important;"
+        style="margin-top: 2% !important;"
     >
         <el-row :gutter="20" class="mb-4">
             <el-col :span="12" class="mb-3">

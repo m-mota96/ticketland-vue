@@ -24,12 +24,12 @@
                         <h2 class="title is-4 has-text-grey mt-5 text-center w-100" v-if="!events.length">Lo sentimos, no hay eventos con este filtro.</h2>
                         <el-card class="mb-5 p-0" v-for="(e, index) in events" :key="index" body-class="p-0">
                             <div>
-                                <el-row class="p-0" :gutter="5">
-                                    <el-col :span="6">
-                                        <img v-if="!e.profile" class="w-100" src="/general/not_image.png" alt="{{ e.name }}">
-                                        <img v-if="e.profile" class="w-100" src="/general/{{ e.profile.name }}" alt="{{ e.name }}">
+                                <el-row :gutter="5">
+                                    <el-col :span="7">
+                                        <img v-if="!e.profile" class="w-100" src="/general/not_image.png" alt="Ticketland">
+                                        <img v-if="e.profile" class="w-100 image-profile" :src="`/events/images/${e.profile.name}`" :alt="e.name">
                                     </el-col>
-                                    <el-col class="pt-5 pl-5" :span="14">
+                                    <el-col class="pt-5 pl-5 mb-4" :span="13">
                                         <a class="title is-4 has-text-dark mb-0" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></a><br>
                                         <span class="has-text-dark mt-0">
                                             {{ 
@@ -61,7 +61,7 @@
                                             />
                                         </div>
                                     </el-col>
-                                    <el-col class="pt-5 pr-5 text-right" :span="4">
+                                    <el-col class="pt-5 pr-5 mb-4 text-right" :span="4">
                                         <h3 class="subtitle mb-0 is-3 w-100 text-right">
                                             <span class="has-text-blue-400 has-text-weight-light">{{ e.sales }}/</span><span class="has-text-blue-300 has-text-weight-light">{{ e.quantity_tickets }}</span>
                                         </h3>
@@ -183,7 +183,12 @@ export default {
 }
 </script>
   
-<style>
+<style scope>
+    .image-profile {
+        height: 100% !important;
+        object-fit: cover;
+        object-position: center;
+    }
     .active {
         text-decoration: underline;
     }
