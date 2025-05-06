@@ -9,8 +9,8 @@
         <el-row :gutter="20" class="mb-4">
             <el-col :span="12">
                 <el-row :gutter="10">
-                    <el-col :span="24" class="mb-3">
-                        <label for="name">Nombre <span class="has-text-danger">*</span></label>
+                    <el-col :span="24" class="mb-5">
+                        <label class="bold" for="name">Nombre <span class="has-text-danger">*</span></label>
                         <el-input
                             class="el-form-item mb-0 mt-1"
                             :class="{'is-error': errors.name}"
@@ -21,8 +21,8 @@
                         />
                         <span class="text-error" v-if="errors.name">El nombre es obligatorio.</span>
                     </el-col>
-                    <el-col :span="24" class="mb-3">
-                        <label for="description">Descripción</label>
+                    <el-col :span="24" class="mb-5">
+                        <label class="bold" for="description">Descripción</label>
                         <el-mention
                             class="w-100 mt-1"
                             id="description"
@@ -31,9 +31,16 @@
                             :rows="5"
                         />
                     </el-col>
-                    <el-col>
-                        <label for="days">¿Cuántas veces se puede escanear este boleto? <span class="has-text-danger">*</span></label>
-                        <el-select class="mt-1" size="large" id="days" v-model="ticket.days" placeholder="Seleccione una opción">
+                    <el-col :span="24" class="mb-5">
+                        <label class="bold" for="days">¿Cuántas veces se puede escanear este boleto? <span class="has-text-danger">*</span></label>
+                        <el-select
+                            class="el-form-item mb-0 mt-1"
+                            :class="{'is-error': errors.name}"
+                            size="large"
+                            id="days"
+                            v-model="ticket.valid"
+                            placeholder="Seleccione una opción"
+                        >
                             <el-option
                             v-for="n in daysEvent"
                             :key="n"
@@ -41,20 +48,138 @@
                             :value="n"
                             />
                         </el-select>
-                        <span class="text-error" v-if="errors.quantity">Indique la cantidad de veces que pueden utilizar el boleto.</span>
+                        <p class="text-error text-justify" v-if="errors.valid">
+                            Indique la cantidad de veces que pueden utilizar el boleto.
+                            <br>
+                            Ej: si el evento dura 2 días y este boleto lo pueden utilizar ambos días debe elegir 2, de lo contrario indique para cuántos días funciona.
+                        </p>
+                    </el-col>
+                    <el-col :span="24" class="mb-5">
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <label class="bold" for="start_sale">A la venta desde... <span class="has-text-danger">*</span></label>
+                                <el-date-picker
+                                    class="el-form-item mb-0 mt-1 w-100"
+                                    :class="{'is-error': errors.start_sale || errors.dates}"
+                                    size="large"
+                                    id="start_sale"
+                                    v-model="ticket.start_sale"
+                                    type="date"
+                                    placeholder="Elija el día"
+                                    format="DD/MM/YYYY"
+                                    value-format="YYYY-MM-DD"
+                                />
+                                <span class="text-error" v-if="errors.start_sale">La fecha inicial es obligatoria.</span>
+                                <span class="text-error" v-if="errors.dates">La fecha inicial debe ser menor o igual que la final.</span>
+                            </el-col>
+                            <el-col :span="12">
+                                <label class="bold" for="stop_sale">...hasta <span class="has-text-danger">*</span></label>
+                                <el-date-picker
+                                    class="el-form-item mb-0 mt-1 w-100"
+                                    :class="{'is-error': errors.stop_sale}"
+                                    size="large"
+                                    id="stop_sale"
+                                    v-model="ticket.stop_sale"
+                                    type="date"
+                                    placeholder="Elija el día"
+                                    format="DD/MM/YYYY"
+                                    value-format="YYYY-MM-DD"
+                                />
+                                <span class="text-error" v-if="errors.start_sale">La fecha final es obligatoria.</span>
+                            </el-col>
+                        </el-row>
                     </el-col>
                 </el-row>
             </el-col>
             <el-col :span="12">
                 <el-row :gutter="10">
-
+                    <el-col :span="24" class="mb-5">
+                        <label class="bold">Costo <span class="has-text-danger">*</span></label><br>
+                        <el-radio-group class="mb-0 mt-1" v-model="ticket.cost_type">
+                            <el-radio value="paid" v-if="eventType == 'paid'">Con pago</el-radio>
+                            <el-radio value="free">Gratis</el-radio>
+                        </el-radio-group><br>
+                        <div v-if="eventType == 'paid'">
+                            <el-input
+                                class="el-form-item mt-2 mb-0 w-50"
+                                :class="{'is-error': errors.price || errors.price_incorrect}"
+                                v-if="ticket.cost_type == 'paid'"
+                                v-model="ticket.price"
+                                :formatter="(value) => {
+                                    const intValue = parseInt(value, 10);
+                                    return isNaN(intValue) ? null : `$ ${intValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+                                }"
+                                :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
+                            />
+                            <p class="text-error mt-0" v-if="errors.price">El precio mínimo es de $40.</p>
+                            <p class="text-error mt-0" v-if="errors.price_incorrect">El precio es obligatorio.</p>
+                        </div>
+                        <p class="mt-2"><i>* Las comisiones se cobran aparte del precio de tu boleto</i></p>
+                    </el-col>
+                    <el-col :span="24" class="mb-5">
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <label class="bold" for="min_tickets">Min. boletos por reservación <span class="has-text-danger">*</span></label>
+                                <el-input-number
+                                    class="el-form-item mb-0 mt-1 w-100"
+                                    :class="{'is-error': errors.min_reservation || errors.min}"
+                                    id="min_tickets"
+                                    v-model="ticket.min_reservation"
+                                    :min="1"
+                                    :max="10"
+                                    size="large"
+                                    :step="1"
+                                    :precision="0"
+                                />
+                                <span class="text-error" v-if="errors.min_reservation">La cantidad mínima es obligatoria.</span>
+                                <span class="text-error" v-if="errors.min">La cantidad mínima debe ser menor o igual que la máxima.</span>
+                            </el-col>
+                            <el-col :span="12">
+                                <label class="bold" for="max_tickets">Max. boletos por reservación <span class="has-text-danger">*</span></label>
+                                <el-input-number
+                                    class="el-form-item mb-0 mt-1 w-100"
+                                    :class="{'is-error': errors.max_reservation}"
+                                    id="max_tickets"
+                                    v-model="ticket.max_reservation"
+                                    :min="1"
+                                    size="large"
+                                    :step="1"
+                                    :precision="0"
+                                />
+                                <span class="text-error" v-if="errors.max_reservation">La cantidad máxima es obligatoria.</span>
+                            </el-col>
+                        </el-row>
+                    </el-col>
+                    <el-col :span="24" class="mb-5">
+                        <label class="bold" for="min_tickets">Cantidad disponible <span class="has-text-danger">*</span></label>
+                        <el-input-number
+                            class="el-form-item mb-0 mt-1 w-100"
+                            :class="{'is-error': errors.quantity}"
+                            id="min_tickets"
+                            v-model="ticket.quantity"
+                            :min="1"
+                            size="large"
+                            :step="1"
+                            :precision="0"
+                        />
+                        <span class="text-error" v-if="errors.quantity">La cantidad es obligatoria.</span>
+                    </el-col>
                 </el-row>
             </el-col>
         </el-row>
+        <template #footer>
+            <div class="dialog-footer">
+                <el-button @click="activeEditTicket = false">Cancelar</el-button>
+                <el-button type="primary" @click="saveInfo" :disabled="isDisabled">Guardar cambios</el-button>
+            </div>
+        </template>
     </el-dialog>
 </template>
 
 <script>
+import apiClient from '@/apiClient';
+import { showNotification } from '@/notification';
+
 export default {
     props: {
         // dadTicket: Object
@@ -64,27 +189,151 @@ export default {
     data() {
         return {
             activeEditTicket: false,
+            isDisabled: false,
+            eventType: 'paid',
             ticket: {
+                ticket_id: null,
                 event_id: this.eventId,
                 name: '',
                 description: '',
-                price: '',
-                auqntity: 0
+                price: 0,
+                quantity: 50,
+                start_sale: '',
+                stop_sale: '',
+                cost_type: 'paid',
+                min_reservation: 1,
+                max_reservation: 10,
+                valid: ''
             },
             errors: {
                 name: false,
-                quantity: 0
+                quantity: false,
+                start_sale: false,
+                stop_sale: false,
+                dates: false,
+                min_reservation: false,
+                max_reservation: false,
+                min: false,
+                price: false,
+                price_incorrect: false,
+                valid: false,
             }
         }
     },
     methods: {
+        async saveInfo() {
+            if (this.validate()) {
+                let response = '';
+                if (!this.ticket.ticket_id) {
+                    response = await apiClient('customer/createTicket', 'POST', this.ticket);
+                } else {
+                    response = await apiClient('customer/editTicket', 'PUT', this.ticket);
+                }
+                if (response.error) {
+                    showNotification('¡Error!', response.msj, 'error');
+                    return false;
+                }
+                showNotification('¡Correcto!', response.msj, 'success');
+                this.activeEditTicket = false;
+            }
+        },
+        validate() {
+            this.resetErrors();
+            let valid = true;
+            if (!this.ticket.name) {
+                this.errors.name = true;
+                valid            = false;
+            }
+            if (!this.ticket.quantity) {
+                this.errors.quantity = true;
+                valid                = false;
+            }
+            if (!this.ticket.valid) {
+                this.errors.valid = true;
+                valid             = false;
+            }
+            if (!this.ticket.start_sale) {
+                this.errors.start_sale = true;
+                valid                  = false;
+            }
+            if (!this.ticket.stop_sale) {
+                this.errors.stop_sale = true;
+                valid                 = false;
+            }
+            if (this.ticket.start_sale > this.ticket.stop_sale) {
+                this.errors.dates = true;
+                valid             = false;
+            }
+            if (!this.ticket.min_reservation) {
+                this.errors.min_reservation = true;
+                valid                       = false;
+            }
+            if (!this.ticket.max_reservation) {
+                this.errors.max_reservation = true;
+                valid                       = false;
+            }
+            if (this.ticket.min_reservation > this.ticket.max_reservation) {
+                this.errors.min = true;
+                valid           = false;
+            }
+            if (this.eventType == 'paid' && this.ticket.cost_type == 'paid') {
+                console.log(this.ticket.price);
+                if (!this.ticket.price || this.ticket.price == '') {
+                    this.errors.price_incorrect = true;
+                    valid                       = false;
+                } else if (this.ticket.price < 40) {
+                    this.errors.price = true;
+                    valid             = false;
+                }
+            }
+            return valid;
+        },
         showModal(_ticket = null) {
+            this.resetErrors();
+            this.ticket.ticket_id       = null;
+            this.ticket.name            = '';
+            this.ticket.description     = '';
+            this.ticket.price           = 0;
+            this.ticket.quantity        = 50;
+            this.ticket.start_sale      = '';
+            this.ticket.stop_sale       = '';
+            this.ticket.cost_type       = 'paid';
+            this.ticket.min_reservation = 1;
+            this.ticket.max_reservation = 10;
+            this.ticket.valid       = '';
+            if (_ticket) {
+                this.eventType              = _ticket.event.cost_type;
+                this.ticket.ticket_id       = _ticket.id;
+                this.ticket.name            = _ticket.name;
+                this.ticket.description     = _ticket.description;
+                this.ticket.valid           = _ticket.valid;
+                this.ticket.start_sale      = _ticket.start_sale;
+                this.ticket.stop_sale       = _ticket.stop_sale;
+                this.ticket.price           = _ticket.price ? _ticket.price : 0;
+                this.ticket.min_reservation = _ticket.min_reservation;
+                this.ticket.max_reservation = _ticket.max_reservation;
+                this.ticket.quantity        = _ticket.quantity;
+                this.ticket.cost_type       = _ticket.event.cost_type == 'paid' ? 'paid' : 'free';
+            }
             this.activeEditTicket = true;
+        },
+        resetErrors() {
+            this.errors.name            = false;
+            this.errors.quantity        = false;
+            this.errors.start_sale      = false;
+            this.errors.stop_sale       = false;
+            this.errors.dates           = false;
+            this.errors.min_reservation = false;
+            this.errors.max_reservation = false;
+            this.errors.min             = false;
+            this.errors.price           = false;
+            this.errors.price_incorrect = false;
+            this.errors.valid            = false;
         }
     }
 }
 </script>
 
 <style scoped>
-
+    
 </style>

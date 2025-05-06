@@ -33,4 +33,6 @@ Route::prefix('customer')->middleware(['auth', ValidateEvent::class.':request'])
     Route::put('editDescription', [EventController::class, 'editDescription']);
     Route::put('editLocation', [EventController::class, 'editLocation']);
     Route::put('editContact', [EventController::class, 'editContact']);
+    Route::post('createTicket', [TicketController::class, 'createTicket']);
+    Route::put('editTicket', [TicketController::class, 'editTicket']);
 });

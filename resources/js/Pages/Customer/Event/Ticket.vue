@@ -28,7 +28,7 @@
                 <el-col :span="7">
                     <el-card class="text-center pb-4">
                         <h5 class="subtitle is-5 has-text-dark mb-5">OPCIONES</h5>
-                        <el-button class="bold w-100" type="warning" size="large">
+                        <el-button class="bold w-100" type="warning" size="large" @click="$refs.EditTicket.showModal()">
                             <font-awesome-icon class="mr-1 bold" :icon="['fas', 'plus']" /> Nuevo tipo de boleto
                         </el-button>
                         <br>
