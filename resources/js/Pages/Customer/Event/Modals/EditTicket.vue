@@ -22,7 +22,7 @@
                         <span class="text-error" v-if="errors.name">El nombre es obligatorio.</span>
                     </el-col>
                     <el-col :span="24" class="mb-5">
-                        <label class="bold" for="description">Descripción</label>
+                        <label class="bold" for="description">Descripción <span class="has-text-grey-light">(Opcional)</span></label>
                         <el-mention
                             class="w-100 mt-1"
                             id="description"
@@ -65,7 +65,7 @@
                                     id="start_sale"
                                     v-model="ticket.start_sale"
                                     type="date"
-                                    placeholder="Elija el día"
+                                    placeholder="Elija la fecha"
                                     format="DD/MM/YYYY"
                                     value-format="YYYY-MM-DD"
                                 />
@@ -81,7 +81,7 @@
                                     id="stop_sale"
                                     v-model="ticket.stop_sale"
                                     type="date"
-                                    placeholder="Elija el día"
+                                    placeholder="Elija la fecha"
                                     format="DD/MM/YYYY"
                                     value-format="YYYY-MM-DD"
                                 />
@@ -111,8 +111,8 @@
                                 }"
                                 :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
                             />
-                            <p class="text-error mt-0" v-if="errors.price">El precio mínimo es de $40.</p>
-                            <p class="text-error mt-0" v-if="errors.price_incorrect">El precio es obligatorio.</p>
+                            <p class="text-error mt-0" v-if="errors.price && ticket.cost_type == 'paid'">El precio mínimo es de $50.</p>
+                            <p class="text-error mt-0" v-if="errors.price_incorrect && ticket.cost_type == 'paid'">El precio es obligatorio y debe ser entero.</p>
                         </div>
                         <p class="mt-2"><i>* Las comisiones se cobran aparte del precio de tu boleto</i></p>
                     </el-col>
@@ -182,9 +182,9 @@ import { showNotification } from '@/notification';
 
 export default {
     props: {
-        // dadTicket: Object
         eventId: Number,
-        daysEvent: Number
+        daysEvent: Number,
+        getTickets: Function
     },
     data() {
         return {
@@ -223,16 +223,19 @@ export default {
     methods: {
         async saveInfo() {
             if (this.validate()) {
-                let response = '';
+                let response    = '';
+                this.isDisabled = true;
                 if (!this.ticket.ticket_id) {
-                    response = await apiClient('customer/createTicket', 'POST', this.ticket);
+                    response = await apiClient('customer/ticket', 'POST', this.ticket);
                 } else {
-                    response = await apiClient('customer/editTicket', 'PUT', this.ticket);
+                    response = await apiClient('customer/ticket', 'PUT', this.ticket);
                 }
+                this.isDisabled = false;
                 if (response.error) {
                     showNotification('¡Error!', response.msj, 'error');
                     return false;
                 }
+                this.getTickets();
                 showNotification('¡Correcto!', response.msj, 'success');
                 this.activeEditTicket = false;
             }
@@ -277,11 +280,10 @@ export default {
                 valid           = false;
             }
             if (this.eventType == 'paid' && this.ticket.cost_type == 'paid') {
-                console.log(this.ticket.price);
-                if (!this.ticket.price || this.ticket.price == '') {
+                if (!this.ticket.price || !parseInt(this.ticket.price)) {
                     this.errors.price_incorrect = true;
                     valid                       = false;
-                } else if (this.ticket.price < 40) {
+                } else if (this.ticket.price < 50) {
                     this.errors.price = true;
                     valid             = false;
                 }

@@ -4,6 +4,7 @@ import EditDescription from './EditDescription.vue';
 import EditLocation from './EditLocation.vue';
 import EditContact from './EditContact.vue';
 import EditTicket from './EditTicket.vue';
+import EditDiscount from './EditDiscount.vue';
 
 export {
   EditEvent,
@@ -11,5 +12,6 @@ export {
   EditDescription,
   EditLocation,
   EditContact,
-  EditTicket
+  EditTicket,
+  EditDiscount
 };

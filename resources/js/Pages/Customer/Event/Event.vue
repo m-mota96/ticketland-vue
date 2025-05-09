@@ -1,7 +1,7 @@
 <template>
     <MenuEvent></MenuEvent>
     <Submenu :dadEvent="event"></Submenu>
-    <el-row :gutter="20">
+    <el-row :gutter="20" class="wrapper">
         <el-col :span="14" :offset="5" class="p-0 bg-profile" :style="{ 'background-image': `url(${imageProfile})` }">
             <div class="action-profile" @click="$refs.UploadImages.showUploadImages('profile')">
                 <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
@@ -10,7 +10,7 @@
             <el-col :span="24" class="back-title-edit">
                 <h1 class="title is-1 has-text-white mb-2">{{ event.name }}</h1>
                 <h5 class="title is-5 has-text-white mb-2">Categoría: {{ event.category.name }}</h5>
-                <h5 class="title is-5 has-text-white"><a class="text-white" :href="'../../'+event.url" target="_blank">Ver sitio web</a></h5>
+                <h5 class="title is-5 has-text-white"><a class="text-white" :href="appUrl+'/evento/'+event.url" target="_blank">Ver sitio web</a></h5>
                 <div class="content-logo" :style="{ 'background-image': imageLogo == '' ? 'unset': `url(${imageLogo})` }">
                     <div class="text-center pt-4 container-logo" v-if="imageLogo == ''" @click="$refs.UploadImages.showUploadImages('logo')">
                         <h5 class="subtitle is-5 mt-5 text-logo">Agregar Logo</h5>
@@ -173,7 +173,7 @@ export default {
 }
 </script>
 
-<style scope>
+<style scoped>
     .card-personalized {
         background-color: #f8f7f7 !important;
     }

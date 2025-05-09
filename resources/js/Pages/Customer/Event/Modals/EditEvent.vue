@@ -63,7 +63,7 @@ export default {
             activeEditEvent: false,
             isDisabled: false,
             event: {
-                id: this.dadEvent.id,
+                event_id: this.dadEvent.id,
                 name: this.dadEvent.name,
                 url: this.dadEvent.url,
                 quantity: this.dadEvent.quantity,
@@ -95,6 +95,6 @@ export default {
 }
 </script>
 
-<style scope>
+<style scoped>
 
 </style>

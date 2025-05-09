@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap');
+body {
+    font-family: 'Nunito', sans-serif !important;
+}
 input[type='text']:focus,
 input[type='email']:focus,
 input[type='url']:focus,
@@ -48,4 +52,11 @@ body {
 }
 .justify {
     text-align: justify;
+}
+html, body {
+    height: 100%;
+    margin: 0;
+}
+.wrapper {
+    min-height: 70vh;
 }

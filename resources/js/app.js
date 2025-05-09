@@ -9,6 +9,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import ElementPlus from 'element-plus';
+import es from 'element-plus/dist/locale/es.mjs';
+es.el.pagination.pagesize = ' por página'; // Cambia el texto aquí
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -30,7 +32,9 @@ createInertiaApp({
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
-            .use(ElementPlus)
+            .use(ElementPlus, {
+                locale: es
+            })
             .component("font-awesome-icon",FontAwesomeIcon)
             .mount(el);
     },

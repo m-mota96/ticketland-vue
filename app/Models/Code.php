@@ -11,7 +11,7 @@ class Code extends Model
     ];
 
     public function tickets() {
-        return $this->belongsToMany(Ticket::class)->withPivot('used', 'reserved');
+        return $this->belongsToMany(Ticket::class)->withPivot('used', 'reserved')->orderBy('name');
     }
 
     public function accesses() {

@@ -125,8 +125,8 @@ class EventController extends Controller {
         }
     }
 
-    public function event($id) {
-        $event      = Event::with(['profile', 'logo', 'eventDates', 'location', 'category'])->where('id', $id)->first();
+    public function event($event_id) {
+        $event      = Event::with(['profile', 'logo', 'eventDates', 'location', 'category'])->where('id', $event_id)->first();
         $categories = Category::orderBy('name')->get();
         return Inertia::render('Customer/Event/Event', [
             'event'      => $event,
@@ -136,7 +136,7 @@ class EventController extends Controller {
 
     public function editEvent(Request $request) {
         try {
-            $event               = Event::find($request->id);
+            $event               = Event::find($request->event_id);
             $event->name         = trim($request->name);
             $event->url          = trim($request->url);
             $event->quantity     = trim($request->quantity);

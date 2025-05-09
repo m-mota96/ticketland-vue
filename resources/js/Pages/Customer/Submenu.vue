@@ -13,10 +13,10 @@
             <el-menu-item index="2-1"><a class="has-text-white" :href="route('cliente.evento', dadEvent.id)"><font-awesome-icon class="mr-2" :icon="['fas', 'eye']" /> Apariencia</a></el-menu-item>
             <el-menu-item index="2-2"><font-awesome-icon class="mr-2" :icon="['fas', 'ticket-simple']" /> Forma por boleto</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="3"><a class="ml-2" :href="route('cliente.boletos', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'ticket']" /> Boletos</a></el-menu-item>
-        <el-menu-item index="4"><font-awesome-icon :icon="['fas', 'percent']" /> <a class="ml-2">Descuentos</a></el-menu-item>
-        <el-menu-item index="4"><font-awesome-icon :icon="['fas', 'cart-shopping']" /> <a class="ml-2">Reservaciones</a></el-menu-item>
-        <el-menu-item index="4"><font-awesome-icon :icon="['fas', 'qrcode']" /> <a class="ml-2">Escaner</a></el-menu-item>
+        <el-menu-item index="3"><a :href="route('cliente.boletos', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'ticket']" /> Boletos</a></el-menu-item>
+        <el-menu-item index="4"><a :href="route('cliente.descuentos', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'percent']" /> Descuentos</a></el-menu-item>
+        <el-menu-item index="4"><a :href="route('cliente.reservaciones', dadEvent.id)"><font-awesome-icon :icon="['fas', 'cart-shopping']" /> Reservaciones</a></el-menu-item>
+        <el-menu-item index="5"><font-awesome-icon :icon="['fas', 'qrcode']" /> <a class="ml-2">Escaner</a></el-menu-item>
     </el-menu>
 </template>
 <script>

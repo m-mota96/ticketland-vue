@@ -36,7 +36,7 @@ export default {
 }
 </script>
 
-<style scope>
+<style scoped>
     p {
         font-size: 0.8rem;
     }

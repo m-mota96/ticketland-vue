@@ -183,7 +183,7 @@ export default {
 }
 </script>
   
-<style scope>
+<style scoped>
     .image-profile {
         height: 100% !important;
         object-fit: cover;

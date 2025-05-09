@@ -17,14 +17,14 @@ class ValidateEvent
      */
     public function handle(Request $request, Closure $next, $action): Response
     {
-        $event_id = (!empty($request->id)) ? $request->id : $request->event_id;
+        $event_id = $request->event_id;
 
         $event = Event::where('id', $event_id)->where('user_id', auth()->user()->id)->first();
         if (!$event) {
             if ($action == 'view') {
                 return redirect(route('cliente.mis_eventos'));
             }
-            return ResponseTrait::response('No tiene permisos para modificar este evento.', null, true, 409);
+            return ResponseTrait::response('No tiene permisos para modificar información de este evento.', null, true, 409);
         }
 
         return $next($request);
