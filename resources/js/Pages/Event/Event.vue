@@ -84,7 +84,7 @@
         class="custom-loading-svg container-fluid has-background-white pt-6 pb-6 padding b-b"
         v-if="viewInfoCustomer"
         element-loading-text="¡Procesando tu compra, por favor espera!"
-        v-loading="false"
+        v-loading="loading"
         :element-loading-svg="svg"
         element-loading-svg-view-box="-10, -10, 50, 50"
         element-loading-background="rgba(0, 0, 0, 0.9)"
@@ -279,8 +279,87 @@
                         Total: <b class="has-text-success">{{ formatCurrency(data.subtotal + (data.subtotal * .12)) }} MXN</b>
                     </h6>
                 </el-col>
-                <el-col :span="24" class="has-text-centered mt-6">
-                    <el-button type="primary" size="large"><font-awesome-icon :icon="['fas', 'dollar-sign']" />&nbsp;&nbsp;Realizar pago</el-button>
+                <el-col :span="24" class="pt-5 pb-5">
+                    <el-row :gutter="20">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
+                            <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
+                            <el-select
+                                :class="{'is-error': errors.payment_method}"
+                                class="el-form-item mb-0"
+                                v-model="data.payment_method"
+                                placeholder="Selecciona una opción"
+                                id="payment_method"
+                                clearable
+                                @change="verifyPaymentMethod"
+                            >
+                                <el-option label="Pago en Oxxo" value="cash" />
+                                <el-option label="Tarjeta de Débito/Crédito" value="card" />
+                            </el-select>
+                            <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
+                        </el-col>
+                        <!-- <el-col :span="24" class="pt-5 pb-5" v-if="data.payment_method == 'card'">
+                            <div id="conektaIframeContainer" style="height: 1350px;"></div>
+                        </el-col> -->
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                            <label class="bold has-text-dark" for="cardName">Nombre en la tarjeta <span class="has-text-danger">*</span></label>
+                            <el-input
+                                :class="{'is-error': errors.cardName}"
+                                class="el-form-item mb-0"
+                                id="cardName"
+                                v-model="data.paymentData.card.name"
+                                placeholder="Nombre del propietario de la tarjeta"
+                                type="text"
+                            />
+                            <span class="text-error" v-if="errors.cardName">El nombre del propietario es obligatorio.</span>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                            <label class="bold has-text-dark" for="cardNumber">Número de tarjeta <span class="has-text-danger">*</span></label>
+                            <el-input
+                                :class="{'is-error': errors.cardNumber}"
+                                class="el-form-item mb-0"
+                                id="cardNumber"
+                                v-mask="'#### #### #### ####'"
+                                v-model="data.paymentData.card.number"
+                                placeholder="1234 5678 9012 3456"
+                                maxlength="19"
+                                clearable
+                            />
+                            <span class="text-error" v-if="errors.cardNumber">El número de tarjeta es obligatorio.</span>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                            <label class="bold has-text-dark" for="expiration">Fecha de expiración <span class="has-text-danger">*</span></label>
+                            <el-input
+                                :class="{'is-error': errors.expiration || errors.month_invalid || errors.year_invalid}"
+                                class="el-form-item mb-0"
+                                id="expiration"
+                                v-mask="'##/##'"
+                                v-model="data.cardExpiration"
+                                placeholder="MM/AA"
+                                maxlength="5"
+                                clearable
+                                @keyup="setExpiration"
+                            />
+                            <p class="text-error" v-if="errors.expiration">Completa el mes y el año.</p>
+                            <p class="text-error" v-if="errors.month_invalid">Ingresa un mes válido.</p>
+                            <p class="text-error" v-if="errors.year_invalid">El año debe ser mayor o igual que el actual.</p>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                            <label class="bold has-text-dark" for="cvv">CVV <span class="has-text-danger">*</span></label>
+                            <el-input
+                                :class="{'is-error': errors.cvc}"
+                                class="el-form-item mb-0"
+                                id="cvv"
+                                v-model="data.paymentData.card.cvc"
+                                placeholder="CVV"
+                                maxlength="3"
+                                @keypress="isNumber($event)"
+                            />
+                            <span class="text-error" v-if="errors.cvc">El código de seguridad es obligatorio.</span>
+                        </el-col>
+                    </el-row>
+                </el-col>
+                <el-col :span="24" class="has-text-centered mt-3">
+                    <el-button type="primary" size="large" @click="payment"><font-awesome-icon :icon="['fas', 'dollar-sign']" />&nbsp;&nbsp;Realizar pago</el-button>
                 </el-col>
             </el-row>
         </el-col>
@@ -293,6 +372,14 @@
                         <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14" class="mb-3">
                             <h3 class="subtitle is-3 has-text-grey mb-2">Sobre el evento</h3>
                             <p class="justify has-text-black" v-if="event.description">{{ event.description }}</p>
+                            <div v-if="event.location">
+                                <h3 class="subtitle is-3 has-text-grey mb-2 mt-5">Lugar del evento</h3>
+                                <h5 class="title is-5 has-text-dark mb-1">{{ event.location.name }}</h5>
+                                <p class="has-text-dark mb-4">{{ event.location.address }}</p>
+                                <div class="w-100" v-html="event.location.iframe">
+        
+                                </div>
+                            </div>
                         </el-col>
                         <el-col :xs="24" :sm="24" :md="12" :lg="10" :xl="10">
                             <h3 class="subtitle is-3 has-text-grey mb-2">Contacta al organizador</h3>
@@ -314,6 +401,7 @@
 </template>
 
 <script>
+import apiClient from '@/apiClient';
 import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
 
@@ -325,17 +413,31 @@ export default {
         return {
             appUrl: window.location.origin,
             event: this.$page.props.event,
+            loading: false,
             data: {
                 tickets: [],
                 ticketsReserved: [],
                 selected: 0,
                 subtotal: 0,
                 order: {
-                    name: '',
-                    email: '',
-                    confirm_email: '',
-                    phone: ''
-                }
+                    name: 'Miguel Angel Mota Murillo',
+                    email: 'miguel@mail.com',
+                    confirm_email: 'miguel@mail.com',
+                    phone: '0123456789',
+                    token_id: '',
+                    card: ''
+                },
+                payment_method: '',
+                paymentData: {
+                    card: {
+                        name: 'Miguel Angel Mota Murillo',
+                        number: '4242424242424242',
+                        exp_month: '06',
+                        exp_year: '26',
+                        cvc: '123'
+                    }
+                },
+                cardExpiration: '06/26',
             },
             viewInfoCustomer: false,
             errors: {
@@ -347,7 +449,14 @@ export default {
                 confirm_email_invalid2: false,
                 phone: false,
                 phone_invalid: false,
-                names: []
+                names: [],
+                payment_method: false,
+                cardName: false,
+                cardNumber: false,
+                expiration: false,
+                month_invalid: false,
+                year_invalid: false,
+                cvc: false
             },
             svg: `
                 <path class="path" d="
@@ -359,6 +468,7 @@ export default {
                 L 15 15
                 " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
             `,
+            currentYear: new Date().getFullYear(),
         }
     },
     beforeMount() {
@@ -378,6 +488,39 @@ export default {
         
     },
     methods: {
+        payment() {
+            if (this.validate()) {
+                this.loading = true;
+                Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
+                Conekta.setLanguage('es');
+                Conekta.Token.create(this.data.paymentData,
+                    (token) => this.conektaSuccessHandler(token),
+                    (error) => {
+                        this.loading = false;
+                        console.log('Error al crear token:', error);
+                    }
+                );
+            } else {
+                this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
+            }
+        },
+        async conektaSuccessHandler(token) {
+            this.data.order.token_id = token.id;
+            this.data.order.card     = this.data.paymentData.card.number.slice(-4);
+            const response = await apiClient('makePayment', 'POST', {
+                event_id: this.event.id,
+                selected: this.data.selected,
+                order: this.data.order,
+                tickets: this.filterTickets(),
+                informationTickets: this.data.ticketsReserved,
+            });
+            this.loading = false;
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error');
+                return false;
+            }
+            showNotification('¡Correcto!', response.msj, 'success');
+        },
         loadInfo() {
             if (!this.data.selected) {
                 showNotification('¡Atención!', 'Debes tener seleccionado al menos 1 boleto', 'warning', 6500);
@@ -449,6 +592,21 @@ export default {
                 currency: 'MXN'
             }).format(value);
         },
+        isNumber(evt) {
+            const charCode = evt.which ? evt.which : evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+        },
+        setExpiration() {
+            this.data.paymentData.card.exp_month = '';
+            this.data.paymentData.card.exp_year  = '';
+            if (this.data.cardExpiration.length == 5) {
+                let expiration = this.data.cardExpiration.split('/');
+                this.data.paymentData.card.exp_month = expiration[0];
+                this.data.paymentData.card.exp_year  = expiration[1];
+            }
+        },
         validate() {
             this.resetErrors();
             const intRegex  = /^\d{10}$/;
@@ -503,6 +661,43 @@ export default {
                 }
             });
 
+            if (!this.data.payment_method) {
+                this.errors.payment_method = true;
+                valid                      = false;
+            }
+
+            if (this.data.payment_method == 'card') {
+                if (!this.data.paymentData.card.name) {
+                    this.errors.cardName = true;
+                    valid                = false;
+                }
+                if (!this.data.paymentData.card.number) {
+                    this.errors.cardNumber = true;
+                    valid                  = false;
+                }
+                if (!this.data.cardExpiration) {
+                    this.errors.expiration = true;
+                    valid                  = false;
+                }
+                if (this.data.cardExpiration) {
+                    if (this.data.cardExpiration.length == 5) {
+                        if (parseInt(this.data.paymentData.card.exp_month) < 1 || parseInt(this.data.paymentData.card.exp_month) > 12) {
+                            this.errors.month_invalid = true;
+                            valid                     = false;
+                        }
+                        let year = this.currentYear.toString();
+                        if (parseInt(this.data.paymentData.card.exp_year) < year.slice(-2)) {
+                            this.errors.year_invalid = true;
+                            valid                    = false;
+                        }
+                    }
+                }
+                if (!this.data.paymentData.card.cvc) {
+                    this.errors.cvc = true;
+                    valid           = false;
+                }
+            }
+
             return valid;
         },
         resetErrors() {
@@ -515,6 +710,26 @@ export default {
             this.errors.phone                  = false;
             this.errors.phone_invalid          = false;
             this.errors.names                  = [];
+            this.errors.payment_method         = false;
+            this.errors.cardName               = false;
+            this.errors.cardNumber             = false;
+            this.errors.expiration             = false;
+            this.errors.month_invalid          = false;
+            this.errors.year_invalid           = false;
+            this.errors.cvc                    = false;
+        },
+        verifyPaymentMethod(value) {
+            if(value !== 'card') {
+                this.errors.cardName               = false;
+                this.errors.cardNumber             = false;
+                this.errors.expiration             = false;
+                this.errors.month_invalid          = false;
+                this.errors.year_invalid           = false;
+                this.errors.cvc                    = false;
+            }
+        },
+        filterTickets() {
+            return this.data.tickets.filter(t => t.quantity > 0);
         }
     },
     computed: {

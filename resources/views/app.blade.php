@@ -15,6 +15,9 @@
         @routes
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
+
+        {{-- <script src="https://pay.conekta.com/v1.0/js/conekta-checkout.min.js"></script> --}}
+        <script type="text/javascript" src="https://cdn.conekta.io/js/latest/conekta.js"></script>
     </head>
     <body class="font-sans antialiased">
         @inertia

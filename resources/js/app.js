@@ -9,6 +9,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import ElementPlus from 'element-plus';
+import VueTheMask from 'vue-the-mask';
 import es from 'element-plus/dist/locale/es.mjs';
 es.el.pagination.pagesize = ' por página'; // Cambia el texto aquí
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -35,6 +36,7 @@ createInertiaApp({
             .use(ElementPlus, {
                 locale: es
             })
+            .use(VueTheMask)
             .component("font-awesome-icon",FontAwesomeIcon)
             .mount(el);
     },
