@@ -247,7 +247,7 @@ export default {
             }
         },
         formatInput(event) {
-            const formatted = event.toUpperCase().replace(/\s+/g, '');
+            const formatted = event.toUpperCase().replace(/[^A-Z0-9]/gi, '').trim();
             this.code.code = formatted;
         }
     }

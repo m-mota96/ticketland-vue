@@ -25,7 +25,7 @@ const apiClient = async (url, method = 'GET', data = null) => {
         return {
             error: true,
             msj: error.response.data.msj,
-            data: `Ocurrio un error ${error.response.data.data}`
+            data: error.response.data.data
         }
     }
 }

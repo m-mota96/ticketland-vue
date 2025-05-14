@@ -224,6 +224,7 @@
                                         :class="{'is-error': false}"
                                         v-model="t.code"
                                         placeholder="Ingresa tu código"
+                                        @input="e => formatInput(e, index)"
                                     />
                                 </el-col>
                             </el-row>
@@ -286,7 +287,7 @@
                             <el-select
                                 :class="{'is-error': errors.payment_method}"
                                 class="el-form-item mb-0"
-                                v-model="data.payment_method"
+                                v-model="data.order.payment_method"
                                 placeholder="Selecciona una opción"
                                 id="payment_method"
                                 clearable
@@ -297,10 +298,10 @@
                             </el-select>
                             <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
                         </el-col>
-                        <!-- <el-col :span="24" class="pt-5 pb-5" v-if="data.payment_method == 'card'">
+                        <!-- <el-col :span="24" class="pt-5 pb-5" v-if="data.order.payment_method == 'card'">
                             <div id="conektaIframeContainer" style="height: 1350px;"></div>
                         </el-col> -->
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="cardName">Nombre en la tarjeta <span class="has-text-danger">*</span></label>
                             <el-input
                                 :class="{'is-error': errors.cardName}"
@@ -312,7 +313,7 @@
                             />
                             <span class="text-error" v-if="errors.cardName">El nombre del propietario es obligatorio.</span>
                         </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="cardNumber">Número de tarjeta <span class="has-text-danger">*</span></label>
                             <el-input
                                 :class="{'is-error': errors.cardNumber}"
@@ -326,7 +327,7 @@
                             />
                             <span class="text-error" v-if="errors.cardNumber">El número de tarjeta es obligatorio.</span>
                         </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="expiration">Fecha de expiración <span class="has-text-danger">*</span></label>
                             <el-input
                                 :class="{'is-error': errors.expiration || errors.month_invalid || errors.year_invalid}"
@@ -343,7 +344,7 @@
                             <p class="text-error" v-if="errors.month_invalid">Ingresa un mes válido.</p>
                             <p class="text-error" v-if="errors.year_invalid">El año debe ser mayor o igual que el actual.</p>
                         </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.payment_method == 'card'" class="mb-3">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="cvv">CVV <span class="has-text-danger">*</span></label>
                             <el-input
                                 :class="{'is-error': errors.cvc}"
@@ -398,16 +399,18 @@
     <el-row class="has-background-dark" style="height: 15vh;">
         
     </el-row>
+    <Errors ref="Errors"></Errors>
 </template>
 
 <script>
 import apiClient from '@/apiClient';
 import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
+import Errors from './Modals/Errors.vue';
 
 export default {
     components: {
-
+        Errors
     },
     data() {
         return {
@@ -424,10 +427,10 @@ export default {
                     email: 'miguel@mail.com',
                     confirm_email: 'miguel@mail.com',
                     phone: '0123456789',
+                    payment_method: '',
                     token_id: '',
                     card: ''
                 },
-                payment_method: '',
                 paymentData: {
                     card: {
                         name: 'Miguel Angel Mota Murillo',
@@ -490,6 +493,7 @@ export default {
     methods: {
         payment() {
             if (this.validate()) {
+                this.scrollCenterY();
                 this.loading = true;
                 Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
                 Conekta.setLanguage('es');
@@ -516,7 +520,16 @@ export default {
             });
             this.loading = false;
             if (response.error) {
-                showNotification('¡Error!', response.msj, 'error');
+                if (response.data.code == 500) {
+                    showNotification('¡Error!', response.msj, 'error', 6000);
+                    return false;
+                }
+                switch (response.data.type) {
+                    case 'stock':
+                        // console.log(response.data.error.join(','));
+                        this.$refs.Errors.showErrors(response.data.error);
+                        break;
+                }
                 return false;
             }
             showNotification('¡Correcto!', response.msj, 'success');
@@ -546,7 +559,7 @@ export default {
                     for (let j = 0; j < t.quantity; j++) {
                         this.errors.names.push(false);
                         this.data.ticketsReserved.push({
-                            name: t.name, customer_name: '', email: '', phone: '', code: '', checked: false
+                            id: t.id, name: t.name, customer_name: '', email: '', phone: '', code: '', checked: false
                         });
                     }
                 }
@@ -661,12 +674,12 @@ export default {
                 }
             });
 
-            if (!this.data.payment_method) {
+            if (!this.data.order.payment_method) {
                 this.errors.payment_method = true;
                 valid                      = false;
             }
 
-            if (this.data.payment_method == 'card') {
+            if (this.data.order.payment_method == 'card') {
                 if (!this.data.paymentData.card.name) {
                     this.errors.cardName = true;
                     valid                = false;
@@ -730,6 +743,24 @@ export default {
         },
         filterTickets() {
             return this.data.tickets.filter(t => t.quantity > 0);
+        },
+        scrollCenterY() {
+            const elComponent = this.$refs.dataOrder;
+            if (elComponent && elComponent.$el && typeof elComponent.$el.getBoundingClientRect === 'function') {
+                const rect         = elComponent.$el.getBoundingClientRect();
+                const scrollTop    = window.scrollY || window.pageYOffset;
+                const windowHeight = window.innerHeight;
+
+                const targetY = rect.top + scrollTop - (windowHeight / 2) + (rect.height / 2);
+                window.scrollTo({
+                    top: targetY,
+                    behavior: 'smooth' // animado
+                });
+            }
+        },
+        formatInput(value, index) {
+            const formatted                       = value.toUpperCase().replace(/[^A-Z0-9]/gi, '').trim();
+            this.data.ticketsReserved[index].code = formatted;
         }
     },
     computed: {

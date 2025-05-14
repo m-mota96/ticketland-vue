@@ -12,7 +12,7 @@
                                 <h4 class="title is-5 has-text-grey mb-3">Descuento: {{ d.discount }}%</h4>
                                 <p class="mb-5 has-text-link">
                                     [<span v-for="(t, index) in d.tickets" :key="index">
-                                        <span v-if="index == 0">{{ t.name }}</span><span v-if="index != 0">, {{ t.name }}</span>
+                                        <span v-if="index == 0">{{ t.name }} ({{ t.pivot.used }})</span><span v-if="index != 0">, {{ t.name }} ({{ t.pivot.used }})</span>
                                     </span>]
                                 </p>
                                 <span class="pointer mr-5" @click="$refs.EditDiscount.showModal(d)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
@@ -39,7 +39,7 @@
                             </el-col>
                             <el-col :span="6" class="text-right">
                                 <h4 class="subtitle is-4 has-text-black mb-0">
-                                    <span class="text-blue">0</span>
+                                    <span class="text-blue">{{ d.used }}</span>
                                     <span class="text-blue">/</span>
                                     <span class="text-blue-ligth">{{ d.quantity }}</span>
                                 </h4>

@@ -26,6 +26,11 @@ class DiscountController extends Controller {
                 $query->where('event_id', $request->event_id);
             })
             ->orderBy('code')->get();
+            foreach ($codes as $key => $c) {
+                foreach ($c->tickets as $key2 => $t) {
+                    $c->used = $c->used + $t->pivot->used;
+                }
+            }
             return ResponseTrait::response(null, $codes);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
