@@ -7,8 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Code extends Model
 {
     protected $fillable = [
-        'email', 'customer_name', 'code', 'quantity', 'discount', 'expiration', 'status', 
+        'event_id', 'email', 'customer_name', 'code', 'quantity', 'used', 'reserved', 'discount', 'expiration', 'status', 
     ];
+
+    public function event() {
+        return $this->belongsTo(Event::class);
+    }
 
     public function tickets() {
         return $this->belongsToMany(Ticket::class)->withPivot('used', 'reserved')->orderBy('name');

@@ -38,7 +38,7 @@
                     <h3 class="subtitle is-4 mb-0 has-text-grey">Máximo 10 boletos por orden</h3>
                 </el-col>
                 <el-col :span="24">
-                    <el-row class="mb-6" :gutter="gutterValue" v-for="(t, index) in data.tickets" :key="index">
+                    <el-row class="mb-6" :gutter="gutterValue2" v-for="(t, index) in data.tickets" :key="index">
                         <el-col class="mb-3" :sm="24" :md="16" :lg="18" :xl="18">
                                 <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
                                 <h5 class="subtitle is-5 has-text-link mb-1">{{ formatCurrency(t.price) }} MXN</h5>
@@ -50,8 +50,9 @@
                                 v-model="t.quantity"
                                 size="large"
                                 :min="0"
-                                :max="t.max_reservation"
+                                :max="t.available"
                                 @change="calculate"
+                                :controls="true"
                             />
                         </el-col>
                     </el-row>
@@ -60,8 +61,8 @@
         </el-col>
     </el-row>
     <el-row class="has-background-white pb-5 b-t b-b pt-6 pb-5 padding" v-if="!viewInfoCustomer">
-        <el-col class="" :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
-            <el-row>
+        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
+            <el-row :gutter="gutterValue2">
                 <el-col :xs="24" :sm="24" :md="16" :lg="18" :xl="18" class="mb-3">
                     <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected != 1">Tienes <b>{{ data.selected }}</b> boletos seleccionados</h4>
                     <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected == 1">Tienes <b>{{ data.selected }}</b> boleto seleccionado</h4>
@@ -185,7 +186,7 @@
                                 </div>
                             </template>
                             <el-row :gutter="gutterValue">
-                                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
+                                <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
                                     <label class="bold has-text-dark">Nombre completo <span class="has-text-danger">*</span></label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
@@ -195,7 +196,7 @@
                                     />
                                     <span class="text-error" v-if="errors.names[index]">El nombre es obligatorio.</span>
                                 </el-col>
-                                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
+                                <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
                                     <label class="bold has-text-dark">Correo</label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
@@ -204,7 +205,7 @@
                                         placeholder="Correo"
                                     />
                                 </el-col>
-                                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
+                                <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
                                     <label class="bold has-text-dark">Teléfono</label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
@@ -213,7 +214,7 @@
                                         placeholder="Teléfono"
                                     />
                                 </el-col>
-                                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
+                                <!-- <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
                                     <label class="bold has-text-dark">¿Tienes un código de descuento?</label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
@@ -223,7 +224,7 @@
                                         @input="val => formatInput(val, index)"
                                         @blur="val => verifyCodes(val, index)"
                                     />
-                                </el-col>
+                                </el-col> -->
                             </el-row>
                         </el-card>
                     </el-row>
@@ -261,7 +262,7 @@
                                 {{ scope.row.subtotal }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="Cupones">
+                        <!-- <el-table-column label="Cupones">
                             <template #default="scope">
                                 {{ formatCurrency(scope.row.discount)+' MXN' }}
                             </template>
@@ -270,8 +271,42 @@
                             <template #default="scope">
                                 {{ formatCurrency((scope.row.quantity * scope.row.price) - scope.row.discount)+' MXN' }}
                             </template>
-                        </el-table-column>
+                        </el-table-column> -->
                     </el-table>
+                </el-col>
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6" :inline="true">
+                    <el-row :gutter="5">
+                        <el-col :xs="17" :sm="17" :md="18" :lg="18" :xl="18">
+                            <label class="bold has-text-dark">¿Tienes un código de descuento?</label>
+                            <el-input
+                                class="el-form-item mb-0"
+                                :class="{'is-error': false}"
+                                v-model="data.order.code"
+                                placeholder="Ingresa tu código"
+                                @input="formatInput"
+                            />
+                        </el-col>
+                        <el-col :xs="7" :sm="7" :md="6" :lg="6" :xl="6">
+                            <br>
+                            <el-button class="w-100" type="success" @click="verifyCodes">Validar cupón</el-button>
+                        </el-col>
+                    </el-row>
+                </el-col>
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6">
+                    <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
+                    <el-select
+                        :class="{'is-error': errors.payment_method}"
+                        class="el-form-item mb-0"
+                        v-model="data.order.payment_method"
+                        placeholder="Selecciona una opción"
+                        id="payment_method"
+                        clearable
+                        @change="verifyPaymentMethod"
+                        >
+                        <el-option label="Pago en Oxxo" value="cash" />
+                        <el-option label="Tarjeta de Débito/Crédito" value="card" />
+                    </el-select>
+                    <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
                 </el-col>
                 <el-col :span="24" class="has-text-left mt-6">
                     <h6 class="subtitle is-5 has-text-black mb-2">
@@ -292,22 +327,6 @@
                 </el-col>
                 <el-col :span="24" class="pt-5 pb-5">
                     <el-row :gutter="gutterValue">
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
-                            <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
-                            <el-select
-                                :class="{'is-error': errors.payment_method}"
-                                class="el-form-item mb-0"
-                                v-model="data.order.payment_method"
-                                placeholder="Selecciona una opción"
-                                id="payment_method"
-                                clearable
-                                @change="verifyPaymentMethod"
-                                >
-                                <el-option label="Pago en Oxxo" value="cash" />
-                                <el-option label="Tarjeta de Débito/Crédito" value="card" />
-                            </el-select>
-                            <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
-                        </el-col>
                         <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="cardName">Nombre en la tarjeta <span class="has-text-danger">*</span></label>
                             <el-input
@@ -372,9 +391,9 @@
             </el-row>
         </el-col>
     </el-row>
-    <el-row class="container-fluid has-background-white pb-6 padding" ref="moreInfo">
+    <el-row class="container-fluid has-background-white pb-6 pt-6 padding" ref="moreInfo">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
-            <el-row :gutter="gutterValue">
+            <el-row :gutter="gutterValue2">
                 <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14" class="mb-3">
                     <h3 class="subtitle is-3 has-text-grey mb-2">Sobre el evento</h3>
                     <p class="justify has-text-black" v-if="event.description">{{ event.description }}</p>
@@ -422,6 +441,7 @@ export default {
             event: this.$page.props.event,
             loading: false,
             gutterValue: window.innerWidth < 768 ? 0 : 20,
+            gutterValue2: window.innerWidth < 768 ? 0 : 80,
             data: {
                 tickets: [],
                 ticketsReserved: [],
@@ -430,13 +450,15 @@ export default {
                 discount: 0,
                 total: 0,
                 order: {
+                    event_id: this.$page.props.event.id,
                     name: 'Miguel Angel Mota Murillo',
                     email: 'miguel@mail.com',
                     confirm_email: 'miguel@mail.com',
                     phone: '0123456789',
                     payment_method: '',
                     token_id: '',
-                    card: ''
+                    card: '',
+                    code: '',
                 },
                 paymentData: {
                     card: {
@@ -491,7 +513,8 @@ export default {
                 priceUnit: this.formatCurrency(t.price) + ' MXN',
                 subtotal: '',
                 quantity: 0,
-                discount: 0
+                discount: 0,
+                available: t.available
             })
         });
     },
@@ -523,56 +546,52 @@ export default {
             this.data.order.token_id = token.id;
             this.data.order.card     = this.data.paymentData.card.number.slice(-4);
             const response = await apiClient('makePayment', 'POST', {
-                event_id: this.event.id,
                 selected: this.data.selected,
                 order: this.data.order,
                 tickets: this.filterTickets(),
                 informationTickets: this.data.ticketsReserved,
             });
             this.loading = false;
+            // console.log(response);
             if (response.error) {
-                if (response.data.code == 500) {
+                if (!response.data.type) {
                     showNotification('¡Error!', response.msj, 'error', 6000);
                     return false;
                 }
                 switch (response.data.type) {
                     case 'stock':
-                        // console.log(response.data.error.join(','));
                         this.$refs.Errors.showErrors(response.data.error);
+                        break;
+                    case 'codes':
+                    case 'event':
+                        showNotification('¡Error!', response.msj, 'error', 7000);
                         break;
                 }
                 return false;
             }
             showNotification('¡Correcto!', response.msj, 'success');
+            return false;
         },
-        async verifyCodes(value, index) {
-            const response = await apiClient('verifyCodes', 'POST', this.data.ticketsReserved);
+        async verifyCodes() {
             this.data.discount = 0;
-            if (response.error) {
-                if (response.data.code == 500) {
-                    showNotification('¡Error!', response.msj, 'error', 6000);
+            this.data.subtotal = this.data.total;
+            if (this.data.order.code) {
+                const response = await apiClient('verifyCodes', 'POST', {event_id: this.event.id, code: this.data.order.code});
+                if (response.error) {
+                    showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
-                this.data.ticketsReserved[index].code = '';
-                // switch (response.data.type) {
-                //     case 'stock':
-                        this.$refs.Errors.showErrors(response.data.error, 'prev');
-                //         break;
-                // }
+
+                this.data.discount = this.data.total * (response.data.discount / 100);
+                this.data.subtotal = this.data.total - this.data.discount;
             }
-            const codes = Object.entries(response.data.data);
-            codes.forEach((c, i) => {
-                this.data.discount            = this.data.discount + (c[1].quantity * (c[1].price * (c[1].discount / 100)));
-                this.data.tickets[i].discount = c[1].quantity * (c[1].price * (c[1].discount / 100));
-                // this.data.subtotal            = this.data.subtotal + (this.data.tickets[i].quantity * )
-            });
-            this.data.subtotal = this.data.total - this.data.discount;
         },
         loadInfo() {
             if (!this.data.selected) {
                 showNotification('¡Atención!', 'Debes tener seleccionado al menos 1 boleto', 'warning', 6500);
                 return;
             }
+            this.verifyCodes();
             this.viewInfoCustomer = true;
             this.$nextTick(() => {
                 // Espera a que el DOM se actualice
@@ -582,6 +601,9 @@ export default {
             });
         },
         calculate(val, oldVal) {
+            if ((this.data.selected + (val - oldVal)) > 10) {
+                return false;
+            }
             this.data.selected        = this.data.selected + (val - oldVal);
             this.data.subtotal        = 0;
             this.data.total           = 0;
@@ -794,12 +816,15 @@ export default {
                 });
             }
         },
-        formatInput(value, index) {
-            const formatted                       = value.toUpperCase().replace(/[^A-Z0-9]/gi, '').trim();
-            this.data.ticketsReserved[index].code = formatted;
+        formatInput(value) {
+            // const formatted                       = value.toUpperCase().replace(/[^A-Z0-9]/gi, '').trim();
+            // this.data.ticketsReserved[index].code = formatted;
+            const formatted = value.toUpperCase().replace(/[^A-Z0-9]/gi, '').trim();
+            this.data.order.code  = formatted;
         },
         handleResize() {
-            this.gutterValue = window.innerWidth < 768 ? 0 : 20;
+            this.gutterValue  = window.innerWidth < 768 ? 0 : 20;
+            this.gutterValue2 = window.innerWidth < 768 ? 0 : 80;
         },
     },
     computed: {

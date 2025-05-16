@@ -44,7 +44,7 @@
                 />
                 <span class="text-error" v-if="errors.quantity">La cantidad es obligatoria.</span>
             </el-col>
-            <el-col :span="12" class="mb-5">
+            <!-- <el-col :span="12" class="mb-5">
                 <label class="bold" for="tickets">Asignar código a <span class="has-text-danger">*</span></label>
                 <el-select
                     class="el-form-item mb-0 mt-1"
@@ -77,7 +77,7 @@
                     />
                 </el-select>
                 <span class="text-error" v-if="errors.tickets">Debe elegir al menos un boleto.</span>
-            </el-col>
+            </el-col> -->
             <el-col :span="12" class="mb-5">
                 <label class="bold" for="expiration">Fecha de expiración <span class="has-text-grey-light">(Opcional)</span></label>
                 <el-date-picker
@@ -160,7 +160,7 @@ export default {
             if (this.validate()) {
                 let response      = '';
                 this.isDisabled   = true;
-                this.code.tickets = this.ticketsCheck;
+                // this.code.tickets = this.ticketsCheck;
                 if (!this.code.id) {
                     response = await apiClient('customer/discount', 'POST', this.code);
                 } else {
@@ -199,10 +199,10 @@ export default {
                 this.errors.quantity = true;
                 valid                = false;
             }
-            if (this.ticketsCheck.length === 0) {
-                this.errors.tickets = true;
-                valid               = false;
-            }
+            // if (this.ticketsCheck.length === 0) {
+            //     this.errors.tickets = true;
+            //     valid               = false;
+            // }
             return valid;
         },
         showModal(_code = null) {
@@ -223,13 +223,13 @@ export default {
                 this.code.discount   = _code.discount;
                 this.code.quantity   = _code.quantity;
                 this.code.expiration = _code.expiration;
-                if (_code.tickets.length === this.tickets.length) {
-                    this.code.checkAll = true;
-                    this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
-                } else if(_code.tickets.length > 0) {
-                    this.indeterminate = true;
-                    this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
-                }
+                // if (_code.tickets.length === this.tickets.length) {
+                //     this.code.checkAll = true;
+                //     this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
+                // } else if(_code.tickets.length > 0) {
+                //     this.indeterminate = true;
+                //     this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
+                // }
             }
             this.activeEditDiscount = true;
         },

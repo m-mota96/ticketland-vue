@@ -4,7 +4,38 @@ namespace App\Http\Traits;
 use App\Models\Code;
 
 trait ValidateCodesTrait {
-    public static function validateCodes($tickets, $save = true) { // Verifica si estan usando códigos de descuento
+    public static function validateCodes($request, $save = true) { // Verifica el código de descuento
+        $code = Code::where('code', $request['code'])->where('event_id', $request['event_id'])->first();
+        if (!$code) {
+            return ['success' => false, 'msj' => 'El código '.$request['code'].' no existe.'];
+        }
+
+        $used = $code->used + $code->reserved;
+        if (($code->quantity - $used) === 0) {
+            return ['success' => false, 'msj' => 'El código '.$code->code.' se ha agotado.'];
+        }
+
+        if ($code->expiration) {
+            if ($code->expiration < date('Y-m-d')) {
+                return ['success' => false, 'msj' => 'El código '.$code->code.' ha expirado.'];
+            }
+        }
+
+        if ($save) {
+            switch ($request['payment_method']) {
+                case 'card':
+                    $code->quantity = $code->quantity + 1;
+                    break;
+                case 'cash':
+                    $code->reserved = $code->reserved + 1;
+                    break;
+            }
+            $code->save();
+        }
+        return ['success' => true, 'data'=> ['discount' => $code->discount]];
+    }
+
+    public static function validateCodesOld($tickets, $save = true) { // Verifica si estan usando códigos de descuento
         try {
             $success    = true;
             $errors     = [];

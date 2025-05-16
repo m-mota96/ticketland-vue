@@ -21,16 +21,12 @@ class DiscountController extends Controller {
 
     public function getDiscounts(Request $request) {
         try {
-            $codes = Code::with(['tickets'])
-            ->whereHas('tickets', function($query) use($request) {
-                $query->where('event_id', $request->event_id);
-            })
-            ->orderBy('code')->get();
-            foreach ($codes as $key => $c) {
-                foreach ($c->tickets as $key2 => $t) {
-                    $c->used = $c->used + $t->pivot->used;
-                }
-            }
+            $codes = Code::where('event_id', $request->event_id)->orderBy('code')->get();
+            // foreach ($codes as $key => $c) {
+            //     foreach ($c->tickets as $key2 => $t) {
+            //         $c->used = $c->used + $t->pivot->used;
+            //     }
+            // }
             return ResponseTrait::response(null, $codes);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
@@ -40,12 +36,13 @@ class DiscountController extends Controller {
     public function createDiscount(Request $request) {
         try {
             $code = Code::create([
+                'event_id'   => $request->event_id,
                 'code'       => trim($request->code),
                 'discount'   => $request->discount,
                 'quantity'   => $request->quantity,
                 'expiration' => $request->expiration
             ]);
-            $code->tickets()->sync($request->tickets);
+            // $code->tickets()->sync($request->tickets);
             return ResponseTrait::response('El código se creo correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
@@ -54,13 +51,13 @@ class DiscountController extends Controller {
 
     public function editDiscount(Request $request) {
         try {
-            $code = Code::find($request->id);
+            $code             = Code::find($request->id);
             $code->code       = trim($request->code);
             $code->discount   = $request->discount;
             $code->quantity   = $request->quantity;
             $code->expiration = $request->expiration;
             $code->save();
-            $code->tickets()->sync($request->tickets);
+            // $code->tickets()->sync($request->tickets);
             return ResponseTrait::response('El código se modificó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);

@@ -42,7 +42,12 @@ class Event extends Model
     public function assistance() {
         return $this->hasOne(Verified::class)->selectRaw('verifieds.event_id, SUM(verifieds.quantity) as assistance')->groupBy('verifieds.event_id')->where('verifieds.access_id', '!=', null);
     }
-        public function category(){
+
+    public function category() {
         return $this->belongsTo(Category::class);
+    }
+
+    public function codes() {
+        return $this->hasMany(Code::class);
     }
 }

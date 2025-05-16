@@ -43,7 +43,7 @@
                                 <p class="mt-2">
                                     Estatus: 
                                     <span v-if="t.status == 1" class="has-text-success">Activo</span>
-                                    <span v-if="t.status == 0" class="has-text-warning">Inactivo</span>
+                                    <span v-if="t.status == 0" class="has-text-danger">Inactivo</span>
                                 </p>
                             </el-col>
                         </el-row>

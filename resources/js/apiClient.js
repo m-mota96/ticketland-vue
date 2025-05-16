@@ -24,8 +24,8 @@ const apiClient = async (url, method = 'GET', data = null) => {
     } catch (error) {
         return {
             error: true,
-            msj: error.response.data.msj,
-            data: error.response.data.data
+            msj: error.response.data.msj || 'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento',
+            data: error.response.data.data || 'Error fatal'
         }
     }
 }
