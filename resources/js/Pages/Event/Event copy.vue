@@ -1,5 +1,5 @@
 <template>
-    <el-row class="container-fluid has-background-white-ter">
+    <!-- <el-row class="container-fluid has-background-white-ter">
         <el-col :xs="0" :sm="0" :md="0" :lg="24" :xl="24" class="row content-head p-r">
             <div class="p-a opacy w-100">
                 <img class="h-100 w-100 img-transparent" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
@@ -58,19 +58,23 @@
                 </el-col>
             </el-row>
         </el-col>
-    </el-row>
-    <el-row class="has-background-white pb-5 b-t b-b pt-6 pb-5 padding" v-if="!viewInfoCustomer">
-        <el-col class="" :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
+    </el-row> -->
+    <el-row class="has-background-white pb-5 padding b-t b-b" v-if="!viewInfoCustomer">
+        <el-col class="w-100" :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
             <el-row>
-                <el-col :xs="24" :sm="24" :md="16" :lg="18" :xl="18" class="mb-3">
-                    <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected != 1">Tienes <b>{{ data.selected }}</b> boletos seleccionados</h4>
-                    <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected == 1">Tienes <b>{{ data.selected }}</b> boleto seleccionado</h4>
-                    <h4 class="title is-4 has-text-link">{{ formatCurrency(data.subtotal) }} MXN <span class="subtitle is-6 has-text-grey"> + CARGOS</span></h4>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-                    <el-button class="bold w-100" type="success" size="large" @click="loadInfo">
-                        <font-awesome-icon :icon="['fas', 'money-check-dollar']" />&nbsp;&nbsp;Comprar boletos
-                    </el-button>
+                <el-col :span="24" class="pt-6 pb-4">
+                    <el-row>
+                        <el-col :xs="24" :sm="24" :md="16" :lg="18" :xl="18" class="mb-3">
+                            <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected != 1">Tienes <b>{{ data.selected }}</b> boletos seleccionados</h4>
+                            <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected == 1">Tienes <b>{{ data.selected }}</b> boleto seleccionado</h4>
+                            <h4 class="title is-4 has-text-link">{{ formatCurrency(data.subtotal) }} MXN <span class="subtitle is-6 has-text-grey"> + CARGOS</span></h4>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
+                            <el-button class="bold w-100" type="success" size="large" @click="loadInfo">
+                                <font-awesome-icon :icon="['fas', 'money-check-dollar']" />&nbsp;&nbsp;Comprar boletos
+                            </el-button>
+                        </el-col>
+                    </el-row>
                 </el-col>
             </el-row>
         </el-col>
@@ -220,8 +224,8 @@
                                         :class="{'is-error': false}"
                                         v-model="t.code"
                                         placeholder="Ingresa tu código"
-                                        @input="val => formatInput(val, index)"
-                                        @blur="val => verifyCodes(val, index)"
+                                        @input="e => formatInput(e, index)"
+                                        @blur="verifyCodes"
                                     />
                                 </el-col>
                             </el-row>
@@ -275,19 +279,16 @@
                 </el-col>
                 <el-col :span="24" class="has-text-left mt-6">
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Subtotal: <b>{{ formatCurrency(data.total) }} MXN</b>
+                        Subtotal: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Descuento: <b>{{ data.discount == 0 ? 'N/A' : formatCurrency(data.discount)+' MXN' }}</b>
-                    </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2">
-                        Total: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
+                        Cupones: <b>{{ data.discount == 0 ? 'N/A' : formatCurrency(data.discount)+' MXN' }}</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
                         Cargo por servicio: <b>{{ formatCurrency(data.subtotal * .12) }} MXN</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + (data.subtotal * .12)) }} MXN</b>
+                        Total: <b class="has-text-success">{{ formatCurrency(data.subtotal + (data.subtotal * .12)) }} MXN</b>
                     </h6>
                 </el-col>
                 <el-col :span="24" class="pt-5 pb-5">
@@ -295,19 +296,32 @@
                         <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
                             <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
                             <el-select
-                                :class="{'is-error': errors.payment_method}"
-                                class="el-form-item mb-0"
-                                v-model="data.order.payment_method"
-                                placeholder="Selecciona una opción"
-                                id="payment_method"
-                                clearable
-                                @change="verifyPaymentMethod"
-                                >
-                                <el-option label="Pago en Oxxo" value="cash" />
-                                <el-option label="Tarjeta de Débito/Crédito" value="card" />
-                            </el-select>
-                            <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
+                            :class="{'is-error': errors.payment_method}"
+                            class="el-form-item mb-0"
+                            v-model="data.order.payment_method"
+                            placeholder="Selecciona una opción"
+                            id="payment_method"
+                            clearable
+                            @change="verifyPaymentMethod"
+                            >
+                            <el-option label="Pago en Oxxo" value="cash" />
+                            <el-option label="Tarjeta de Débito/Crédito" value="card" />
+                        </el-select>
+                        <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
                         </el-col>
+                        <!-- <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
+                            <label class="bold has-text-dark">¿Tienes un código de descuento?</label>
+                                <el-input
+                                    class="el-form-item mb-0"
+                                    :class="{'is-error': false}"
+                                    v-model="data.order.name"
+                                    placeholder="Ingresa tu código"
+                                    @input="e => formatInput(e, index)"
+                                />
+                        </el-col> -->
+                        <!-- <el-col :span="24" class="pt-5 pb-5" v-if="data.order.payment_method == 'card'">
+                            <div id="conektaIframeContainer" style="height: 1350px;"></div>
+                        </el-col> -->
                         <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="cardName">Nombre en la tarjeta <span class="has-text-danger">*</span></label>
                             <el-input
@@ -372,7 +386,7 @@
             </el-row>
         </el-col>
     </el-row>
-    <el-row class="container-fluid has-background-white pb-6 padding" ref="moreInfo">
+    <!-- <el-row class="container-fluid has-background-white pb-6 padding" ref="moreInfo">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
             <el-row :gutter="gutterValue">
                 <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14" class="mb-3">
@@ -398,12 +412,11 @@
                 </el-col>
             </el-row>
         </el-col>
-    </el-row>
+    </el-row> -->
     <el-row class="has-background-dark" style="height: 15vh;">
         
     </el-row>
     <Errors ref="Errors"></Errors>
-    <div></div>
 </template>
 
 <script>
@@ -428,7 +441,6 @@ export default {
                 selected: 0,
                 subtotal: 0,
                 discount: 0,
-                total: 0,
                 order: {
                     name: 'Miguel Angel Mota Murillo',
                     email: 'miguel@mail.com',
@@ -545,7 +557,7 @@ export default {
             }
             showNotification('¡Correcto!', response.msj, 'success');
         },
-        async verifyCodes(value, index) {
+        async verifyCodes() {
             const response = await apiClient('verifyCodes', 'POST', this.data.ticketsReserved);
             this.data.discount = 0;
             if (response.error) {
@@ -553,12 +565,12 @@ export default {
                     showNotification('¡Error!', response.msj, 'error', 6000);
                     return false;
                 }
-                this.data.ticketsReserved[index].code = '';
-                // switch (response.data.type) {
-                //     case 'stock':
+                switch (response.data.type) {
+                    case 'stock':
                         this.$refs.Errors.showErrors(response.data.error, 'prev');
-                //         break;
-                // }
+                        break;
+                }
+                return false;
             }
             const codes = Object.entries(response.data.data);
             codes.forEach((c, i) => {
@@ -566,7 +578,6 @@ export default {
                 this.data.tickets[i].discount = c[1].quantity * (c[1].price * (c[1].discount / 100));
                 // this.data.subtotal            = this.data.subtotal + (this.data.tickets[i].quantity * )
             });
-            this.data.subtotal = this.data.total - this.data.discount;
         },
         loadInfo() {
             if (!this.data.selected) {
@@ -584,12 +595,10 @@ export default {
         calculate(val, oldVal) {
             this.data.selected        = this.data.selected + (val - oldVal);
             this.data.subtotal        = 0;
-            this.data.total           = 0;
             this.data.ticketsReserved = [];
             this.errors.names         = [];
             this.data.tickets.forEach((t, i) => {
                 this.data.subtotal = this.data.subtotal + (t.quantity * t.price);
-                this.data.total    = this.data.total + (t.quantity * t.price);
                 t.subtotal         = this.formatCurrency(t.quantity * t.price) + ' MXN';
                 if (t.quantity > 0) {
                     for (let j = 0; j < t.quantity; j++) {
@@ -799,7 +808,7 @@ export default {
             this.data.ticketsReserved[index].code = formatted;
         },
         handleResize() {
-            this.gutterValue = window.innerWidth < 768 ? 0 : 20;
+            this.gutterValue = window.innerWidth < 768 ? 0 : 80;
         },
     },
     computed: {
@@ -811,7 +820,7 @@ export default {
 </script>
 <style scoped>
 .example-showcase .el-loading-mask {
-    z-index: 999;
+  z-index: 999;
 }
 .b-t {
     border-top: 1px solid #eeeceb;

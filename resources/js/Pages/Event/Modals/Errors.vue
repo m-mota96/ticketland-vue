@@ -7,7 +7,7 @@
     >
         <el-row class="pb-3 pt-5 pl-5 pr-5" :gutter="20">
             <el-col class="mb-5" :span="24">
-                <h5 class="title is-5 has-text-dark">Lo sentimos, hubo problemas al realizar tu compra.</h5>
+                <h5 class="title is-5 has-text-dark">{{ title }}</h5>
             </el-col>
             <el-col class="mb-3 card-error p-3" :span="24" v-for="(e, index) in errors" :key="index">
                 <h6 class="subtitle is-6">
@@ -15,7 +15,7 @@
                 </h6>
             </el-col>
             <el-col :span="24">
-                <p class="has-text-black mb-0 mt-5 bold">No se realizaron cargos a tu tarjeta</p>
+                <p class="has-text-black mb-0 mt-5 bold" v-if="showMessage">No se realizaron cargos a tu tarjeta</p>
             </el-col>
         </el-row>
         <template #footer>
@@ -36,11 +36,19 @@ export default {
     data() {
         return {
             activeErrors: false,
-            errors: []
+            errors: [],
+            title: 'Lo sentimos, hubo problemas al realizar tu compra.',
+            showMessage: true
         }
     },
     methods: {
-        showErrors(_errors) {
+        showErrors(_errors, typeError = null) {
+            this.title       = 'Lo sentimos, hubo problemas al realizar tu compra.';
+            this.showMessage = true;
+            if (typeError) {
+                this.title       = 'Antes de realizar tu compra revisa los siguientes errores.';
+                this.showMessage = false;
+            }
             this.errors       = _errors;
             this.activeErrors = true;
         }
