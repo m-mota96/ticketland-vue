@@ -32,7 +32,7 @@ trait ValidateCodesTrait {
             }
             $code->save();
         }
-        return ['success' => true, 'data'=> ['discount' => $code->discount]];
+        return ['success' => true, 'data'=> ['discount' => $code->discount, 'code_id' => $code->id]];
     }
 
     public static function validateCodesOld($tickets, $save = true) { // Verifica si estan usando códigos de descuento

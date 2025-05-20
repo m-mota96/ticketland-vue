@@ -62,7 +62,7 @@
                                     <el-input v-model="search.phone" placeholder="Buscar Teléfono" @input="getPayments" />
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="type">
+                            <el-table-column>
                                 <template #header>
                                     <el-select v-model="search.type" placeholder="Método de pago" @change="getPayments">
                                         <el-option
@@ -73,9 +73,16 @@
                                         />
                                     </el-select>
                                 </template>
+                                <template #default="scope">
+                                    {{ scope.row.type == 'card' ? 'Tarjeta' : 'Efectivo' }}
+                                </template>
                             </el-table-column>
-                            <el-table-column prop="amount" label="Monto" width="130" />
-                            <el-table-column prop="status">
+                            <el-table-column label="Monto" width="130">
+                                <template #default="scope">
+                                    {{ formatCurrency(scope.row.amount) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column>
                                 <template #header>
                                     <el-select v-model="search.status" placeholder="Estatus" @change="getPayments">
                                         <el-option
@@ -86,8 +93,15 @@
                                         />
                                     </el-select>
                                 </template>
+                                <template #default="scope">
+                                    {{ verifyStatus(scope.row.status) }}
+                                </template>
                             </el-table-column>
-                            <el-table-column prop="created_at" label="Fecha" />
+                            <el-table-column label="Fecha de compra">
+                                <template #default="scope">
+                                    {{ formatDate(scope.row.created_at) + ' - ' + formatTime(scope.row.created_at) }}
+                                </template>
+                            </el-table-column>
                             <el-table-column label="Acciones" width="110" align="center">
                                 <!-- <template #default="scope">
                                     
@@ -118,6 +132,7 @@ import { showNotification } from '@/notification';
 import MenuEvent from '../MenuEvent.vue';
 import Submenu from '../Submenu.vue';
 import Footer from '../Footer.vue';
+import { dateEs, time } from '@/dateEs';
 
 export default {
     components: {
@@ -173,6 +188,29 @@ export default {
         handleCurrentChange(val) {
             // console.log(`current page: ${val}`)
             this.getPayments();
+        },
+        formatCurrency(value) {
+            return new Intl.NumberFormat('es-MX', {
+                style: 'currency',
+                currency: 'MXN'
+            }).format(value);
+        },
+        verifyStatus(status) {
+            switch (status) {
+                case 'expired':
+                    return 'Expirado';
+                case 'payed':
+                    return 'Pagado';
+                case 'pending':
+                    return 'Pendiente';
+            }
+        },
+        formatDate(_date) {
+            return dateEs(_date, 1, '/');
+        },
+        formatTime(_time) {
+            console.log(_time);
+            return time(_time.substring(11, 16));
         },
         resetFilters() {
             this.search.name   = '';

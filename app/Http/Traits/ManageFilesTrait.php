@@ -7,7 +7,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Traits\DateFormatTrait;
 use App\Models\Ticket;
 
-trait CreateFilesTrait {
+trait ManageFilesTrait {
     public static function createPdf($tickets, $event) {
         if (!file_exists('events/pdf/'.$event->id)) {
             mkdir('events/pdf/'.$event->id, 0777, true);
@@ -32,10 +32,18 @@ trait CreateFilesTrait {
             $tickets[$i]['qr_code']      = base64_encode($qr_code);
             $pdf                         = PDF::loadView('pdfTicket', $tickets[$i]);
             $pdf->save('events/pdf/'.$event->id.'/'.$folio.'.pdf');
-            $files[] = $folio.'.pdf';
+            $files[] = $folio;
             // $folio = Crypt::decrypt($folio);
         }
 
         return ['success' => true, 'files' => $files];
+    }
+
+    public static function deleteFiles($event_id, $files) {
+        for ($i = 0; $i < sizeof($files); $i++) { 
+            if (file_exists('events/pdf/'.$event_id.'/'.$files[$i].'.pdf')) {
+                unlink('events/pdf/'.$event_id.'/'.$files[$i].'.pdf');
+            }
+        }
     }
 }

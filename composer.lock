@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0573cd8b1e0fe465dbce3d7d45878e7b",
+    "content-hash": "67c2f773eddd6fc463390cfdbe009cc1",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -6442,6 +6442,64 @@
     ],
     "packages-dev": [
         {
+            "name": "conekta/conekta-php",
+            "version": "7.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/conekta/conekta-php.git",
+                "reference": "852b14307e97f97d56030daf83efbcc80bb9ec30"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/conekta/conekta-php/zipball/852b14307e97f97d56030daf83efbcc80bb9ec30",
+                "reference": "852b14307e97f97d56030daf83efbcc80bb9ec30",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "guzzlehttp/guzzle": "^7.3",
+                "guzzlehttp/psr7": "^1.7 || ^2.0",
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.5",
+                "phpstan/phpstan": "2.0.1",
+                "phpunit/phpunit": "^9.0 || ^10.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Conekta\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "engineering@conekta.com",
+                    "homepage": "https://github.com/conekta/conekta-php/contributors"
+                }
+            ],
+            "description": "Conekta PHP Library",
+            "homepage": "https://www.conekta.com/",
+            "keywords": [
+                "api",
+                "conekta",
+                "php",
+                "rest",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/conekta/conekta-php/issues",
+                "source": "https://github.com/conekta/conekta-php/tree/v7.0.1"
+            },
+            "time": "2025-04-30T11:23:33+00:00"
+        },
+        {
             "name": "fakerphp/faker",
             "version": "v1.23.1",
             "source": {
@@ -8720,12 +8778,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

@@ -463,7 +463,7 @@ export default {
                 paymentData: {
                     card: {
                         name: 'Miguel Angel Mota Murillo',
-                        number: '4242424242424242',
+                        number: '4000000000000127',
                         exp_month: '06',
                         exp_year: '26',
                         cvc: '123'
@@ -564,13 +564,14 @@ export default {
                         break;
                     case 'codes':
                     case 'event':
+                    case 'createCustomer':
+                    case 'payment':
                         showNotification('¡Error!', response.msj, 'error', 7000);
                         break;
                 }
                 return false;
             }
             showNotification('¡Correcto!', response.msj, 'success');
-            return false;
         },
         async verifyCodes() {
             this.data.discount = 0;

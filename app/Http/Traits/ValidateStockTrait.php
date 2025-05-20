@@ -6,10 +6,11 @@ use App\Models\Ticket;
 
 trait ValidateStockTrait {
     public static function validateStock($tickets, $payment_method) { // Verifica si todavía quedan boletos disponibles
-        $success = true;
-        $errors  = [];
+        $success    = true;
+        $errors     = [];
+        $totalToPay = 0;
         foreach ($tickets as $key => $t) {
-            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales')
+            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'price')
             ->where('id', $t['id'])
             ->where('start_sale', '<=', date('Y-m-d'))
             ->where('stop_sale', '>=', date('Y-m-d'))
@@ -33,12 +34,14 @@ trait ValidateStockTrait {
                             break;
                     }
                     $ticket->save();
+                    $totalToPay = $totalToPay + ($t['quantity'] * $ticket->price);
                 }
             }
         }
         return [
-            'success' => $success,
-            'error'   => $errors
+            'success'    => $success,
+            'error'      => $errors,
+            'totalToPay' => $totalToPay
         ];
     }
 }

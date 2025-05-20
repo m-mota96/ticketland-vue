@@ -41,7 +41,7 @@ class ReservationController extends Controller {
             $limit      = $pagination['pageSize']; // Tamaño de la página
             $offset     = ($page - 1) * $limit; // Calcular el offset
 
-            $payments    = Payment::with(['tickets.access'])
+            $payments    = Payment::with(['accesses'])
             ->whereRaw($where)->orderBy($request->order['orderBy'], $request->order['order'])
             ->offset($offset)->limit($limit)->get();
             $allPayments = Payment::where('event_id', $request->event_id)->count();
