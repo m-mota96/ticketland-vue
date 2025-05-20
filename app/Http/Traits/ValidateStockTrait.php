@@ -12,10 +12,11 @@ trait ValidateStockTrait {
         foreach ($tickets as $key => $t) {
             $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'price')
             ->where('id', $t['id'])
+            ->where('status', 1)
             ->where('start_sale', '<=', date('Y-m-d'))
             ->where('stop_sale', '>=', date('Y-m-d'))
             ->first();
-            if (!$ticket) { // Se esta intentando comprar el boleto fuera del rango de fechas establecidas
+            if (!$ticket) { // Se esta intentando comprar el boleto fuera del rango de fechas establecidas o que ya no esta activo
                 $errors[] = 'El boleto <b>'.$t['name'].'</b> ya no esta disponible.';
                 $success  = false;
             } else {

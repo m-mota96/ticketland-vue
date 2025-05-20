@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->unsignedBigInteger('code_id')->after('event_id')->nullable();
+            $table->integer('discount')->default(0)->after('amount');
+            $table->string('code')->after('amount')->nullable();
         });
     }
 

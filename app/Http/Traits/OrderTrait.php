@@ -6,16 +6,17 @@ use App\Models\Payment;
 use App\Models\Ticket;
 
 trait OrderTrait {
-    public static function registerPayment($event_id, $order, $order_id, $totalToPay, $type, $status, $code_id, $reference) {
+    public static function registerPayment($event_id, $order, $order_id, $totalToPay, $type, $status, $discount, $reference) {
         $payment = Payment::create([
             'event_id'  => $event_id,
-            'code_id'   => $code_id,
             'name'      => $order['name'],
             'email'     => $order['email'],
             'phone'     => $order['phone'],
             'type'      => $type,
             'reference' => $reference,
             'amount'    => $totalToPay,
+            'code'      => $discount['code'],
+            'discount'  => $discount['discountInt'],
             'status'    => $status
         ]);
         return [

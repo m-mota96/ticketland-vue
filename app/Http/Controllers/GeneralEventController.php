@@ -9,6 +9,7 @@ use App\Http\Traits\ResponseTrait;
 use App\Http\Traits\ConektaPaymentTrait;
 use App\Http\Traits\ManageFilesTrait;
 use App\Http\Traits\OrderTrait;
+use App\Http\Traits\SendMailTrait;
 use App\Http\Traits\ValidateCodesTrait;
 use App\Http\Traits\ValidateStockTrait;
 use App\Models\Event;
@@ -47,7 +48,7 @@ class GeneralEventController extends Controller {
             }
             $totalToPay = $proccess['totalToPay'];
 
-            $discount = ['code' => null, 'discount' => 0];
+            $discount = ['code_id' => null, 'code' => null, 'discount' => 0, 'discountInt' => 0];
             if ($request->order['code']) {
                 $proccess = ValidateCodesTrait::validateCodes($request->order); // Valida si estan usando código de descuento y si éste es válido
                 if (!$proccess['success']) {
@@ -55,9 +56,10 @@ class GeneralEventController extends Controller {
                     return ResponseTrait::response($proccess['msj'], ['type' => 'codes'], true, 409);
                 }
                 $discount = [
-                    'code_id'  => $proccess['data']['code_id'],
-                    'code'     => $request->order['code'],
-                    'discount' => $proccess['data']['discount'] / 100
+                    'code_id'     => $proccess['data']['code_id'],
+                    'code'        => $request->order['code'],
+                    'discount'    => $proccess['data']['discount'] / 100,
+                    'discountInt' => $proccess['data']['discount']
                 ];
             }
 
@@ -66,34 +68,40 @@ class GeneralEventController extends Controller {
             
             switch ($request->order['payment_method']) {
                 case 'card':
-                    $proccess = ConektaPaymentTrait::createCustomer($request->order); // Crea al cliente en Conekta
-                    if (!$proccess['success']) {
-                        ManageFilesTrait::deleteFiles($event->id, $files);
-                        DB::rollBack();
-                        return ResponseTrait::response(
-                            'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento.',
-                            ['type' => 'createCustomer', 'error' => $proccess['error']],
-                            true,
-                            409
-                        );
-                    }
-                    // Se procesa el cobro a la tarjeta
-                    $proccess = ConektaPaymentTrait::createOrder($event->name, $totalToPay, $proccess['customer_id'], $discount);
-                    if (!$proccess['success']) {
-                        ManageFilesTrait::deleteFiles($event->id, $files);
-                        DB::rollBack();
-                        return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
-                    }
-                    $proccess = OrderTrait::registerPayment($event->id, $request->order, $proccess['order_id'], $totalToPay, 'card', 'payed', $discount['code_id'], $request->order['card']);
-                    $proccess = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
+                    // $proccess = ConektaPaymentTrait::createCustomer($request->order); // Crea al cliente en Conekta
+                    // if (!$proccess['success']) {
+                    //     ManageFilesTrait::deleteFiles($event->id, $files);
+                    //     DB::rollBack();
+                    //     return ResponseTrait::response(
+                    //         'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento.',
+                    //         ['type' => 'createCustomer', 'error' => $proccess['error']],
+                    //         true,
+                    //         409
+                    //     );
+                    // }
+                    // // Se procesa el cobro a la tarjeta
+                    // $proccess = ConektaPaymentTrait::createOrder($event->name, $totalToPay, $proccess['customer_id'], $discount);
+                    // if (!$proccess['success']) {
+                    //     ManageFilesTrait::deleteFiles($event->id, $files);
+                    //     DB::rollBack();
+                    //     return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
+                    // }
+                    $proccess['order_id'] = '0123456789';
+                    $proccess   = OrderTrait::registerPayment($event->id, $request->order, $proccess['order_id'], $totalToPay, 'card', 'payed', $discount, $request->order['card']);
+                    $payment_id = $proccess['payment_id'];
+                    $proccess   = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
+                    SendMailTrait::index('tickets', $payment_id);
                     break;
                 case 'cash':
                     # code...
                     break;
             }
 
-            DB::commit();
-            return ResponseTrait::response('Los boletos se enviarán a su correo electrónico');
+            // DB::commit();
+            $txt = $request->order['payment_method'] === 'card' ? 
+            'Pago realizado exitosamente.<br>Recibirás tus boletos en tu correo electrónico.<br> Si no los ves en tu bandeja de entrada, por favor revisa en Spam.' :
+            'Registro realizado exitosamente.<br>Recibirás tu ficha de pago en tu correo electrónico. Si no la ves en tu bandeja de entrada, por favor revisa en Spam.';
+            return ResponseTrait::response($txt);
         } catch (\Throwable $th) {
             if (sizeof($files) > 0) {
                 ManageFilesTrait::deleteFiles($event->id, $files);

@@ -319,10 +319,10 @@
                         Total: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Cargo por servicio: <b>{{ formatCurrency(data.subtotal * .12) }} MXN</b>
+                        Cargo por servicio: <b>{{ formatCurrency(Math.round(data.subtotal * .12)) }} MXN</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + (data.subtotal * .12)) }} MXN</b>
+                        Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + (Math.round(data.subtotal * .12))) }} MXN</b>
                     </h6>
                 </el-col>
                 <el-col :span="24" class="pt-5 pb-5">
@@ -430,6 +430,7 @@ import apiClient from '@/apiClient';
 import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
 import Errors from './Modals/Errors.vue';
+import Swal from 'sweetalert2';
 
 export default {
     components: {
@@ -463,7 +464,7 @@ export default {
                 paymentData: {
                     card: {
                         name: 'Miguel Angel Mota Murillo',
-                        number: '4000000000000127',
+                        number: '4242424242424242',
                         exp_month: '06',
                         exp_year: '26',
                         cvc: '123'
@@ -528,16 +529,33 @@ export default {
         payment() {
             if (this.validate()) {
                 this.scrollCenterY();
-                this.loading = true;
-                Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
-                Conekta.setLanguage('es');
-                Conekta.Token.create(this.data.paymentData,
-                    (token) => this.conektaSuccessHandler(token),
-                    (error) => {
-                        this.loading = false;
-                        console.log('Error al crear token:', error);
+                const txt = this.data.order.payment_method == 'card' ? 'Tus boletos se enviarán al siguiente correo:<br>' : 'Tu ficha de pago se enviará al siguiente correo:<br>';
+                Swal.fire({
+                title: "¡Atención!",
+                html: `${txt}<b>${this.data.order.email}</b><br>¿El correo esta correcto?`,
+                icon: "warning",
+                reverseButtons: true,
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                // cancelButtonColor: "#d33",
+                cancelButtonText: "Cancelar",
+                confirmButtonText: "Si, proceder al pago",
+                scrollbarPadding: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.scrollCenterY();
+                        this.loading = true;
+                        Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
+                        Conekta.setLanguage('es');
+                        Conekta.Token.create(this.data.paymentData,
+                            (token) => this.conektaSuccessHandler(token),
+                            (error) => {
+                                this.loading = false;
+                                console.log('Error al crear token:', error);
+                            }
+                        );
                     }
-                );
+                });
             } else {
                 this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
             }
@@ -571,7 +589,8 @@ export default {
                 }
                 return false;
             }
-            showNotification('¡Correcto!', response.msj, 'success');
+            showNotification('¡Correcto!', response.msj, 'success', 20000);
+            return false;
         },
         async verifyCodes() {
             this.data.discount = 0;
@@ -584,6 +603,7 @@ export default {
                 }
 
                 this.data.discount = this.data.total * (response.data.discount / 100);
+                this.data.discount = Math.round(this.data.discount);
                 this.data.subtotal = this.data.total - this.data.discount;
             }
         },

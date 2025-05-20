@@ -41,10 +41,11 @@ class ReservationController extends Controller {
             $limit      = $pagination['pageSize']; // Tamaño de la página
             $offset     = ($page - 1) * $limit; // Calcular el offset
 
-            $payments    = Payment::with(['accesses'])
+            $payments    = Payment::with(['accesses.ticket'])
             ->whereRaw($where)->orderBy($request->order['orderBy'], $request->order['order'])
             ->offset($offset)->limit($limit)->get();
             $allPayments = Payment::where('event_id', $request->event_id)->count();
+            // dd($payments);
             return ResponseTrait::response(null, ['payments' => $payments, 'count' => $allPayments]);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);

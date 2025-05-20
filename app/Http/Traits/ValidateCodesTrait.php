@@ -5,7 +5,7 @@ use App\Models\Code;
 
 trait ValidateCodesTrait {
     public static function validateCodes($request, $save = true) { // Verifica el código de descuento
-        $code = Code::where('code', $request['code'])->where('event_id', $request['event_id'])->first();
+        $code = Code::where('code', $request['code'])->where('event_id', $request['event_id'])->where('status', 1)->first();
         if (!$code) {
             return ['success' => false, 'msj' => 'El código '.$request['code'].' no existe.'];
         }
@@ -24,7 +24,7 @@ trait ValidateCodesTrait {
         if ($save) {
             switch ($request['payment_method']) {
                 case 'card':
-                    $code->quantity = $code->quantity + 1;
+                    $code->used = $code->used + 1;
                     break;
                 case 'cash':
                     $code->reserved = $code->reserved + 1;

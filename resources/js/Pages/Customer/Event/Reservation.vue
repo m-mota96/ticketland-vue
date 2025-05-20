@@ -13,7 +13,7 @@
                             <el-option :key="1" label="Correo electrónico" value="email" />
                             <el-option :key="1" label="Teléfono" value="phone" />
                             <el-option :key="1" label="Método de pago" value="type" />
-                            <el-option :key="1" label="Monto" value="amount" />
+                            <el-option :key="1" label="Subtotal" value="amount" />
                             <el-option :key="1" label="Estatus" value="status" />
                             <el-option :key="1" label="Fecha" value="created_at" />
                         </el-select>
@@ -57,7 +57,7 @@
                                     <el-input v-model="search.email" placeholder="Buscar Correo electrónico" @input="getPayments" />
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="phone">
+                            <el-table-column prop="phone" width="150">
                                 <template #header>
                                     <el-input v-model="search.phone" placeholder="Buscar Teléfono" @input="getPayments" />
                                 </template>
@@ -77,9 +77,24 @@
                                     {{ scope.row.type == 'card' ? 'Tarjeta' : 'Efectivo' }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Monto" width="130">
+                            <el-table-column label="Código de descuento" width="150" align="center">
+                                <template #default="scope">
+                                    {{ scope.row.code ? scope.row.code : 'N/A' }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="Subtotal" width="130" align="center">
                                 <template #default="scope">
                                     {{ formatCurrency(scope.row.amount) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="Descuento" width="130" align="center">
+                                <template #default="scope">
+                                    {{ scope.row.discount }}%
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="Total" width="130" align="center">
+                                <template #default="scope">
+                                    {{ formatCurrency(scope.row.amount - Math.round(scope.row.amount * scope.row.discount / 100)) }}
                                 </template>
                             </el-table-column>
                             <el-table-column>
@@ -97,15 +112,36 @@
                                     {{ verifyStatus(scope.row.status) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Fecha de compra">
+                            <el-table-column label="Fecha de compra" align="center">
                                 <template #default="scope">
-                                    {{ formatDate(scope.row.created_at) + ' - ' + formatTime(scope.row.created_at) }}
+                                    {{ formatDate(scope.row.created_at) }}<br>{{ formatTime(scope.row.created_at) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Acciones" width="110" align="center">
-                                <!-- <template #default="scope">
-                                    
-                                </template> -->
+                            <el-table-column label="Acciones" width="100" align="center">
+                                <template #default="scope">
+                                    <el-button-group>
+                                        <el-tooltip
+                                            class="box-item"
+                                            effect="dark"
+                                            content="Reenviar boletos"
+                                            placement="top"
+                                        >
+                                            <el-button class="pl-2 pr-2" type="primary" @click="resendTickets(scope.row.id, scope.row.email)">
+                                                <font-awesome-icon :icon="['fas', 'share']" />
+                                            </el-button>
+                                        </el-tooltip>
+                                        <el-tooltip
+                                            class="box-item"
+                                            effect="dark"
+                                            content="Ver boletos de la orden"
+                                            placement="top"
+                                        >
+                                            <el-button class="pl-2 pr-2" type="success" @click="$refs.ViewTickets.showTickets(scope.row.accesses)">
+                                                <font-awesome-icon :icon="['fas', 'eye']" />
+                                            </el-button>
+                                        </el-tooltip>
+                                    </el-button-group>
+                                </template>
                             </el-table-column>
                         </el-table>
                         <el-pagination
@@ -124,6 +160,7 @@
         </el-col>
     </el-row>
     <Footer></Footer>
+    <ViewTickets ref="ViewTickets"></ViewTickets>
 </template>
 
 <script>
@@ -133,12 +170,15 @@ import MenuEvent from '../MenuEvent.vue';
 import Submenu from '../Submenu.vue';
 import Footer from '../Footer.vue';
 import { dateEs, time } from '@/dateEs';
+import Swal from 'sweetalert2';
+import { ViewTickets } from './Modals';
 
 export default {
     components: {
         MenuEvent,
         Submenu,
         Footer,
+        ViewTickets
     },
     data() {
         return {
@@ -181,6 +221,27 @@ export default {
             this.payments             = response.data.payments;
             this.pagination.totalRows = response.data.count;
         },
+        async resendTickets(payment_id, email) {
+            Swal.fire({
+                icon: 'warning',
+                html: 'Los boletos serán enviados al siguiente correo:<br><b>Nota: </b>si el correo es incorrecto ingrese el nuevo',
+                input: 'email',
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                confirmButtonText: 'Reenviar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true,
+                inputValue : email,
+                scrollbarPadding: false
+            }).then((result) => {
+                if (result.value) {
+                    
+                }
+            });
+        },
         handleSizeChange(val) {
             // console.log(`${val} items per page`)
             this.getPayments();
@@ -209,7 +270,6 @@ export default {
             return dateEs(_date, 1, '/');
         },
         formatTime(_time) {
-            console.log(_time);
             return time(_time.substring(11, 16));
         },
         resetFilters() {

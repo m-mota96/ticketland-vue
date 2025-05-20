@@ -70,7 +70,7 @@ trait ConektaPaymentTrait {
             $offert     = $totalToPay * $discounts['discount'];
             $discount = [
                 [
-                    "amount" => intval($offert) * 100,
+                    "amount" => round($offert) * 100,
                     "code"   => $discounts['code'],
                     "type"   => "coupon"
                 ]
@@ -78,11 +78,11 @@ trait ConektaPaymentTrait {
         }
 
         $order_request = new \Conekta\Model\OrderRequest([
-            "amount"=> intval($totalToPay),
+            "amount"=> round($totalToPay),
             "line_items" => [
                 [
-                    "name" => $event_name,
-                    "unit_price" => intval($totalToPay) * 100, //se multiplica por 100 conekta
+                    "name" => 'Compra de boletos para '.$event_name,
+                    "unit_price" => round($totalToPay) * 100, //se multiplica por 100 conekta
                     "quantity" => 1
                 ] //first line_item
             ], //line_items
