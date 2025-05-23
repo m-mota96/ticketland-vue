@@ -26,7 +26,7 @@ trait ValidateCodesTrait {
                 case 'card':
                     $code->used = $code->used + 1;
                     break;
-                case 'cash':
+                case 'oxxo':
                     $code->reserved = $code->reserved + 1;
                     break;
             }

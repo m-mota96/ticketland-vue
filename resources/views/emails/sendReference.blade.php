@@ -1,4 +1,8 @@
+
+text/x-generic sendReference.blade.php ( HTML document, UTF-8 Unicode text, with CRLF line terminators )
+
 <!DOCTYPE html>
+<!-- saved from url=(0050)http://bigelephant.mx/_sitios/japy/bienvenido.html -->
 <html lang="en" dir="ltr">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -20,7 +24,7 @@
                                     <tbody>
                                     <tr>
                                         <td bgcolor="#fff" style="padding:0px 0px 0px 0px;">
-                                            <img src="{{URL::asset($event->imgProfile)}}" width="100%"  style="display: block;" alt="{{$event->name}}">
+                                            <img src="{{URL::asset($payment->event->imgProfile)}}" width="100%"  style="display: block;" alt="{{$payment->event->name}}">
                                         </td>
                                     </tr>
                                     </tbody>
@@ -36,75 +40,18 @@
                         <tr bgcolor="#f9f9f9" valing="center" style="font-family: &#39;Raleway&#39;, sans-serif; font-weight: 300;text-align: center; font-size: 14px; color:#fff; margin-top:50;">
                             <td>
                                 <div style="text-align: center;">
-                                    <p style="color:#013f68; font-size:20px; font-weight:bold; text-align:center;">RESUMEN DE TU COMPRA</p>
-                                    <p style="color:grey; font-size:25px; font-weight:bold; text-align:center;">{{$payment->name}}</p>
+                                    <p style="color:#013f68; font-size:20px; font-weight:bold; text-align:center;">REFERENCIA DE PAGO</p>
                                 </div>
                             </td>
                         </tr>
-                        <tr bgcolor="#f9f9f9" valing="center" style="font-family: &#39;Raleway&#39;, sans-serif; font-weight: 300;text-align: center; font-size: 14px; color:#fff; margin-top:50; padding-left: 5vh; padding-right: 5vh;">
-                            <td>
-                                <div style="width: 100%;">
-                                    <table style="width: 100%; padding-left: 5vh; padding-right: 5vh;">
-                                        <thead>
-                                            <tr style="padding-top: 5px; padding-bottom: 5px;">
-                                                <td style="color: black; font-weight: bold; text-align: left; font-size: 0.9rem;">Producto</td>
-                                                <td style="color: black; font-weight: bold; text-align: center; font-size: 0.9rem;">Cantidad</td>
-                                                <td style="color: black; font-weight: bold; text-align: left; font-size: 0.9rem;">Precio unitario</td>
-                                                <td style="color: black; font-weight: bold; text-align: left; font-size: 0.9rem;">Subtotal</td>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @for($i = 0; $i < sizeof($tickets); $i++)
-                                                <tr style="padding-top: 5px; padding-bottom: 5px;">
-                                                    <td style="color: black; text-align: left; font-size: 0.9rem;">{{$tickets[$i]['ticket']}}</td>
-                                                    <td style="color: black; text-align: center; font-size: 0.9rem;">{{$tickets[$i]['quantity']}}</td>
-                                                    <td style="color: black; text-align: left; font-size: 0.9rem;">${{number_format($tickets[$i]['price'], 2)}} MXN</td>
-                                                    <td style="color: black; text-align: left; font-size: 0.9rem;">${{number_format(($tickets[$i]['price'] * $tickets[$i]['quantity']), 2)}} MXN</td>
-                                                </tr>
-                                            @endfor
-                                            <tr>
-                                                <td colspan="4"><br><br></td>
-                                            </tr>
-                                            <tr style="margin-top: 10px;">
-                                                <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
-                                                    Subtotal: 
-                                                    <b>${{number_format($totals['subtotal'], 2)}} MXN</b>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
-                                                    Descuento: 
-                                                    @if($totals['discount'] != 'N/A')
-                                                        <b>${{number_format($totals['discount'], 2)}} MXN</b>
-                                                    @else
-                                                        <b>N/A</b>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
-                                                    Total: 
-                                                    <b>${{number_format($totals['total'], 2)}} MXN</b>
-                                                </td>
-                                            </tr>
-                                            @if ($event->model_payment == 'separated')
-                                            <tr>
-                                                <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
-                                                    Cargo por servicio: 
-                                                    <b>${{number_format($totals['commission'], 2)}} MXN</b>
-                                                </td>
-                                            </tr>
-                                            @endif
-                                            @if ($event->model_payment == 'separated')
-                                            <tr>
-                                                <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
-                                                    @if($payment->type == 'card')Total pagado: @else Total a pagar: @endif
-                                                    <b>${{number_format($totals['totalToPay'], 2)}} MXN</b>
-                                                </td>
-                                            </tr>
-                                            @endif
-                                        </tbody>
-                                    </table>
+                        <tr bgcolor="#f9f9f9" valing="center" style="font-family: &#39;Raleway&#39;, sans-serif; font-weight: 300;text-align: center; font-size: 14px; color:#fff;">
+                            <td style="padding-left: 5vh; padding-right: 5vh;">
+                                <div style="width: 100%; margin-top: 5vh;">
+                                    <p style="color: black; font-size: 1.3rem; text-align: justify;">
+                                        <b>{{$payment->name}}</b> agradecemos tu preferencia, en este correo se encuentra adjunta tu ficha de pago
+                                        <strong><b>la cual tiene una vigencia de 48 horas</b></strong> por lo cual te pedimos que realices el pago 
+                                        dentro del tiempo establecido.
+                                    </p>
                                 </div>
                             </td>
                         </tr>

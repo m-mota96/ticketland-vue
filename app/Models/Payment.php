@@ -8,7 +8,7 @@ use DateTimeInterface;
 class Payment extends Model
 {
     protected $fillable = [
-        'event_id', 'name', 'email', 'phone', 'type', 'reference', 'amount', 'code', 'discount', 'status', 
+        'event_id', 'order_id', 'name', 'email', 'phone', 'type', 'reference', 'amount', 'code', 'discount', 'status', 
     ];
 
     public function accesses() {

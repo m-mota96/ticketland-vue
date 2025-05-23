@@ -30,7 +30,7 @@ trait ValidateStockTrait {
                         case 'card':
                             $ticket->sales = $ticket->sales + $t['quantity'];
                             break;
-                        case 'cash':
+                        case 'oxxo':
                             $ticket->reserved = $ticket->reserved + $t['quantity'];
                             break;
                     }

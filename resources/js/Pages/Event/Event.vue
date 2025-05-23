@@ -1,5 +1,5 @@
 <template>
-    <el-row class="container-fluid has-background-white-ter">
+    <el-row class="container-fluid has-background-white-ter" ref="dataPrincipal">
         <el-col :xs="0" :sm="0" :md="0" :lg="24" :xl="24" class="row content-head p-r">
             <div class="p-a opacy w-100">
                 <img class="h-100 w-100 img-transparent" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
@@ -80,7 +80,7 @@
         ref="dataOrder"
         class="custom-loading-svg container-fluid has-background-white pt-6 pb-6 padding b-b"
         v-if="viewInfoCustomer"
-        element-loading-text="¡Procesando tu compra, por favor espera!"
+        :element-loading-text="`¡Procesando tu ${txtLoading}. No cierres ni actualices esta página, por favor espera!`"
         v-loading="loading"
         :element-loading-svg="svg"
         element-loading-svg-view-box="-10, -10, 50, 50"
@@ -303,7 +303,7 @@
                         clearable
                         @change="verifyPaymentMethod"
                         >
-                        <el-option label="Pago en Oxxo" value="cash" />
+                        <el-option label="Pago en Oxxo" value="oxxo" />
                         <el-option label="Tarjeta de Débito/Crédito" value="card" />
                     </el-select>
                     <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
@@ -318,10 +318,10 @@
                     <h6 class="subtitle is-5 has-text-black mb-2">
                         Total: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
                     </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2">
+                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="event.model_payment == 'separated'">
                         Cargo por servicio: <b>{{ formatCurrency(Math.round(data.subtotal * .12)) }} MXN</b>
                     </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2">
+                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="event.model_payment == 'separated'">
                         Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + (Math.round(data.subtotal * .12))) }} MXN</b>
                     </h6>
                 </el-col>
@@ -430,7 +430,7 @@ import apiClient from '@/apiClient';
 import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
 import Errors from './Modals/Errors.vue';
-import Swal from 'sweetalert2';
+import { ElMessageBox } from 'element-plus';
 
 export default {
     components: {
@@ -443,6 +443,7 @@ export default {
             loading: false,
             gutterValue: window.innerWidth < 768 ? 0 : 20,
             gutterValue2: window.innerWidth < 768 ? 0 : 80,
+            txtLoading: 'compra',
             data: {
                 tickets: [],
                 ticketsReserved: [],
@@ -453,9 +454,9 @@ export default {
                 order: {
                     event_id: this.$page.props.event.id,
                     name: 'Miguel Angel Mota Murillo',
-                    email: 'miguel@mail.com',
-                    confirm_email: 'miguel@mail.com',
-                    phone: '0123456789',
+                    email: 'miguel.mota.murillo@gmail.com',
+                    confirm_email: 'miguel.mota.murillo@gmail.com',
+                    phone: '4371041976',
                     payment_method: '',
                     token_id: '',
                     card: '',
@@ -505,19 +506,7 @@ export default {
         }
     },
     beforeMount() {
-        this.event.tickets.forEach(t => {
-            this.data.tickets.push({
-                id: t.id,
-                name: t.name,
-                description: t.description,
-                price: t.price,
-                priceUnit: this.formatCurrency(t.price) + ' MXN',
-                subtotal: '',
-                quantity: 0,
-                discount: 0,
-                available: t.available
-            })
-        });
+        this.setTickets();
     },
     mounted() {
         window.addEventListener('resize', this.handleResize);
@@ -529,32 +518,37 @@ export default {
         payment() {
             if (this.validate()) {
                 this.scrollCenterY();
-                const txt = this.data.order.payment_method == 'card' ? 'Tus boletos se enviarán al siguiente correo:<br>' : 'Tu ficha de pago se enviará al siguiente correo:<br>';
-                Swal.fire({
-                title: "¡Atención!",
-                html: `${txt}<b>${this.data.order.email}</b><br>¿El correo esta correcto?`,
-                icon: "warning",
-                reverseButtons: true,
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                // cancelButtonColor: "#d33",
-                cancelButtonText: "Cancelar",
-                confirmButtonText: "Si, proceder al pago",
-                scrollbarPadding: false
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        this.scrollCenterY();
-                        this.loading = true;
-                        Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
-                        Conekta.setLanguage('es');
-                        Conekta.Token.create(this.data.paymentData,
-                            (token) => this.conektaSuccessHandler(token),
-                            (error) => {
-                                this.loading = false;
-                                console.log('Error al crear token:', error);
-                            }
-                        );
+                const txt    = this.data.order.payment_method == 'card' ? 
+                `Tus boletos se enviarán al siguiente correo:<br><b>${this.data.order.email}</b><br>¿El correo esta correcto?<br>` : 
+                `Tu ficha de pago se enviará al siguiente correo:<br><b>${this.data.order.email}</b><br>¿El correo esta correcto?<br>Tendrás 48 horas para realizar tu pago.<br>`;
+                const txtBtn = this.data.order.payment_method == 'card' ? 
+                'Si, proceder al pago' :
+                'Si, realizar registro';
+                ElMessageBox.confirm(
+                    txt,
+                    '¡Atención!',
+                    {
+                        dangerouslyUseHTMLString: true,
+                        confirmButtonText: txtBtn,
+                        cancelButtonText: 'Cancelar',
+                        type: 'warning',
+                        center: true,
+                        lockScroll: false
                     }
+                )
+                .then(() => {
+                    this.txtLoading = this.data.order.payment_method == 'card' ? 'compra' : 'registro';
+                    this.scrollCenterY();
+                    this.loading = true;
+                    Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
+                    Conekta.setLanguage('es');
+                    Conekta.Token.create(this.data.paymentData,
+                        (token) => this.conektaSuccessHandler(token),
+                        (error) => {
+                            this.loading = false;
+                            console.log('Error al crear token:', error);
+                        }
+                    );
                 });
             } else {
                 this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
@@ -589,6 +583,16 @@ export default {
                 }
                 return false;
             }
+            this.$nextTick(() => {
+                // Espera a que el DOM se actualice
+                if (this.$refs.dataPrincipal) {
+                    this.$refs.dataPrincipal.$el.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+            this.viewInfoCustomer = false;
+            this.resetInfo();
+            this.resetErrors();
+            this.setTickets();
             showNotification('¡Correcto!', response.msj, 'success', 20000);
             return false;
         },
@@ -601,7 +605,7 @@ export default {
                     showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
-
+                showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
                 this.data.discount = this.data.total * (response.data.discount / 100);
                 this.data.discount = Math.round(this.data.discount);
                 this.data.subtotal = this.data.total - this.data.discount;
@@ -822,6 +826,43 @@ export default {
         },
         filterTickets() {
             return this.data.tickets.filter(t => t.quantity > 0);
+        },
+        setTickets() {
+            this.event.tickets.forEach(t => {
+                this.data.tickets.push({
+                    id: t.id,
+                    name: t.name,
+                    description: t.description,
+                    price: t.price,
+                    priceUnit: this.formatCurrency(t.price) + ' MXN',
+                    subtotal: '',
+                    quantity: 0,
+                    discount: 0,
+                    available: t.available
+                })
+            });
+        },
+        resetInfo() {
+            this.data.tickets                    = [];
+            this.data.ticketsReserved            = [];
+            this.data.selected                   = 0;
+            this.data.subtotal                   = 0;
+            this.data.discount                   = 0;
+            this.data.total                      = 0;
+            this.data.order.name                 = 'Miguel Angel Mota Murillo';
+            this.data.order.email                = 'miguel.mota.murillo@gmail.com';
+            this.data.order.confirm_email        = 'miguel.mota.murillo@gmail.com';
+            this.data.order.phone                = '4371041976';
+            this.data.order.payment_method       = '';
+            this.data.order.token_id             = '';
+            this.data.order.card                 = '';
+            this.data.order.code                 = '';
+            this.data.paymentData.card.name      = 'Miguel Angel Mota Murillo';
+            this.data.paymentData.card.number    = '4242424242424242';
+            this.data.paymentData.card.exp_month = '06';
+            this.data.paymentData.card.exp_year  = '26';
+            this.data.paymentData.card.cvc       = '123';
+            this.data.cardExpiration             = '06/26';
         },
         scrollCenterY() {
             const elComponent = this.$refs.dataOrder;

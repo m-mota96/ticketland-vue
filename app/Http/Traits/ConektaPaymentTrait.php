@@ -49,6 +49,9 @@ trait ConektaPaymentTrait {
             ];
         } catch (ApiException $e) {
             // dd('Exception when calling CustomersApi->createCustomer: '.$e->getMessage());
+            $logFile = fopen("logs/log_customer.txt", 'a') or die("Error creando archivo");
+            fwrite($logFile, date("d/m/Y H:i:s")." Error al crear cliente: ".$e->getMessage()."\n") or die("Error escribiendo en el archivo");
+            fclose($logFile);
             return [
                 'success' => false,
                 'error'   => $e->getMessage()
@@ -56,7 +59,7 @@ trait ConektaPaymentTrait {
         }
     }
 
-    public static function createOrder($event_name, $totalToPay, $customer_id, $discounts) {
+    public static function createOrder($event_name, $totalToPay, $customer_id, $discounts, $model_payment) {
         self::initConekta();
 
         $apiInstance = new OrdersApi(
@@ -64,29 +67,36 @@ trait ConektaPaymentTrait {
             self::$config
         );
 
-        $totalToPay = $totalToPay + ($totalToPay * .12);
-        $discount   = [];
-        if ($discounts['code'] && $discounts['discount'] != 0) {
-            $offert     = $totalToPay * $discounts['discount'];
-            $discount = [
-                [
-                    "amount" => round($offert) * 100,
-                    "code"   => $discounts['code'],
-                    "type"   => "coupon"
-                ]
-            ];
-        }
+        $subtotal   = $totalToPay;
+        $discount   = round($totalToPay * $discounts['discount']);
+        $total      = $subtotal - $discount;
+        $commission = $model_payment == 'separated' ? round($total * .12) : 0;
+        $totalToPay = $total + $commission;
+        // dd($subtotal.' / '.$discount.' / '.$total.' / '.$commission.' / '.$totalToPay);
+        
+        // $totalToPay = $totalToPay + ($totalToPay * .12);
+        // $discount   = [];
+        // if ($discounts['code'] && $discounts['discount'] != 0) {
+        //     $offert     = $totalToPay * $discounts['discount'];
+        //     $discount = [
+        //         [
+        //             "amount" => round($offert) * 100,
+        //             "code"   => $discounts['code'],
+        //             "type"   => "coupon"
+        //         ]
+        //     ];
+        // }
 
         $order_request = new \Conekta\Model\OrderRequest([
-            "amount"=> round($totalToPay),
+            "amount"=> $totalToPay,
             "line_items" => [
                 [
                     "name" => 'Compra de boletos para '.$event_name,
-                    "unit_price" => round($totalToPay) * 100, //se multiplica por 100 conekta
+                    "unit_price" => $totalToPay * 100, //se multiplica por 100 conekta
                     "quantity" => 1
                 ] //first line_item
             ], //line_items
-            "discount_lines" => $discount,
+            // "discount_lines" => $discount,
             "currency" => "MXN",
             "customer_info" => [
                 "customer_id" => $customer_id
@@ -115,21 +125,33 @@ trait ConektaPaymentTrait {
                 if (method_exists($response, 'getDetails') && is_array($response->getDetails())) {
                     $details = $response->getDetails();
                     if (!empty($details) && method_exists($details[0], 'getMessage')) {
+                        $logFile = fopen("logs/log_payment.txt", 'a') or die("Error creando archivo");
+                        fwrite($logFile, date("d/m/Y H:i:s")." Error al procesar el pago: ".$details[0]->getMessage()."\n") or die("Error escribiendo en el archivo");
+                        fclose($logFile);
                         return [
                             'success' => false,
                             'msj'     => $details[0]->getMessage() // Mensaje en español
                         ];
                     }
+                    $logFile = fopen("logs/log_payment.txt", 'a') or die("Error creando archivo");
+                    fwrite($logFile, date("d/m/Y H:i:s")." Error al procesar el pago: ".$e->getMessage()."\n") or die("Error escribiendo en el archivo");
+                    fclose($logFile);
                     return [
                         'success' => false,
                         'msj'     => 'Hubo un problema al procesar su pago, por favor verifique su información.'
                     ];
                 }
+                $logFile = fopen("logs/log_payment.txt", 'a') or die("Error creando archivo");
+                fwrite($logFile, date("d/m/Y H:i:s")." Error al procesar el pago: ".$e->getMessage()."\n") or die("Error escribiendo en el archivo");
+                fclose($logFile);
                 return [
                     'success' => false,
                     'msj'     => 'Hubo un problema al procesar su pago, por favor verifique su información.'
                 ];
             }
+            $logFile = fopen("logs/log_payment.txt", 'a') or die("Error creando archivo");
+            fwrite($logFile, date("d/m/Y H:i:s")." Error al procesar el pago: ".$e->getMessage()."\n") or die("Error escribiendo en el archivo");
+            fclose($logFile);
             return [
                 'success' => false,
                 'msj'     => 'Hubo un problema al procesar su pago, por favor verifique su información.'

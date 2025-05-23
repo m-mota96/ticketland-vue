@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Traits\ResponseTrait;
+use App\Http\Traits\SendMailTrait;
 use App\Models\Event;
 use App\Models\Payment;
 
@@ -50,5 +51,32 @@ class ReservationController extends Controller {
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         } 
+    }
+
+    public function resendEmail(Request $request) {
+        try {
+            $payment = Payment::select('id', 'email', 'status')->find($request->payment_id);
+            if ($payment->email !== $request->email) {
+                $payment->email = $request->email;
+                $payment->save();
+            }
+            switch ($payment->status) {
+                case 'payed':
+                    $txt      = 'Lob boletos se reenviaron correctamente';
+                    $proccess = SendMailTRait::index('tickets', $payment->id);
+                    break;
+                case 'pending':
+                    $txt      = 'La ficha de pago se reenvio correctamente';
+                    $proccess = SendMailTRait::index('reference', $payment->id);
+                    break;
+            }
+
+            if ($proccess['error']) {
+                return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$tproccess['msj'], true, 500);
+            }
+            return ResponseTrait::response($txt);
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
     }
 }

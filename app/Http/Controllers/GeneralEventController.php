@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Http\Traits\ResponseTrait;
 use App\Http\Traits\ConektaPaymentTrait;
+use App\Http\Traits\DigitalFemsaTRait;
 use App\Http\Traits\ManageFilesTrait;
 use App\Http\Traits\OrderTrait;
 use App\Http\Traits\SendMailTrait;
@@ -68,39 +69,50 @@ class GeneralEventController extends Controller {
             
             switch ($request->order['payment_method']) {
                 case 'card':
-                    // $proccess = ConektaPaymentTrait::createCustomer($request->order); // Crea al cliente en Conekta
-                    // if (!$proccess['success']) {
-                    //     ManageFilesTrait::deleteFiles($event->id, $files);
-                    //     DB::rollBack();
-                    //     return ResponseTrait::response(
-                    //         'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento.',
-                    //         ['type' => 'createCustomer', 'error' => $proccess['error']],
-                    //         true,
-                    //         409
-                    //     );
-                    // }
-                    // // Se procesa el cobro a la tarjeta
-                    // $proccess = ConektaPaymentTrait::createOrder($event->name, $totalToPay, $proccess['customer_id'], $discount);
-                    // if (!$proccess['success']) {
-                    //     ManageFilesTrait::deleteFiles($event->id, $files);
-                    //     DB::rollBack();
-                    //     return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
-                    // }
-                    $proccess['order_id'] = '0123456789';
+                    $proccess = ConektaPaymentTrait::createCustomer($request->order); // Crea al cliente en Conekta
+                    if (!$proccess['success']) {
+                        ManageFilesTrait::deleteFiles($event->id, $files);
+                        DB::rollBack();
+                        return ResponseTrait::response(
+                            'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento.',
+                            ['type' => 'createCustomer', 'error' => $proccess['error']],
+                            true,
+                            409
+                        );
+                    }
+                    // Se procesa el cobro a la tarjeta
+                    $proccess = ConektaPaymentTrait::createOrder($event->name, $totalToPay, $proccess['customer_id'], $discount, $event->model_payment);
+                    if (!$proccess['success']) {
+                        ManageFilesTrait::deleteFiles($event->id, $files);
+                        DB::rollBack();
+                        return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
+                    }
                     $proccess   = OrderTrait::registerPayment($event->id, $request->order, $proccess['order_id'], $totalToPay, 'card', 'payed', $discount, $request->order['card']);
                     $payment_id = $proccess['payment_id'];
                     $proccess   = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
                     SendMailTrait::index('tickets', $payment_id);
                     break;
-                case 'cash':
-                    # code...
+                case 'oxxo':
+                    $proccess = DigitalFemsaTRait::createOrder($event->name, $totalToPay, $request->order, $discount, $event->model_payment); // Crea la referencia de pago en DigitalFemsa
+                    if (!$proccess['success']) {
+                        ManageFilesTrait::deleteFiles($event->id, $files);
+                        DB::rollBack();
+                        return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
+                    }
+                    $dataReference               = $proccess;
+                    $dataReference['name_event'] = $event->name;
+                    $proccess                    = OrderTrait::registerPayment($event->id, $request->order, null, $totalToPay, 'oxxo', 'pending', $discount, $dataReference['reference']);
+                    $payment_id                  = $proccess['payment_id'];
+                    $proccess                    = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
+                    $proccess                    = ManageFilesTrait::createReference($event->id, $dataReference, $payment_id);
+                    SendMailTrait::index('reference', $payment_id);
                     break;
             }
 
-            // DB::commit();
+            DB::commit();
             $txt = $request->order['payment_method'] === 'card' ? 
             'Pago realizado exitosamente.<br>Recibirás tus boletos en tu correo electrónico.<br> Si no los ves en tu bandeja de entrada, por favor revisa en Spam.' :
-            'Registro realizado exitosamente.<br>Recibirás tu ficha de pago en tu correo electrónico. Si no la ves en tu bandeja de entrada, por favor revisa en Spam.';
+            'Registro realizado exitosamente.<br>Recibirás tu ficha de pago en tu correo electrónico.<br> Si no la ves en tu bandeja de entrada, por favor revisa en Spam.';
             return ResponseTrait::response($txt);
         } catch (\Throwable $th) {
             if (sizeof($files) > 0) {

@@ -1,6 +1,6 @@
 <template>
-    <el-row :gutter="20" class="mb-6 mt-6">
-        <el-col :span="14" :offset="5">
+    <el-row :gutter="20" class="mb-6 mt-6" :class="{'pl-3 pr-3': dataExpand}">
+        <el-col :span="span" :offset="offset">
             <el-row :gutter="20" class="border">
                 <el-col :span="8" class="pt-2">
                     <p class="has-text-dark">
@@ -28,9 +28,24 @@
 
 <script>
 export default {
+    props: {
+        dataExpand: {
+            type: Boolean,
+            required: false,
+            default: false
+        }
+    },
     data() {
         return {
-            currentYear: new Date().getFullYear()
+            currentYear: new Date().getFullYear(),
+            span: 14,
+            offset: 5
+        }
+    },
+    mounted() {
+        if (this.dataExpand) {
+            this.span = 24;
+            this.offset = 0;
         }
     }
 }

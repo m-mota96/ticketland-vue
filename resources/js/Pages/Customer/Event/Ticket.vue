@@ -35,7 +35,7 @@
                             </el-col>
                             <el-col :span="6" class="text-right">
                                 <h4 class="subtitle is-4 has-text-black mb-0">
-                                    <span class="text-blue">{{ t.access.length }}</span>
+                                    <span class="text-blue">{{ t.sales }}</span>
                                     <span class="text-blue">/</span>
                                     <span class="text-blue-ligth">{{ t.quantity }}</span>
                                 </h4>
@@ -63,10 +63,16 @@
                     <el-card class="text-center pb-4 mt-5">
                         <h5 class="subtitle is-5 has-text-dark mb-5">MODELO DE COBRO</h5>
                         <el-button-group class="w-100 mb-4">
-                            <el-button class="w-50" type="primary" size="large">
+                            <el-button class="w-50" type="primary" size="large" v-if="event.model_payment == 'separated'">
                                 SEPARADO
                             </el-button>
-                            <el-button class="w-50" type="primary" size="large" plain>
+                            <el-button class="w-50" type="primary" size="large" @click="modelPayment('separated')" plain v-if="event.model_payment == 'including'">
+                                SEPARADO
+                            </el-button>
+                            <el-button class="w-50" type="primary" size="large" @click="modelPayment('including')" plain v-if="event.model_payment == 'separated'">
+                                INCLUIDO
+                            </el-button>
+                            <el-button class="w-50" type="primary" size="large" v-if="event.model_payment == 'including'">
                                 INCLUIDO
                             </el-button>
                         </el-button-group>
@@ -132,6 +138,15 @@ export default {
                 return false;
             }
             this.getTickets();
+            showNotification('¡Correcto!', response.msj, 'success');
+        },
+        async modelPayment(model_payment) {
+            const response = await apiClient('customer/editModelPayment', 'PUT', {event_id: this.event.id, model_payment});
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error', 7000);
+                return false;
+            }
+            this.event.model_payment = model_payment;
             showNotification('¡Correcto!', response.msj, 'success');
         },
         formatCurrency(value) {

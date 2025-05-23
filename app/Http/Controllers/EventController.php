@@ -262,4 +262,19 @@ class EventController extends Controller {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
     }
+
+    public function editModelPayment(Request $request) {
+        try {
+            $payments = Payment::where('event_id', $request->event_id)->count();
+            if ($payments > 0) {
+                return ResponseTrait::response('No se puede cambiar el modelo de cobro porque ya hay boletos comprados y/o reservados.', null, true, 409);
+            }
+            $event                = Event::select('id', 'model_payment')->find($request->event_id);
+            $event->model_payment = $request->model_payment;
+            $event->save();
+            return ResponseTrait::response('El modelo de cobro se modificó correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
 }

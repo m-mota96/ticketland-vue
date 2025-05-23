@@ -18,16 +18,18 @@ class SendTickets extends Mailable
     public $event;
     public $tickets;
     public $accesses;
+    public $totals;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($payment, $event, $tickets, $accesses)
+    public function __construct($payment, $tickets, $totals)
     {
         $this->payment  = $payment;
-        $this->event    = $event;
+        $this->event    = $payment->event;
         $this->tickets  = $tickets;
-        $this->accesses = $accesses;
+        $this->accesses = $payment->accesses;
+        $this->totals   = $totals;
     }
 
     /**
@@ -51,6 +53,7 @@ class SendTickets extends Mailable
                 'payment' => $this->payment,
                 'event'   => $this->event,
                 'tickets' => $this->tickets,
+                'totals'  => $this->totals
             ]
         );
     }

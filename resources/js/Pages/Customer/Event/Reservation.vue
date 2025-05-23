@@ -1,9 +1,16 @@
 <template>
     <MenuEvent></MenuEvent>
     <Submenu :dadEvent="event"></Submenu>
+    <div
+        :element-loading-text="`¡Reenviando correo, por favor espera!`"
+        v-loading="loading"
+        :element-loading-svg="svg"
+        element-loading-svg-view-box="-10, -10, 50, 50"
+        element-loading-background="rgba(0, 0, 0, 0.9)"
+    >
     <el-row class="wrapper">
-        <el-col class="pl-4 pr-4" :span="24">
-            <el-card class="w-100 pt-5 pb-5 pl-1 pr-1">
+        <el-col :span="24">
+            <el-card class="w-100 pt-5 pb-5">
                 <el-row :gutter="20">
                     <el-col class="mb-5" :span="4" :offset="15">
                         <label for="order">Ordernar por</label>
@@ -97,7 +104,7 @@
                                     {{ formatCurrency(scope.row.amount - Math.round(scope.row.amount * scope.row.discount / 100)) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column>
+                            <el-table-column align="center" width="180">
                                 <template #header>
                                     <el-select v-model="search.status" placeholder="Estatus" @change="getPayments">
                                         <el-option
@@ -109,7 +116,13 @@
                                     </el-select>
                                 </template>
                                 <template #default="scope">
-                                    {{ verifyStatus(scope.row.status) }}
+                                    <span class="bold" :class="{
+                                        'has-text-danger': scope.row.status === 'expired',
+                                        'has-text-success': scope.row.status === 'payed',
+                                        'has-text-warning': scope.row.status === 'pending'
+                                    }">
+                                        {{ verifyStatus(scope.row.status) }}
+                                    </span>
                                 </template>
                             </el-table-column>
                             <el-table-column label="Fecha de compra" align="center">
@@ -123,10 +136,11 @@
                                         <el-tooltip
                                             class="box-item"
                                             effect="dark"
-                                            content="Reenviar boletos"
+                                            :content="scope.row.status == 'payed' ? 'Reenviar boletos' : 'Reenviar ficha de pago'"
                                             placement="top"
+                                            v-if="scope.row.status !== 'expired'"
                                         >
-                                            <el-button class="pl-2 pr-2" type="primary" @click="resendTickets(scope.row.id, scope.row.email)">
+                                            <el-button class="pl-2 pr-2" type="primary" @click="resendEmail(scope.row.id, scope.row.email)">
                                                 <font-awesome-icon :icon="['fas', 'share']" />
                                             </el-button>
                                         </el-tooltip>
@@ -135,6 +149,7 @@
                                             effect="dark"
                                             content="Ver boletos de la orden"
                                             placement="top"
+                                            v-if="scope.row.status == 'payed'"
                                         >
                                             <el-button class="pl-2 pr-2" type="success" @click="$refs.ViewTickets.showTickets(scope.row.accesses)">
                                                 <font-awesome-icon :icon="['fas', 'eye']" />
@@ -159,7 +174,8 @@
             </el-card>
         </el-col>
     </el-row>
-    <Footer></Footer>
+    <Footer :dataExpand="true"></Footer>
+    </div>
     <ViewTickets ref="ViewTickets"></ViewTickets>
 </template>
 
@@ -185,6 +201,7 @@ export default {
             appUrl: window.location.origin,
             event: this.$page.props.event,
             payments: [],
+            loading: false,
             search: {
                 name: '',
                 email: '',
@@ -203,7 +220,17 @@ export default {
                 order: 'DESC'
             },
             payment_methods: [{value: 'all', label: 'Todos los métodos de pago'},{value: 'oxxo', label: 'Efectivo'},{value: 'card', label: 'Tarjeta'}],
-            status: [{value: 'all', label: 'Todos los estatus'},{value: 'expired', label: 'Expirado'},{value: 'payed', label: 'Pagado'},{value: 'pending', label: 'Pendiente'}]
+            status: [{value: 'all', label: 'Todos los estatus'},{value: 'expired', label: 'Expirado'},{value: 'payed', label: 'Pagado'},{value: 'pending', label: 'Pendiente'}],
+            svg: `
+                <path class="path" d="
+                M 30 15
+                L 28 17
+                M 25.61 25.61
+                A 15 15, 0, 0, 1, 15 30
+                A 15 15, 0, 1, 1, 27.99 7.5
+                L 15 15
+                " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
+            `,
         }
     },
     beforeMount() {
@@ -221,10 +248,10 @@ export default {
             this.payments             = response.data.payments;
             this.pagination.totalRows = response.data.count;
         },
-        async resendTickets(payment_id, email) {
+        async resendEmail(payment_id, email) {
             Swal.fire({
                 icon: 'warning',
-                html: 'Los boletos serán enviados al siguiente correo:<br><b>Nota: </b>si el correo es incorrecto ingrese el nuevo',
+                html: 'Los boletos serán enviados al siguiente correo:<br><b>Nota: </b>si el correo es incorrecto ingrese el nuevo.',
                 input: 'email',
                 inputAttributes: {
                     autocapitalize: 'off'
@@ -236,9 +263,17 @@ export default {
                 reverseButtons: true,
                 inputValue : email,
                 scrollbarPadding: false
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.value) {
-                    
+                    this.loading = true;
+                    const response = await apiClient('customer/resendEmail', 'POST', {event_id: this.event.id, payment_id, email: result.value});
+                    this.loading = false;
+                    if (response.error) {
+                    showNotification('¡Error!', response.msj, 'error');
+                        return false;
+                    }
+                    this.getPayments();
+                    showNotification('¡Correcto!', response.msj, 'success');
                 }
             });
         },

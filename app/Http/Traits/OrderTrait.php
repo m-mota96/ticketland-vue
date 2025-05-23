@@ -9,6 +9,7 @@ trait OrderTrait {
     public static function registerPayment($event_id, $order, $order_id, $totalToPay, $type, $status, $discount, $reference) {
         $payment = Payment::create([
             'event_id'  => $event_id,
+            'order_id'  => $order_id,
             'name'      => $order['name'],
             'email'     => $order['email'],
             'phone'     => $order['phone'],

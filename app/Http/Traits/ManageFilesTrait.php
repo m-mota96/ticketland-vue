@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Crypt;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Traits\DateFormatTrait;
 use App\Models\Ticket;
+use Carbon\Carbon;
 
 trait ManageFilesTrait {
     public static function createPdf($tickets, $event) {
@@ -45,5 +46,19 @@ trait ManageFilesTrait {
                 unlink('events/pdf/'.$event_id.'/'.$files[$i].'.pdf');
             }
         }
+    }
+
+    public static function createReference($event_id, $dataReference, $payment_id) {
+        $date                            = Carbon::now();
+        $expirationDate                  = Carbon::parse($date->addDays(2)->format('Y-m-d 23:59:59'))->locale('es')->isoFormat('D MMMM Y');
+        $expirationHour                  = Carbon::parse($date->addDays(2)->format('Y-m-d 23:59:59'))->locale('es')->isoFormat('H:mm');
+        $dataReference['expirationDate'] = $expirationDate;
+        $dataReference['expirationHour'] = $expirationHour;
+
+        $pdf = PDF::loadView('pdfOxxo', $dataReference);
+        if (!file_exists('events/pdf/'.$event_id)) {
+            mkdir('events/pdf/'.$event_id, 0777, true);
+        }
+        $pdf->save('events/pdf/'.$event_id.'/reference'.$payment_id.'.pdf');
     }
 }

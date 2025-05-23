@@ -16,7 +16,7 @@
             <el-table-column prop="name" label="Nombre" />
             <el-table-column prop="email" label="Correo electrónico" />
             <el-table-column prop="phone" label="Teléfono" />
-            <el-table-column label="Acciones" width="90" align="center">
+            <!-- <el-table-column label="Acciones" width="90" align="center">
                 <template #default="scope">
                     <el-tooltip
                         class="box-item"
@@ -29,8 +29,7 @@
                         </el-button>
                     </el-tooltip>
                 </template>
-            </el-table-column>
-            <!-- <el-table-column prop="address" label="Address" /> -->
+            </el-table-column> -->
         </el-table>
         <template #footer>
             <div class="dialog-footer">
