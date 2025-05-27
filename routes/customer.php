@@ -3,6 +3,7 @@
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\ScannerController;
 use App\Http\Controllers\StatisticController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,7 @@ Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'role:customer',
     Route::get('descuentos/{event_id}', [DiscountController::class, 'discounts'])->name('descuentos');
     Route::get('reservaciones/{event_id}', [ReservationController::class, 'reservations'])->name('reservaciones');
     Route::get('estadisticas/{event_id}', [StatisticController::class, 'statistics'])->name('estadisticas');
+    Route::get('escaner/{event_id}', [ScannerController::class, 'scanner'])->name('escaner');
 });
 
 
@@ -52,4 +54,5 @@ Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group
     Route::post('resendEmail', [ReservationController::class, 'resendEmail']);
     Route::get('statistics', [StatisticController::class, 'getStatistics']);
     Route::put('editModelPayment', [EventController::class, 'editModelPayment']);
+    Route::post('validateAccess', [ScannerController::class, 'validateAccess']);
 });

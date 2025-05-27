@@ -15,8 +15,8 @@
         </el-sub-menu>
         <el-menu-item index="3"><a :href="route('cliente.boletos', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'ticket']" /> Boletos</a></el-menu-item>
         <el-menu-item index="4"><a :href="route('cliente.descuentos', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'percent']" /> Descuentos</a></el-menu-item>
-        <el-menu-item index="4"><a :href="route('cliente.reservaciones', dadEvent.id)"><font-awesome-icon :icon="['fas', 'cart-shopping']" /> Reservaciones</a></el-menu-item>
-        <el-menu-item index="5"><font-awesome-icon :icon="['fas', 'qrcode']" /> <a class="ml-2">Escaner</a></el-menu-item>
+        <el-menu-item index="4"><a :href="route('cliente.reservaciones', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'cart-shopping']" /> Reservaciones</a></el-menu-item>
+        <el-menu-item index="5"><a :href="route('cliente.escaner', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'qrcode']" /> Escaner</a></el-menu-item>
     </el-menu>
 </template>
 <script>

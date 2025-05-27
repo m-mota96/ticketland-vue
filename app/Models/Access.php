@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use DateTimeInterface;
 
 class Access extends Model
 {
@@ -28,5 +29,9 @@ class Access extends Model
 
     public function codes() {
         return $this->belongsToMany(Code::class)->withPivot('ticket_price', 'discount');
+    }
+
+    protected function serializeDate(DateTimeInterface $date) {
+        return $date->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
     }
 }
