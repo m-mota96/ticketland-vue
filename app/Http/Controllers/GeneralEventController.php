@@ -22,7 +22,7 @@ class GeneralEventController extends Controller {
             ->where('start_sale', '<=', date('Y-m-d'))
             ->where('stop_sale', '>=', date('Y-m-d'))
             ->whereRaw('quantity > (sales + reserved)');
-        }, 'eventDates', 'profile', 'logo', 'location'])->where(DB::raw('BINARY url'), $url)->first();
+        }, 'eventDates', 'profile', 'logo', 'location'])->whereRaw(DB::raw('BINARY url = "'.$url.'"'))->first();
         if (!$event) {
             return redirect('/');
         }
@@ -35,11 +35,19 @@ class GeneralEventController extends Controller {
         try {
             $files    = [];
             $event_id = $request->order['event_id'];
-            $event    = Event::with(['profile', 'eventDates', 'location'])->find($event_id);
+            $event    = Event::with(['profile', 'eventDates', 'location'])->where('status', 1)->find($event_id);
             
             if (!$event) {
-                return ResponseTrait::response('No se encuentra el evento solicitado.', ['type' => 'event'], true, 404);
+                return ResponseTrait::response('No es posible comprar boletos para el evento seleccionado.', ['type' => 'event'], true, 404);
             }
+
+            $initialDateEvent = new \DateTime($event->eventDates[0]->date);
+            $initialDateEvent->modify('-3 days');
+            $initialDateEvent = $initialDateEvent->format('Y-m-d');
+            if ((date('Y-m-d') >= $initialDateEvent) && $request->order['payment_method'] == 'oxxo') {
+                return ResponseTrait::response('Ya no es posible realizar compras con Pago en Oxxo.', ['type' => 'event'], true, 409);
+            }
+
             DB::beginTransaction();
 
             $proccess = ValidateStockTrait::validateStock($request->tickets, $request->order['payment_method']); // Valida si aún hay disponibilidad de los boeltos elegidos

@@ -7,7 +7,7 @@
         text-color="white"
     >
         <el-menu-item index="0"></el-menu-item>
-        <el-menu-item index="1">Mi cuenta</el-menu-item>
+        <el-menu-item index="1"><a :href="route('cliente.mi_perfil')">Mi perfil</a></el-menu-item>
         <el-sub-menu index="2" class="me-10">
             <template #title>{{ $page.props.auth.user.name }}</template>
             <el-menu-item index="2-1">
@@ -59,7 +59,7 @@ export default {
 }
 </script>
   
-<style>
+<style scoped>
     .el-menu--horizontal>.el-menu-item {
         font-size: 1rem !important;
     }

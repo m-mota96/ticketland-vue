@@ -9,25 +9,52 @@
         <el-row :gutter="20" class="mb-4">
             <el-col :span="12" class="mb-3">
                 <label class="text-black" for="name">Nombre del evento:</label>
-                <el-input size="large" id="name" v-model="event.name"/>
+                <el-input
+                    class="el-form-item mb-0 mt-1"
+                    :class="{'is-error': errors.name}"
+                    size="large"
+                    id="name"
+                    v-model="event.name"
+                    @input="setWebsite"
+                />
+                <span class="text-error" v-if="errors.name">El nombre del evento es obligatorio.</span>
             </el-col>
             <el-col :span="12" class="mb-3">
                 <label class="text-black" for="website">Sitio web:</label>
                 <el-input
-                size="large"
-                id="website"
-                v-model="event.website"
+                    class="el-form-item mb-0 mt-1"
+                    :class="{'is-error': errors.website}"
+                    size="large"
+                    id="website"
+                    v-model="event.website"
+                    @input="setWebsite"
                 >
-                <template #prepend>ticketland.mx/</template>
+                <template #prepend>ticketland.mx/evento/</template>
                 </el-input>
+                <span class="text-error" v-if="errors.website">El sitio web es obligatorio.</span>
             </el-col>
             <el-col :span="12" class="mb-3">
                 <label class="text-black" for="capacity">Asistencia estimada:</label>
-                <el-input size="large" id="capacity" v-model="event.capacity"/>
+                <el-input
+                    class="el-form-item mb-0 mt-1"
+                    :class="{'is-error': errors.capacity}"
+                    size="large"
+                    id="capacity"
+                    v-model="event.capacity"
+                    @keypress="isNumber($event)"
+                />
+                <span class="text-error" v-if="errors.capacity">La asistencia estimada es obligatoria.</span>
             </el-col>
             <el-col :span="12" class="mb-3">
                 <label class="text-black" for="category">Categoría:</label>
-                <el-select size="large" id="category" v-model="event.category" placeholder="Seleccione una categoría">
+                <el-select
+                    class="el-form-item mb-0 mt-1"
+                    :class="{'is-error': errors.category}"
+                    size="large"
+                    id="category"
+                    v-model="event.category"
+                    placeholder="Seleccione una categoría"
+                >
                     <el-option
                     v-for="item in categories"
                     :key="item.id"
@@ -35,6 +62,7 @@
                     :value="item.id"
                     />
                 </el-select>
+                <span class="text-error" v-if="errors.category">La categoría es obligatoria.</span>
             </el-col>
             <el-col :span="12" class="mb-6">
                 <p class="text-black">Tipo de evento:</p>
@@ -45,84 +73,57 @@
             </el-col>
             <el-col :span="12" class="mb-6">
                 <label>Fechas del evento:</label>
-                    <el-date-picker
-                        size="large"
-                        class="w-100"
-                        v-model="event.dates"
-                        type="daterange"
-                        range-separator="A"
-                        start-placeholder="Fecha inicial"
-                        end-placeholder="Fecha final"
-                        @change="createHorary"
-                    />
+                <el-date-picker
+                    class="el-form-item mb-0 mt-1 w-100"
+                    :class="{'is-error': errors.dates}"
+                    size="large"
+                    v-model="event.dates"
+                    type="daterange"
+                    range-separator="A"
+                    start-placeholder="Fecha inicial"
+                    end-placeholder="Fecha final"
+                    @change="createHorary"
+                />
+                <span class="text-error" v-if="errors.dates">Las fechas son obligatorias.</span>
             </el-col>
             <el-col :span="8" class="mb-3">
-                <el-input
-                size="large"
-                class="mb-3"
-                v-for="(item, index) in dates" :key="item.id" v-model="item.date" readonly
-                >
-                <template #prepend>Día {{ index + 1 }}</template>
+                <div v-for="(item, index) in dates" :key="item.id">
+                    <el-input
+                    size="large"
+                    class="mb-3"
+                    v-model="item.date" readonly
+                    >
+                    <template #prepend>Día {{ index + 1 }}</template>
                 </el-input>
+                <span style="font-size: 13px; color: white;" v-if="errors.startHour || errors.endHour">0</span>
+                </div>
             </el-col>
             <el-col :span="8">
-                <el-row :gutter="0" v-for="(item, index) in dates" :key="item.id">
-                    <el-col :span="3" class="text-left pt-2">
-                        <b>De</b>
-                    </el-col>
-                    <el-col :span="10">
-                        <el-select size="large" class="mb-3" v-model="event.startHour[index]" placeholder="Hora">
-                            <el-option
-                            v-for="index in 23"
-                            :key="index"
-                            :label="index"
-                            :value="index"
-                            />
-                        </el-select>
-                    </el-col>
-                    <el-col :span="1" class="text-center pt-2">
-                        <b>:</b>
-                    </el-col>
-                    <el-col :span="10">
-                        <el-select size="large" class="mb-3" v-model="event.startMinute[index]" placeholder="Minuto">
-                            <el-option
-                            v-for="m in minutes"
-                            :key="m.id"
-                            :label="m"
-                            :value="m"
-                            />
-                        </el-select>
-                    </el-col>
+                <el-row class="mb-3" :gutter="0" v-for="(item, index) in dates" :key="item.id">
+                    <el-time-picker
+                        class="el-form-item mb-0 w-100"
+                        :class="{'is-error': errors.startHour}"
+                        v-model="event.startHour[index]"
+                        placeholder="Hora inicial"
+                        size="large"
+                        :format="'HH:mm'"
+                        :value-format="'HH:mm'"
+                    />
+                    <span class="text-error" v-if="errors.startHour">Es necesario completar todos los horarios.</span>
                 </el-row>
             </el-col>
             <el-col :span="8">
-                <el-row :gutter="0" v-for="(item, index) in dates" :key="item.id">
-                    <el-col :span="3" class="text-left pt-2">
-                        <b>A</b>
-                    </el-col>
-                    <el-col :span="10">
-                        <el-select size="large" class="mb-3" v-model="event.endHour[index]" placeholder="Hora">
-                            <el-option
-                            v-for="index in 23"
-                            :key="index"
-                            :label="index"
-                            :value="index"
-                            />
-                        </el-select>
-                    </el-col>
-                    <el-col :span="1" class="text-center pt-2">
-                        <b>:</b>
-                    </el-col>
-                    <el-col :span="10">
-                        <el-select size="large" class="mb-3" v-model="event.endMinute[index]" placeholder="Minuto">
-                            <el-option
-                            v-for="m in minutes"
-                            :key="m.id"
-                            :label="m"
-                            :value="m"
-                            />
-                        </el-select>
-                    </el-col>
+                <el-row class="mb-3" :gutter="0" v-for="(item, index) in dates" :key="item.id">
+                    <el-time-picker
+                        class="el-form-item mb-0 w-100"
+                        :class="{'is-error': errors.endHour}"
+                        v-model="event.endHour[index]"
+                        placeholder="Hora final"
+                        size="large"
+                        :format="'HH:mm'"
+                        :value-format="'HH:mm'"
+                    />
+                    <span class="text-error" v-if="errors.endHour">Es necesario completar todos los horarios.</span>
                 </el-row>
             </el-col>
             <el-col :span="24">
@@ -135,17 +136,11 @@
                     placeholder=""
                 />
             </el-col>
-            <el-col class="mt-3" :span="24" v-if="errors.length">
-                <b>Por favor, corrija los siguientes errores:</b>
-                <ul>
-                    <li v-for="error in errors" :key="error.id">- {{ error }}</li>
-                </ul>
-            </el-col>
         </el-row>
         <template #footer>
             <div class="dialog-footer">
                 <el-button @click="showHideModal">Cancelar</el-button>
-                <el-button type="primary" @click="saveEvent" :disabled="isDisabled">Crear evento</el-button>
+                <el-button type="primary" @click="saveEvent" :loading="loading">Crear evento</el-button>
             </div>
         </template>
     </el-dialog>
@@ -176,15 +171,21 @@ export default {
                 allDates: [],
                 days: 0,
                 startHour: [],
-                startMinute: [],
                 endHour: [],
-                endMinute: [],
                 description: '',
             },
-            errors: [],
+            errors: {
+                name: false,
+                website: false,
+                capacity: false,
+                category: false,
+                dates: false,
+                startHour: false,
+                endHour: false
+            },
             dates: [],
             minutes: ['00', '15', '30', '45'],
-            isDisabled: false
+            loading: false
         }
     },
     beforeMount() {
@@ -201,11 +202,11 @@ export default {
     // Aqui van los métodos
         async saveEvent() {
             if (this.validate()) {
-                this.isDisabled = true;
+                this.loading   = true;
                 const response = await apiClient('customer/event', 'POST', this.event);
                 if (response.error) {
-                    this.isDisabled = false;
-                    showNotification('¡Error!', response.msj, 'error');
+                    this.loading = false;
+                    showNotification('¡Error!', response.msj, 'error', 8000);
                     return false;
                 }
                 location.href = this.appUrl+'/cliente/evento/'+response.data.id;
@@ -213,48 +214,72 @@ export default {
             }
         },
         validate() {
-            this.errors = [];
-            if (!this.event.name.trim()) this.errors.push('Ingrese el nombre del evento');
-            if (!this.event.website.trim()) this.errors.push('Ingrese el sitio web del evento');
-            if (!this.event.capacity) this.errors.push('Ingrese la asistencia del evento');
-            if (!this.event.category) this.errors.push('Elija la categoría del evento');
-            if (!this.event.dates.length) this.errors.push('Ingrese las fechas del evento');
-            if (!this.event.startHour.length || !this.event.startMinute.length || !this.event.endHour.length || !this.event.endMinute.length) this.errors.push('Ingrese los horarios del evento');
-            if (this.event.startHour.length != this.event.days || this.event.startMinute.length != this.event.days || this.event.endHour.length != this.event.days || this.event.endMinute.length != this.event.days) this.errors.push('Complete todos los horarios del evento');
-            return (!this.errors.length) ? true : false;
+            this.resetErrors();
+            let valid = true;
+            if (!this.event.name.trim()) {
+                this.errors.name = true;
+                valid            = false;
+            }
+            if (!this.event.website.trim()) {
+                this.errors.website = true;
+                valid               = false;
+            }
+            if (!this.event.capacity) {
+                this.errors.capacity = true;
+                valid                = false;
+            }
+            if (!this.event.category) {
+                this.errors.category = true;
+                valid                = false;
+            }
+            if (!this.event.dates.length) {
+                this.errors.dates = true;
+                valid             = false;
+            }
+            this.event.allDates.forEach((d, i) => {
+                if (!this.event.startHour[i]) {
+                    this.errors.startHour = true;
+                    valid                 = false;
+                }
+                if (!this.event.endHour[i]) {
+                    this.errors.endHour = true;
+                    valid               = false;
+                }
+            });
+            return valid;
+        },
+        setWebsite(value) {
+            value              = value.toLowerCase();
+            this.event.website = this.filterNonAphaNumeric(value);
         },
         showHideModal() {
-            this.event.name = 'Petweekend';
-            this.event.website = 'petweekend';
-            this.event.capacity = 3000;
-            this.event.category = '';
-            this.event.type = 'paid';
-            this.event.dates = [];
-            this.event.allDates = [];
-            this.dates = [];
-            this.event.startHour = [];
-            this.event.startMinute = [];
-            this.event.endHour = [];
-            this.event.endMinute = [];
+            this.event.name        = '';
+            this.event.website     = '';
+            this.event.capacity    = '';
+            this.event.category    = '';
+            this.event.type        = 'paid';
+            this.event.dates       = [];
+            this.event.allDates    = [];
+            this.dates             = [];
+            this.event.startHour   = [];
+            this.event.endHour     = [];
             this.event.description = '';
-            this.errors = [];
+            this.resetErrors();
             this.isActive = !this.isActive;
         },
         createHorary() {
             // console.log(this.event.dates.length);
             if (!this.event.dates) {
-                this.event.dates = [];
-                this.event.allDates = [];
-                this.dates = [];
+                this.event.dates     = [];
+                this.event.allDates  = [];
+                this.dates           = [];
                 this.event.startHour = [];
-                this.event.startMinute = [];
-                this.event.endHour = [];
-                this.event.endMinute = [];
+                this.event.endHour   = [];
                 return false;
             }
             const timeStart = this.formatDate(this.event.dates[0], true);
-            const timeEnd = this.formatDate(this.event.dates[1], true);
-            this.dates = this.datesRange(timeStart, timeEnd);
+            const timeEnd   = this.formatDate(this.event.dates[1], true);
+            this.dates      = this.datesRange(timeStart, timeEnd);
         },
         formatDate(date) {
             let d = new Date(date),
@@ -294,6 +319,33 @@ export default {
             var mesesCortos = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             var nombreMes = corto = 0 ? meses[parseInt(date.substring(5, 7) - 1)] : mesesCortos[parseInt(date.substring(5, 7) - 1)]
             return `${date.substring(8, 10)}${separator}${nombreMes}${separator}${date.substring(0, 4)}`;
+        },
+        resetErrors() {
+            this.errors.name      = false;
+            this.errors.website   = false;
+            this.errors.capacity  = false;
+            this.errors.category  = false;
+            this.errors.dates     = false;
+            this.errors.startHour = false;
+            this.errors.endHour   = false;
+        },
+        isNumber(evt) {
+            const charCode = evt.which ? evt.which : evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+        },
+        filterNonAphaNumeric(str) {
+            let code, i, len, result='';
+            for (i = 0, len = str.length; i < len; i++) {
+                code = str.charCodeAt(i);
+                if ((code > 47 && code < 58) || // numeric (0-9)
+                    (code > 64 && code < 91) || // upper alpha (A-Z)
+                    (code > 96 && code < 123)) { // lower alpha (a-z)
+                        result += str.charAt(i);
+                }
+            }
+            return result;
         }
     }
 }

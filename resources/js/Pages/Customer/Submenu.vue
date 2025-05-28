@@ -29,6 +29,9 @@ export default {
     components: {
         ResponsiveNavLink
     },
+    mounted() {
+        document.title = `Ticketland - ${this.dadEvent.name}`;
+    }
 }
 </script>
 <style scoped>

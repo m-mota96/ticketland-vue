@@ -11,6 +11,10 @@ class Event extends Model
         'user_id', 'name', 'url', 'description', 'quantity', 'email', 'phone', 'twitter', 'facebook', 'instagram', 'website', 'final_date', 'authorization', 'cost_type','model_payment', 'status','category_id', 
     ];
 
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
+
     public function profile() {
         return $this->hasOne(GalleryEvent::class)->where('type', 'index');
     }

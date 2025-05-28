@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ScannerController;
 use App\Http\Controllers\StatisticController;
@@ -16,6 +17,7 @@ una respuesta que no tiene permiso de modificar dicho evento */
 Y cuando se realice una petición para editar o agregar datos al evento de igual manera se le debe mandar un parámetro con el nombre mencionado anteriormente. */
 
 Route::get('cliente/mis_eventos', [EventController::class, 'index'])->middleware('auth')->name('cliente.mis_eventos');
+Route::get('cliente/mi_perfil', [MyProfileController::class, 'index'])->middleware('auth')->name('cliente.mi_perfil');
 
 Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'role:customer', 'validate_event:view'])->group(function() {
     Route::get('evento/{event_id}', [EventController::class, 'event'])->name('evento');
@@ -30,6 +32,7 @@ Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'role:customer',
 Route::prefix('customer')->middleware('auth')->group(function () {
     Route::get('events', [EventController::class, 'getEvents']);
     Route::post('event', [EventController::class, 'createEvent']);
+    Route::post('uploadFiles', [MyProfileController::class, 'uploadFiles']);
 });
 
 Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group(function () {

@@ -2,22 +2,34 @@
     <Menu></Menu>
     <div class="container">
         <el-row :gutter="50" class="mt-10">
+            <el-col class="mb-5" :xs="24" :sm="24" :md="0" :lg="0" :xl="0">
+                <el-card class="p-4">
+                    <template #header>
+                        <div class="card-header is-justify-content-center is-flex p-0">
+                            <span>OPCIONES</span>
+                        </div>
+                    </template>
+                    <el-button class="w-100 mt-1" type="warning" size="large" @click="$refs.CreateEvent.showHideModal()">
+                        <font-awesome-icon class="me-2" :icon="['fas', 'plus']" /> Crear nuevo evento
+                    </el-button>
+                </el-card>
+            </el-col>
             <el-col class="mb-5" :span="24">
                 <h1 class="title has-text-dark">Listado de eventos</h1>
             </el-col>
-            <el-col :xs="24" :sm="24" :md="12" :lg="18" :xl="18">
+            <el-col :xs="24" :sm="24" :md="17" :lg="18" :xl="18" class="mb-6">
                 <el-input placeholder="Buscar por nombre de evento" size="large" v-model="paramsGetEvents.search" @keyup="searchEvent" />
                 <el-row class="mt-5" :gutter="20">
-                    <el-col class="mb-5" :span="6">
+                    <el-col class="mb-5" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
                         <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == 1}" @click="changeStatus(1)"><b>ACTIVOS ({{ count.active }})</b></span>
                     </el-col>
-                    <el-col class="mb-5" :span="6">
+                    <el-col class="mb-5" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
                         <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == 0}" @click="changeStatus(0)"><b>INACTIVOS ({{ count.inactive }})</b></span>
                     </el-col>
-                    <el-col class="mb-5" :span="6">
+                    <el-col class="mb-5" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
                         <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == 2}" @click="changeStatus(2)"><b>PASADOS ({{ count.past }})</b></span>
                     </el-col>
-                    <el-col class="mb-5" :span="6">
+                    <el-col class="mb-5" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
                         <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == null}" @click="changeStatus()"><b>TODOS ({{ count.all }})</b></span>
                     </el-col>
                     <el-col :span="24">
@@ -25,11 +37,11 @@
                         <el-card class="mb-5 p-0" v-for="(e, index) in events" :key="index" body-class="p-0">
                             <div>
                                 <el-row :gutter="5">
-                                    <el-col :span="7">
+                                    <el-col :xs="24" :sm="24" :md="7" :lg="7" :xl="7">
                                         <img v-if="!e.profile" class="w-100" src="/general/not_image.png" alt="Ticketland">
                                         <img v-if="e.profile" class="w-100 image-profile" :src="`/events/images/${e.profile.name}`" :alt="e.name">
                                     </el-col>
-                                    <el-col class="pt-5 pl-5 mb-4" :span="13">
+                                    <el-col class="pt-5 pl-5 mb-4" :xs="24" :sm="24" :md="10" :lg="13" :xl="13">
                                         <a class="title is-4 has-text-dark mb-0" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></a><br>
                                         <span class="has-text-dark mt-0">
                                             {{ 
@@ -61,7 +73,7 @@
                                             />
                                         </div>
                                     </el-col>
-                                    <el-col class="pt-5 pr-5 mb-4 text-right" :span="4">
+                                    <el-col class="pt-5 pr-5 mb-4 text-right" :xs="24" :sm="24" :md="7" :lg="4" :xl="4">
                                         <h3 class="subtitle mb-0 is-3 w-100 text-right">
                                             <span class="has-text-blue-400 has-text-weight-light">{{ e.sales }}/</span><span class="has-text-blue-300 has-text-weight-light">{{ e.quantity_tickets }}</span>
                                         </h3>
@@ -86,7 +98,7 @@
                     </el-col>
                 </el-row>
             </el-col>
-            <el-col :xs="24" :sm="24" :md="12" :lg="6" :xl="6">
+            <el-col :xs="0" :sm="0" :md="7" :lg="6" :xl="6">
                 <el-card class="p-4">
                     <template #header>
                         <div class="card-header is-justify-content-center is-flex p-0">
@@ -175,7 +187,7 @@ export default {
                     showNotification('¡Correcto!', response.msj, 'success');
                     return resolve(true);
                 }
-                showNotification('¡Error!', response.msj, 'error');
+                showNotification('¡Error!', response.msj, 'error', 8000);
                 return reject(new Error(response.msj));
             })
         }

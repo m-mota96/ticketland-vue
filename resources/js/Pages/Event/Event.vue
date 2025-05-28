@@ -146,6 +146,7 @@
                         id="phone"
                         v-model="data.order.phone"
                         placeholder="Teléfono"
+                        @keypress="isNumber($event)"
                     />
                     <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
                     <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span>
@@ -302,6 +303,7 @@
                         id="payment_method"
                         clearable
                         @change="verifyPaymentMethod"
+                        :disabled="disabledPaymentMethod"
                         >
                         <el-option label="Pago en Oxxo" value="oxxo" />
                         <el-option label="Tarjeta de Débito/Crédito" value="card" />
@@ -386,7 +388,9 @@
                     </el-row>
                 </el-col>
                 <el-col :span="24" class="has-text-centered mt-3">
-                    <el-button type="primary" size="large" @click="payment"><font-awesome-icon :icon="['fas', 'dollar-sign']" />&nbsp;&nbsp;Realizar pago</el-button>
+                    <el-button type="primary" size="large" @click="payment" v-if="event.active">
+                        <font-awesome-icon :icon="['fas', 'dollar-sign']" />&nbsp;&nbsp;Realizar pago
+                    </el-button>
                 </el-col>
             </el-row>
         </el-col>
@@ -503,12 +507,24 @@ export default {
                 " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
             `,
             currentYear: new Date().getFullYear(),
+            disabledPaymentMethod: false,
         }
     },
     beforeMount() {
+        // console.log(this.event.event_dates);
+        let currentDate = new Date();
+        let date        = new Date(this.event.event_dates[0].date); // formato YYYY-MM-DD
+        date.setDate(date.getDate() - 3);
+        date        = date.toISOString().split('T')[0];
+        currentDate = currentDate.toISOString().split('T')[0];
+        if (currentDate >= date) {
+            this.disabledPaymentMethod     = true;
+            this.data.order.payment_method = 'card';
+        }
         this.setTickets();
     },
     mounted() {
+        document.title = `${this.event.name}`;
         window.addEventListener('resize', this.handleResize);
     },
     beforeDestroy() {
