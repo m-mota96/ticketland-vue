@@ -8,9 +8,14 @@
     >
         <el-table class="w-100 mb-6" :data="tickets" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
             <el-table-column prop="ticket.name" label="Tipo de boleto" />
+            <el-table-column label="Descuento">
+                <template #default="scope">
+                    {{ scope.row.promotion ? `-${scope.row.promotion}%` : 'N/A' }}
+                </template>
+            </el-table-column>
             <el-table-column label="Precio">
                 <template #default="scope">
-                    {{ formatCurrency(scope.row.ticket.price) }}
+                    {{ !scope.row.promotion ? formatCurrency(scope.row.ticket.price) : formatCurrency(scope.row.ticket.price - Math.round(scope.row.ticket.price * (scope.row.promotion / 100))) }}
                 </template>
             </el-table-column>
             <el-table-column prop="name" label="Nombre" />

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Traits;
+use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Crypt;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -9,7 +10,7 @@ use App\Models\Ticket;
 use Carbon\Carbon;
 
 trait ManageFilesTrait {
-    public static function createPdf($tickets, $event) {
+    public static function createPdf($tickets, $event, $code) {
         if (!file_exists('events/pdf/'.$event->id)) {
             mkdir('events/pdf/'.$event->id, 0777, true);
         }
@@ -17,7 +18,11 @@ trait ManageFilesTrait {
         $files = [];
 
         for ($i = 0; $i < sizeof($tickets); $i++) {
-            $ticket                      = Ticket::select('id', 'name', 'price')->find($tickets[$i]['id']);
+            $ticket                      = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))->find($tickets[$i]['id']);
+            $price                       = $ticket->price;
+            if ($ticket->promotion && !$code) {
+                $price = $ticket->price - round($ticket->price * ($ticket->promotion / 100));
+            }
             $tickets[$i]['eventName']    = $event->name;
             $tickets[$i]['eventDesc']    = $event->description;
             $tickets[$i]['eventAddress'] = $event->location ? $event->location->address : 'Sin información';
@@ -26,7 +31,8 @@ trait ManageFilesTrait {
             $endDate                     = DateFormatTrait::parseDate($event->eventDates[sizeof($event->eventDates) - 1]->date, '/', 'monthsAbrev');
             $tickets[$i]['dates']        = $startDate.' al '.$endDate;
             $tickets[$i]['currentDate']  = DateFormatTrait::parseDate(date('Y-m-d'), '/', 'monthsAbrev');
-            $tickets[$i]['price']        = number_format($ticket->price);
+            $tickets[$i]['promotion']    = $ticket->promotion;
+            $tickets[$i]['price']        = number_format($price);
             $folio                       = strtoupper(uniqid());
             $folioCrypt                  = Crypt::encrypt($folio);
             $qr_code                     = QrCode::backgroundColor(255, 125, 0, 0.5)->size(800)->format('svg')->generate($folioCrypt);

@@ -123,6 +123,9 @@
                     </td>
                     <td style="width: 50%; text-align: justify;" width="50">
                         {{-- <h5>Descripción: <br><span style="font-weight: normal; font-size: 1.3rem;">{{ $eventDesc }}</span></h5> --}}
+                        @if($promotion)
+                            <h5 style="margin-bottom: 0px;">Descuento: <br><span style="font-weight: normal; font-size: 1.3rem;">-{{ $promotion }}%</span></h5>
+                        @endif
                     </td>
                 </tr>
                 <tr>

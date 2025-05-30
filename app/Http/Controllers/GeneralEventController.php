@@ -18,11 +18,12 @@ use App\Models\Event;
 class GeneralEventController extends Controller {
     public function event($url) {
         $event = Event::with(['tickets' => function($query) {
-            $query->select('*', DB::raw('quantity - (sales + reserved) available'))
+            $query->select('*', DB::raw('quantity - (sales + reserved) available'), DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))
             ->where('start_sale', '<=', date('Y-m-d'))
             ->where('stop_sale', '>=', date('Y-m-d'))
             ->whereRaw('quantity > (sales + reserved)');
         }, 'eventDates', 'profile', 'logo', 'location'])->whereRaw(DB::raw('BINARY url = "'.$url.'"'))->first();
+        // dd($event->tickets);
         if (!$event) {
             return redirect('/');
         }
@@ -33,12 +34,15 @@ class GeneralEventController extends Controller {
 
     public function makePayment(Request $request) {
         try {
-            $files    = [];
-            $event_id = $request->order['event_id'];
-            $event    = Event::with(['profile', 'eventDates', 'location'])->where('status', 1)->find($event_id);
+            $files = [];
+            $event = Event::with(['profile', 'eventDates', 'location'])->where('status', 1)->find($request->order['event_id']);
             
             if (!$event) {
                 return ResponseTrait::response('No es posible comprar boletos para el evento seleccionado.', ['type' => 'event'], true, 404);
+            }
+
+            if (!in_array($request->order['payment_method'], ['card', 'oxxo'])) {
+                return ResponseTrait::response('Método de pago no reconocido.', ['type' => 'event'], true, 404);
             }
 
             $initialDateEvent = new \DateTime($event->eventDates[0]->date);
@@ -49,13 +53,6 @@ class GeneralEventController extends Controller {
             }
 
             DB::beginTransaction();
-
-            $proccess = ValidateStockTrait::validateStock($request->tickets, $request->order['payment_method']); // Valida si aún hay disponibilidad de los boeltos elegidos
-            if (!$proccess['success']) {
-                DB::rollBack();
-                return ResponseTrait::response('', ['error' => $proccess['error'], 'type' => 'stock'], true, 409);
-            }
-            $totalToPay = $proccess['totalToPay'];
 
             $discount = ['code_id' => null, 'code' => null, 'discount' => 0, 'discountInt' => 0];
             if ($request->order['code']) {
@@ -72,7 +69,14 @@ class GeneralEventController extends Controller {
                 ];
             }
 
-            $proccess = ManageFilesTrait::createPdf($request->informationTickets, $event); // Crea los pdf de los boletos
+            $proccess = ValidateStockTrait::validateStock($request->tickets, $request->order['payment_method'], $discount); // Valida si hay disponibilidad de los boeltos elegidos
+            if (!$proccess['success']) {
+                DB::rollBack();
+                return ResponseTrait::response('', ['error' => $proccess['error'], 'type' => 'stock'], true, 409);
+            }
+            $totalToPay = intval($proccess['totalToPay']);
+
+            $proccess = ManageFilesTrait::createPdf($request->informationTickets, $event, $discount['code']); // Crea los pdf de los boletos
             $files    = $proccess['files'];
             
             switch ($request->order['payment_method']) {
@@ -97,8 +101,9 @@ class GeneralEventController extends Controller {
                     }
                     $proccess   = OrderTrait::registerPayment($event->id, $request->order, $proccess['order_id'], $totalToPay, 'card', 'payed', $discount, $request->order['card']);
                     $payment_id = $proccess['payment_id'];
-                    $proccess   = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
+                    $proccess   = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files, $discount['code']);
                     SendMailTrait::index('tickets', $payment_id);
+                    $txt = 'Pago realizado exitosamente.<br>Recibirás tus boletos en tu correo electrónico.<br> Si no los ves en tu bandeja de entrada, por favor revisa en Spam.';
                     break;
                 case 'oxxo':
                     $proccess = DigitalFemsaTRait::createOrder($event->name, $totalToPay, $request->order, $discount, $event->model_payment); // Crea la referencia de pago en DigitalFemsa
@@ -111,16 +116,14 @@ class GeneralEventController extends Controller {
                     $dataReference['name_event'] = $event->name;
                     $proccess                    = OrderTrait::registerPayment($event->id, $request->order, null, $totalToPay, 'oxxo', 'pending', $discount, $dataReference['reference']);
                     $payment_id                  = $proccess['payment_id'];
-                    $proccess                    = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
+                    $proccess                    = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files, $discount['code']);
                     $proccess                    = ManageFilesTrait::createReference($event->id, $dataReference, $payment_id);
                     SendMailTrait::index('reference', $payment_id);
+                    $txt = 'Registro realizado exitosamente.<br>Recibirás tu ficha de pago en tu correo electrónico.<br> Si no la ves en tu bandeja de entrada, por favor revisa en Spam.';
                     break;
             }
 
             DB::commit();
-            $txt = $request->order['payment_method'] === 'card' ? 
-            'Pago realizado exitosamente.<br>Recibirás tus boletos en tu correo electrónico.<br> Si no los ves en tu bandeja de entrada, por favor revisa en Spam.' :
-            'Registro realizado exitosamente.<br>Recibirás tu ficha de pago en tu correo electrónico.<br> Si no la ves en tu bandeja de entrada, por favor revisa en Spam.';
             return ResponseTrait::response($txt);
         } catch (\Throwable $th) {
             if (sizeof($files) > 0) {

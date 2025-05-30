@@ -9,8 +9,8 @@
                         <el-row>
                             <el-col :span="18">
                                 <h4 class="title is-4 has-text-black mb-2">{{ t.name }}</h4>
-                                <h4 class="title is-5 has-text-grey mb-2">{{ formatCurrency(t.price) }} MXN</h4>
-                                <h6 class="subtitle is-6"><a class="has-text-link" :href="appUrl+'/'+event.url+'/'+t.name" target="_blank"><font-awesome-icon :icon="['fas', 'link']" /> {{ appUrl+'/'+event.url+'/'+t.name }}</a></h6>
+                                <h4 class="title is-5 has-text-grey mb-5">{{ formatCurrency(t.price) }} MXN</h4>
+                                <!-- <h6 class="subtitle is-6"><a class="has-text-link" :href="appUrl+'/'+event.url+'/'+t.name" target="_blank"><font-awesome-icon :icon="['fas', 'link']" /> {{ appUrl+'/'+event.url+'/'+t.name }}</a></h6> -->
                                 <span class="pointer mr-5" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
                                 <el-popconfirm
                                     confirm-button-text="Eliminar"
@@ -76,7 +76,11 @@
                                 INCLUIDO
                             </el-button>
                         </el-button-group>
-                        <template #footer><span class="has-text-link"><font-awesome-icon class="mr-1" :icon="['fas', 'circle-question']" /> ¿Que es esto?</span></template>
+                        <template #footer>
+                            <span class="has-text-link pointer" @click="info">
+                                <font-awesome-icon class="mr-1" :icon="['fas', 'circle-question']" /> ¿Que es esto?
+                            </span>
+                        </template>
                     </el-card>
                 </el-col>
             </el-row>
@@ -93,6 +97,7 @@ import MenuEvent from '../MenuEvent.vue';
 import Submenu from '../Submenu.vue';
 import Footer from '../Footer.vue';
 import { EditTicket } from './Modals';
+import Swal from 'sweetalert2';
 
 export default {
     components: {
@@ -148,6 +153,18 @@ export default {
             }
             this.event.model_payment = model_payment;
             showNotification('¡Correcto!', response.msj, 'success');
+        },
+        info() {
+            Swal.fire({
+                icon: 'info',
+                title: 'Información',
+                html: `
+                    <p class="justify"><b>Separado: </b>Las comosiones de Ticketland serán pagadas por el cliente.</p>
+                    <p class="justify"><b>Incluído: </b>Las comosiones de Ticketland serán descontadas del precio de los boletos.</p>
+                `,
+                confirmButtonText: 'Cerrar',
+                scrollbarPadding: false
+            });
         },
         formatCurrency(value) {
             return new Intl.NumberFormat('es-MX', {

@@ -28,7 +28,11 @@ trait SendMailTrait {
         $infoTickets = [];
         foreach ($payment->accesses as $key => $a) {
             $infoTickets[$a->ticket->id]['ticket']   = $a->ticket->name;
-            $infoTickets[$a->ticket->id]['price']    = $a->ticket->price;
+            if ($a->promotion && !$payment->code) {
+                $infoTickets[$a->ticket->id]['price']    = $a->ticket->price - round($a->ticket->price * ($a->promotion / 100));
+            } else {
+                $infoTickets[$a->ticket->id]['price']    = $a->ticket->price;
+            }
             $infoTickets[$a->ticket->id]['quantity'] = isset($infoTickets[$a->ticket->id]['quantity']) ? $infoTickets[$a->ticket->id]['quantity'] + 1 : 1;
         }
         $infoTickets = array_values($infoTickets);

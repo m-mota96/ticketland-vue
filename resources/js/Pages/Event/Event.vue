@@ -300,6 +300,7 @@
                                 v-model="data.order.code"
                                 placeholder="Ingresa tu código"
                                 @input="formatInput"
+                                :disabled="disabledDiscount"
                             />
                         </el-col>
                         <el-col :xs="7" :sm="7" :md="6" :lg="6" :xl="6">
@@ -526,19 +527,12 @@ export default {
             `,
             currentYear: new Date().getFullYear(),
             disabledPaymentMethod: false,
+            disabledDiscount: false,
         }
     },
     beforeMount() {
         // console.log(this.event.event_dates);
-        let currentDate = new Date();
-        let date        = new Date(this.event.event_dates[0].date); // formato YYYY-MM-DD
-        date.setDate(date.getDate() - 3);
-        date        = date.toISOString().split('T')[0];
-        currentDate = currentDate.toISOString().split('T')[0];
-        if (currentDate >= date) {
-            this.disabledPaymentMethod     = true;
-            this.data.order.payment_method = 'card';
-        }
+        this.loadPaymentMethod();
         this.setTickets();
     },
     mounted() {
@@ -609,6 +603,10 @@ export default {
                         this.$refs.Errors.showErrors(response.data.error);
                         break;
                     case 'codes':
+                        this.verifyCodes('delete');
+                        this.totals();
+                        showNotification('¡Error!', response.msj, 'error', 7000);
+                        break;
                     case 'event':
                     case 'createCustomer':
                     case 'payment':
@@ -632,24 +630,26 @@ export default {
         },
         async verifyCodes(action = null) {
             if (action == 'delete') {
-                this.data.order.code = '';
+                this.data.order.code  = '';
+                this.disabledDiscount = false;
             }
             this.data.discount = 0;
+            this.totals();
             this.data.subtotal = this.data.total;
-            // this.totals();
             if (this.data.order.code) {
                 const response = await apiClient('verifyCodes', 'POST', {event_id: this.event.id, code: this.data.order.code});
                 if (response.error) {
                     showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
+                this.disabledDiscount = true;
                 showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
+                this.totals(true);
                 this.data.discount = this.data.total * (response.data.discount / 100);
                 this.data.discount = Math.round(this.data.discount);
+                this.data.subtotal = this.data.total;
                 this.data.subtotal = this.data.total - this.data.discount;
             }
-            this.totals();
-            // this.updatePrices();
         },
         loadInfo() {
             if (!this.data.selected) {
@@ -666,24 +666,25 @@ export default {
             });
         },
         calculate(val, oldVal) {
-            // this.updatePrices();
             if ((this.data.selected + (val - oldVal)) > 10) {
                 return false;
             }
-            this.data.selected        = this.data.selected + (val - oldVal);
-            this.totals();
+            this.data.selected = this.data.selected + (val - oldVal);
+            this.totals(false, true);
         },
-        totals() {
+        totals(code = false, save = false) {
             this.data.subtotal        = 0;
             this.data.total           = 0;
-            this.data.ticketsReserved = [];
-            this.errors.names         = [];
+            if (save) {
+                this.data.ticketsReserved = [];
+                this.errors.names         = [];
+            }
             this.data.tickets.forEach((t, i) => {
-                let price          = t.promotion && !this.data.discount ? t.priceDiscount : t.price;
+                let price          = t.promotion && !code ? t.priceDiscount : t.price;
                 this.data.subtotal = this.data.subtotal + (t.quantity * price);
                 this.data.total    = this.data.total + (t.quantity * price);
                 t.subtotal         = this.formatCurrency(t.quantity * price) + ' MXN';
-                if (t.quantity > 0) {
+                if (t.quantity > 0 && save) {
                     for (let j = 0; j < t.quantity; j++) {
                         this.errors.names.push(false);
                         this.data.ticketsReserved.push({
@@ -704,6 +705,7 @@ export default {
             }
         },
         viewTickets() {
+            this.totals();
             this.viewInfoCustomer = false;
             this.$nextTick(() => {
                 // Espera a que el DOM se actualice
@@ -718,15 +720,6 @@ export default {
                 // Espera a que el DOM se actualice
                 if (this.$refs.moreInfo) {
                     this.$refs.moreInfo.$el.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        },
-        updatePrices() {
-            this.data.tickets.forEach((t, i) => {
-                t.price = this.event.tickets[i].price;
-                if (t.promotion && !this.data.discount) {
-                    // console.log('else if');
-                    t.price = this.event.tickets[i].price - Math.round(this.event.tickets[i].price * (t.promotion / 100));
                 }
             });
         },
@@ -909,7 +902,6 @@ export default {
             this.data.order.email                = 'miguel.mota.murillo@gmail.com';
             this.data.order.confirm_email        = 'miguel.mota.murillo@gmail.com';
             this.data.order.phone                = '4371041976';
-            this.data.order.payment_method       = '';
             this.data.order.token_id             = '';
             this.data.order.card                 = '';
             this.data.order.code                 = '';
@@ -919,6 +911,21 @@ export default {
             this.data.paymentData.card.exp_year  = '26';
             this.data.paymentData.card.cvc       = '123';
             this.data.cardExpiration             = '06/26';
+            this.disabledDiscount                = false;
+            this.loadPaymentMethod();
+        },
+        loadPaymentMethod() {
+            this.data.order.payment_method = '';
+            this.disabledPaymentMethod     = false;
+            let currentDate = new Date();
+            let date        = new Date(this.event.event_dates[0].date); // formato YYYY-MM-DD
+            date.setDate(date.getDate() - 3);
+            date        = date.toISOString().split('T')[0];
+            currentDate = currentDate.toISOString().split('T')[0];
+            if (currentDate >= date) {
+                this.disabledPaymentMethod     = true;
+                this.data.order.payment_method = 'card';
+            }
         },
         scrollCenterY() {
             const elComponent = this.$refs.dataOrder;

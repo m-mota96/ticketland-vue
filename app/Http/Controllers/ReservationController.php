@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Exports\ReservationsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Traits\ResponseTrait;
 use App\Http\Traits\SendMailTrait;
 use App\Models\Event;
 use App\Models\Payment;
+use ZipArchive;
 
 class ReservationController extends Controller {
     public function reservations($event_id) {
@@ -77,6 +80,42 @@ class ReservationController extends Controller {
             return ResponseTrait::response($txt);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function downloadTickets(Request $request) {
+        try {
+            if (!file_exists('events/zips/'.$request->event_id)) {
+                mkdir('events/zips/'.$request->event_id, 0777, true);
+            }
+            $payment = Payment::with(['accesses:id,payment_id,ticket_id,name,folio', 'accesses.ticket:id,name'])->select('id', 'event_id', 'name')->find($request->payment_id);
+            
+            $zip = new ZipArchive();
+            $filename = 'events/zips/'.$payment->event_id.'/'.$payment->id.'_'.$payment->name.'.zip';
+            if (file_exists($filename)) {
+                unlink($filename);
+            }
+
+            if(!$zip->open($filename, ZIPARCHIVE::CREATE)) {
+                return ResponseTrait::response('Error al crear archivo zip.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+            }
+
+            foreach ($payment->accesses as $key => $a) {
+                $url = 'events/pdf/'.$payment->event_id.'/'.$a->folio.'.pdf';
+                $zip->addFile($url, $a->ticket->name.' '.$a->name.'.pdf');
+            }
+            $zip->close();
+            return ResponseTrait::response(null, ['fileName' => $filename.'?v='.uniqid()]);
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function downloadReservations($event_id) {
+        try {
+            return Excel::download(new ReservationsExport($event_id), 'Reservaciones.xlsx');
+        } catch (\Throwable $th) {
+            return redirect(route('cliente.reservaciones', $event_id));
         }
     }
 }

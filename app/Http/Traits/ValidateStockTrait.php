@@ -5,12 +5,12 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Ticket;
 
 trait ValidateStockTrait {
-    public static function validateStock($tickets, $payment_method) { // Verifica si todavía quedan boletos disponibles
+    public static function validateStock($tickets, $payment_method, $discount) { // Verifica si todavía quedan boletos disponibles
         $success    = true;
         $errors     = [];
         $totalToPay = 0;
         foreach ($tickets as $key => $t) {
-            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'price')
+            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'price', DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))
             ->where('id', $t['id'])
             ->where('status', 1)
             ->where('start_sale', '<=', date('Y-m-d'))
@@ -35,7 +35,11 @@ trait ValidateStockTrait {
                             break;
                     }
                     $ticket->save();
-                    $totalToPay = $totalToPay + ($t['quantity'] * $ticket->price);
+                    if ($ticket->promotion && !$discount['code']) {
+                        $totalToPay = $totalToPay + ($t['quantity'] * ($ticket->price - round($ticket->price * ($ticket->promotion / 100))));
+                    } else {
+                        $totalToPay = $totalToPay + ($t['quantity'] * $ticket->price);
+                    }
                 }
             }
         }

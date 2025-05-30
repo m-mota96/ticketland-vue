@@ -37,8 +37,8 @@ class TicketController extends Controller {
                 'name'            => trim($request->name),
                 'description'     => trim($request->description),
                 'valid'           => $request->valid,
-                'promotion'       => $request->promotion ? $request->promotion : null,
-                'date_promotion'  => $request->date_promotion,
+                'promotion'       => $request->discount ? $request->promotion : null,
+                'date_promotion'  => $request->discount ? $request->date_promotion : null,
                 'start_sale'      => $request->start_sale,
                 'stop_sale'       => $request->stop_sale,
                 'price'           => $request->cost_type === 'paid' ? $request->price : null,
@@ -58,8 +58,8 @@ class TicketController extends Controller {
             $ticket->name            = trim($request->name);
             $ticket->description     = trim($request->description);
             $ticket->valid           = $request->valid;
-            $ticket->promotion       = $request->promotion ? $request->promotion : null;
-            $ticket->date_promotion  = $request->date_promotion;
+            $ticket->promotion       = $request->discount ? $request->promotion : null;
+            $ticket->date_promotion  = $request->discount ? $request->date_promotion : null;
             $ticket->start_sale      = $request->start_sale;
             $ticket->stop_sale       = $request->stop_sale;
             $ticket->price           = $request->cost_type === 'paid' ? $request->price : null;

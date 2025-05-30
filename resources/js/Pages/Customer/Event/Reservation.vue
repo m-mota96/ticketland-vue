@@ -12,7 +12,16 @@
         <el-col :span="24">
             <el-card class="w-100 pt-5 pb-5">
                 <el-row :gutter="20">
-                    <el-col class="mb-5" :span="4" :offset="15">
+                    <el-col :span="3">
+                        <br>
+                        <a :href="route('cliente.downloadReservations', event.id)">
+                            <el-button class="w-100" type="success">
+                                <font-awesome-icon class="mr-2" :icon="['fas', 'file-excel']" />
+                                Generar Excel
+                            </el-button>
+                        </a>
+                    </el-col>
+                    <el-col class="mb-5" :span="4" :offset="12">
                         <label for="order">Ordernar por</label>
                         <el-select v-model="order.orderBy" @change="getPayments" id="order">
                             <el-option :key="0" label="Id" value="id" />
@@ -130,7 +139,7 @@
                                     {{ formatDate(scope.row.created_at) }}<br>{{ formatTime(scope.row.created_at) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Acciones" width="100" align="center">
+                            <el-table-column label="Acciones" width="130" align="center">
                                 <template #default="scope">
                                     <el-button-group>
                                         <el-tooltip
@@ -153,6 +162,17 @@
                                         >
                                             <el-button class="pl-2 pr-2" type="success" @click="$refs.ViewTickets.showTickets(scope.row.accesses)">
                                                 <font-awesome-icon :icon="['fas', 'eye']" />
+                                            </el-button>
+                                        </el-tooltip>
+                                        <el-tooltip
+                                            class="box-item"
+                                            effect="dark"
+                                            content="Descargar boletos"
+                                            placement="top"
+                                            v-if="scope.row.status == 'payed'"
+                                        >
+                                            <el-button class="pl-2 pr-2" color="#626aef" @click="downloadTickets(scope.row.id)">
+                                                <font-awesome-icon :icon="['fas', 'download']" />
                                             </el-button>
                                         </el-tooltip>
                                     </el-button-group>
@@ -269,7 +289,7 @@ export default {
                     const response = await apiClient('customer/resendEmail', 'POST', {event_id: this.event.id, payment_id, email: result.value});
                     this.loading = false;
                     if (response.error) {
-                    showNotification('¡Error!', response.msj, 'error');
+                        showNotification('¡Error!', response.msj, 'error');
                         return false;
                     }
                     this.getPayments();
@@ -277,6 +297,18 @@ export default {
                 }
             });
         },
+        async downloadTickets(payment_id) {
+            const response = await apiClient('customer/downloadTickets', 'GET', {event_id: this.event.id, payment_id});
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error');
+                return false;
+            }
+            location.href = this.appUrl+'/'+response.data.fileName;
+        },
+        // downloadReservations() {
+        //     console.log('entre');
+        //     location.ref = this.appUrl+`/customer/downloadReservations/${this.event.id}`;
+        // },
         handleSizeChange(val) {
             // console.log(`${val} items per page`)
             this.getPayments();
