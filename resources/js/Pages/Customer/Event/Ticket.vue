@@ -83,7 +83,7 @@
         </el-col>
     </el-row>
     <Footer></Footer>
-    <EditTicket ref="EditTicket" :eventId="event.id" :daysEvent="event.event_dates.length" :getTickets="getTickets"></EditTicket>
+    <EditTicket ref="EditTicket" :eventId="event.id" :daysEvent="event.event_dates.length" :getTickets="getTickets" :modelPayment="event.model_payment"></EditTicket>
 </template>
 
 <script>

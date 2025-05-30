@@ -37,11 +37,13 @@ class TicketController extends Controller {
                 'name'            => trim($request->name),
                 'description'     => trim($request->description),
                 'valid'           => $request->valid,
+                'promotion'       => $request->promotion ? $request->promotion : null,
+                'date_promotion'  => $request->date_promotion,
                 'start_sale'      => $request->start_sale,
                 'stop_sale'       => $request->stop_sale,
                 'price'           => $request->cost_type === 'paid' ? $request->price : null,
-                'min_reservation' => $request->min_reservation,
-                'max_reservation' => $request->max_reservation,
+                'min_reservation' => 1,
+                'max_reservation' => 10,
                 'quantity'        => $request->quantity
             ]);
             return ResponseTrait::response('El boleto se creo correctamente.');
@@ -56,11 +58,13 @@ class TicketController extends Controller {
             $ticket->name            = trim($request->name);
             $ticket->description     = trim($request->description);
             $ticket->valid           = $request->valid;
+            $ticket->promotion       = $request->promotion ? $request->promotion : null;
+            $ticket->date_promotion  = $request->date_promotion;
             $ticket->start_sale      = $request->start_sale;
             $ticket->stop_sale       = $request->stop_sale;
             $ticket->price           = $request->cost_type === 'paid' ? $request->price : null;
-            $ticket->min_reservation = $request->min_reservation;
-            $ticket->max_reservation = $request->max_reservation;
+            $ticket->min_reservation = 1;
+            $ticket->max_reservation = 10;
             $ticket->quantity        = $request->quantity;
             $ticket->save();
             return ResponseTrait::response('El boleto se modificó correctamente.');

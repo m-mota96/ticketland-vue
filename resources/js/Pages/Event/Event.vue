@@ -40,8 +40,13 @@
                 <el-col :span="24">
                     <el-row class="mb-6" :gutter="gutterValue2" v-for="(t, index) in data.tickets" :key="index">
                         <el-col class="mb-3" :sm="24" :md="16" :lg="18" :xl="18">
-                                <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
-                                <h5 class="subtitle is-5 has-text-link mb-1">{{ formatCurrency(t.price) }} MXN</h5>
+                                <h4 class="subtitle is-4 has-text-dark mb-0" v-if="!t.promotion">{{ t.name }}</h4>
+                                <el-badge :value="`-${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion">
+                                    <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
+                                </el-badge>
+                                <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
+                                <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion">{{ formatCurrency(t.priceDiscount) }} MXN</h5>
+                                <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion">{{ formatCurrency(t.price) }} MXN</h5>
                                 <p class="has-text-black justify mb-0" v-if="t.description">{{ t.description }}</p>
                         </el-col>
                         <el-col class="mb-6" :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
@@ -246,7 +251,7 @@
                     </el-row>
                 </el-col>
                 <el-col :span="24">
-                    <el-table class="w-100" :data="filteredTickets" stripe header-cell-class-name="has-text-dark" empty-text="Ningún dato disponible en esta tabla">
+                    <el-table class="w-100 mb-3" :data="filteredTickets" stripe header-cell-class-name="has-text-dark" empty-text="Ningún dato disponible en esta tabla">
                         <el-table-column prop="name" label="Producto" />
                         <el-table-column label="Cantidad" align="center">
                             <template #default="scope">
@@ -255,7 +260,16 @@
                         </el-table-column>
                         <el-table-column label="Precio unitario">
                             <template #default="scope">
-                                {{ scope.row.priceUnit }}
+                                <span v-if="!scope.row.promotion" class="has-text-success">{{ scope.row.priceUnit }}</span>
+                                <del v-if="scope.row.promotion && !data.discount" class="has-text-danger">{{ scope.row.priceUnit }}</del>
+                                <span v-if="scope.row.promotion && data.discount" class="has-text-success">{{ scope.row.priceUnit }}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="Precio c/descuento">
+                            <template #default="scope">
+                                <span v-if="scope.row.promotion && !data.discount" class="has-text-success">{{ formatCurrency(scope.row.priceDiscount) }} MXN</span>
+                                <del v-if="scope.row.promotion && data.discount" class="has-text-danger">{{ formatCurrency(scope.row.priceDiscount) }} MXN</del>
+                                <span v-if="!scope.row.promotion" class="has-text-danger"><del>N/A</del></span>
                             </template>
                         </el-table-column>
                         <el-table-column label="Subtotal">
@@ -274,6 +288,7 @@
                             </template>
                         </el-table-column> -->
                     </el-table>
+                    <i class="has-text-danger"><font-awesome-icon :icon="['fas', 'circle-info']" /> Si aplicas un código de descuento no se tomará en cuenta el precio con descuento.</i>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6" :inline="true">
                     <el-row :gutter="5">
@@ -289,7 +304,8 @@
                         </el-col>
                         <el-col :xs="7" :sm="7" :md="6" :lg="6" :xl="6">
                             <br>
-                            <el-button class="w-100" type="success" @click="verifyCodes">Validar cupón</el-button>
+                            <el-button class="w-100" type="success" @click="verifyCodes" v-if="!data.discount">Validar cupón</el-button>
+                            <el-button class="w-100" type="danger" @click="verifyCodes('delete')" v-if="data.discount">Borrar cupón</el-button>
                         </el-col>
                     </el-row>
                 </el-col>
@@ -388,8 +404,10 @@
                     </el-row>
                 </el-col>
                 <el-col :span="24" class="has-text-centered mt-3">
-                    <el-button type="primary" size="large" @click="payment" v-if="event.active">
-                        <font-awesome-icon :icon="['fas', 'dollar-sign']" />&nbsp;&nbsp;Realizar pago
+                    <el-button type="primary" size="large" @click="payment" v-if="event.status == 1 && data.order.payment_method">
+                        <font-awesome-icon :icon="['fas', 'dollar-sign']" v-if="data.order.payment_method == 'card'" />
+                        <font-awesome-icon :icon="['fas', 'check']" v-if="data.order.payment_method == 'oxxo'" />
+                        &nbsp;&nbsp;{{ data.order.payment_method == 'card' ? 'Realizar pago' : 'Realizar pedido' }}
                     </el-button>
                 </el-col>
             </el-row>
@@ -612,9 +630,13 @@ export default {
             showNotification('¡Correcto!', response.msj, 'success', 20000);
             return false;
         },
-        async verifyCodes() {
+        async verifyCodes(action = null) {
+            if (action == 'delete') {
+                this.data.order.code = '';
+            }
             this.data.discount = 0;
             this.data.subtotal = this.data.total;
+            // this.totals();
             if (this.data.order.code) {
                 const response = await apiClient('verifyCodes', 'POST', {event_id: this.event.id, code: this.data.order.code});
                 if (response.error) {
@@ -626,6 +648,8 @@ export default {
                 this.data.discount = Math.round(this.data.discount);
                 this.data.subtotal = this.data.total - this.data.discount;
             }
+            this.totals();
+            // this.updatePrices();
         },
         loadInfo() {
             if (!this.data.selected) {
@@ -642,18 +666,23 @@ export default {
             });
         },
         calculate(val, oldVal) {
+            // this.updatePrices();
             if ((this.data.selected + (val - oldVal)) > 10) {
                 return false;
             }
             this.data.selected        = this.data.selected + (val - oldVal);
+            this.totals();
+        },
+        totals() {
             this.data.subtotal        = 0;
             this.data.total           = 0;
             this.data.ticketsReserved = [];
             this.errors.names         = [];
             this.data.tickets.forEach((t, i) => {
-                this.data.subtotal = this.data.subtotal + (t.quantity * t.price);
-                this.data.total    = this.data.total + (t.quantity * t.price);
-                t.subtotal         = this.formatCurrency(t.quantity * t.price) + ' MXN';
+                let price          = t.promotion && !this.data.discount ? t.priceDiscount : t.price;
+                this.data.subtotal = this.data.subtotal + (t.quantity * price);
+                this.data.total    = this.data.total + (t.quantity * price);
+                t.subtotal         = this.formatCurrency(t.quantity * price) + ' MXN';
                 if (t.quantity > 0) {
                     for (let j = 0; j < t.quantity; j++) {
                         this.errors.names.push(false);
@@ -689,6 +718,15 @@ export default {
                 // Espera a que el DOM se actualice
                 if (this.$refs.moreInfo) {
                     this.$refs.moreInfo.$el.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        },
+        updatePrices() {
+            this.data.tickets.forEach((t, i) => {
+                t.price = this.event.tickets[i].price;
+                if (t.promotion && !this.data.discount) {
+                    // console.log('else if');
+                    t.price = this.event.tickets[i].price - Math.round(this.event.tickets[i].price * (t.promotion / 100));
                 }
             });
         },
@@ -850,11 +888,13 @@ export default {
                     name: t.name,
                     description: t.description,
                     price: t.price,
+                    priceDiscount: !t.promotion ? 0 : (t.price - Math.round(t.price * (t.promotion / 100))),
                     priceUnit: this.formatCurrency(t.price) + ' MXN',
                     subtotal: '',
                     quantity: 0,
                     discount: 0,
-                    available: t.available
+                    available: t.available,
+                    promotion: t.promotion
                 })
             });
         },

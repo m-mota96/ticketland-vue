@@ -79,12 +79,15 @@ class DiscountController extends Controller {
     public function deleteDiscount(Request $request) {
         try {
             $code = Code::with(['tickets'])->find($request->id);
-            foreach ($code->tickets as $key => $t) {
-                if ($t->pivot->used > 0 || $t->pivot->reserved > 0) {
-                    return ResponseTrait::response('No se puede eliminar el código porque ya ha sido utilizado.', null, true, 409);
-                }
+            // foreach ($code->tickets as $key => $t) {
+            //     if ($t->pivot->used > 0 || $t->pivot->reserved > 0) {
+            //         return ResponseTrait::response('No se puede eliminar el código porque ya ha sido utilizado.', null, true, 409);
+            //     }
+            // }
+            // $code->tickets()->detach();
+            if ($code->used > 0 || $code->reserved > 0) {
+                return ResponseTrait::response('No se puede eliminar el código porque ya ha sido utilizado.', null, true, 409);
             }
-            $code->tickets()->detach();
             $code->delete();
             return ResponseTrait::response('El código se eliminó correctamente.');
         } catch (\Throwable $th) {
