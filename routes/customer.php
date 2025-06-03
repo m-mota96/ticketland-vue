@@ -34,6 +34,8 @@ Route::prefix('customer')->middleware('auth')->group(function () {
     Route::get('events', [EventController::class, 'getEvents']);
     Route::post('event', [EventController::class, 'createEvent']);
     Route::post('uploadFiles', [MyProfileController::class, 'uploadFiles']);
+    Route::post('taxInformation', [MyProfileController::class, 'taxInformation']);
+    Route::post('bankData', [MyProfileController::class, 'bankData']);
 });
 
 Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group(function () {
