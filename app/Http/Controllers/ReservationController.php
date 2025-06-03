@@ -22,32 +22,32 @@ class ReservationController extends Controller {
 
     public function getReservations(Request $request) {
         try {
-            $search = $request->search;
-            $where = 'event_id = '.$request->event_id;
-            if ($search['email']) {
-                $where .= ' AND name LIKE "%'.$search['name'].'%"';
-            }
-            if ($search['email']) {
-                $where .= ' AND email LIKE "%'.$search['email'].'%"';
-            }
-            if ($search['phone']) {
-                $where .= ' AND phone LIKE "%'.$search['phone'].'%"';
-            }
-            if ($search['type'] !== 'all') {
-                $where .= ' AND type = "'.$search['type'].'"';
-            }
-            if ($search['status'] !== 'all') {
-                $where .= ' AND status = "'.$search['status'].'"';
-            }
-
             $pagination = $request->pagination;
             $page       = $pagination['currentPage']; // Página actual
             $limit      = $pagination['pageSize']; // Tamaño de la página
             $offset     = ($page - 1) * $limit; // Calcular el offset
+            $search     = $request->search;
+            $query      = Payment::with(['accesses.ticket'])->where('event_id', $request->event_id);
 
-            $payments    = Payment::with(['accesses.ticket'])
-            ->whereRaw($where)->orderBy($request->order['orderBy'], $request->order['order'])
-            ->offset($offset)->limit($limit)->get();
+            if ($search['email']) {
+                $query->whereRaw('name LIKE "%'.$search['name'].'%"');
+            }
+            if ($search['email']) {
+                $query->whereRaw('email LIKE "%'.$search['email'].'%"');
+            }
+            if ($search['phone']) {
+                $query->whereRaw('phone LIKE "%'.$search['phone'].'%"');
+            }
+            if ($search['type'] !== 'all') {
+                $query->where('type', $search['type']);
+            }
+            if ($search['status'] !== 'all') {
+                $query->where('status', $search['status']);
+            }
+
+            $payments = $query->orderBy($request->order['orderBy'], $request->order['order'])
+            ->offset($offset)->limit($limit)
+            ->get();
             $allPayments = Payment::where('event_id', $request->event_id)->count();
             // dd($payments);
             return ResponseTrait::response(null, ['payments' => $payments, 'count' => $allPayments]);

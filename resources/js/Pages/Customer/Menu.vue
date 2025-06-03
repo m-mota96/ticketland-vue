@@ -7,8 +7,9 @@
         text-color="white"
     >
         <el-menu-item index="0"></el-menu-item>
-        <el-menu-item index="1"><a :href="route('cliente.mi_perfil')">Mi perfil</a></el-menu-item>
-        <el-sub-menu index="2" class="me-10">
+        <el-menu-item index="1" v-if="viewDashboard"><a :href="route('cliente.mis_eventos')">Mis eventos</a></el-menu-item>
+        <el-menu-item index="2" v-if="!viewDashboard"><a :href="route('cliente.mi_perfil')">Mi perfil</a></el-menu-item>
+        <el-sub-menu index="3" class="me-10">
             <template #title>{{ $page.props.auth.user.name }}</template>
             <el-menu-item index="2-1">
                 <ResponsiveNavLink
@@ -30,6 +31,13 @@
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
   
 export default {
+    props: {
+        viewDashboard: {
+            type: Boolean,
+            required: false,
+            default: false
+        }
+    },
     components: {
         //Aqui se agregan los componentes, en dado caso que quiereas usar, para separar código, yo separo los modales y aqui los agrego
         ResponsiveNavLink

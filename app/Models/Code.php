@@ -27,4 +27,8 @@ class Code extends Model
             return $query->where('status', 'payed');
         });
     }
+
+    public function payments() {
+        return $this->hasMany(Payment::class);
+    }
 }

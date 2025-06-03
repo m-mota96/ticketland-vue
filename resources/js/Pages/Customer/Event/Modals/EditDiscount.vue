@@ -7,7 +7,7 @@
         style="margin-top: 2% !important;"
     >
         <el-row :gutter="20" class="mb-4">
-            <el-col :span="12" class="mb-5">
+            <el-col :span="12" class="mb-3">
                 <label class="bold" for="code">Ingrese el código <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
@@ -20,7 +20,7 @@
                 />
                 <span class="text-error" v-if="errors.code">El código es obligatorio.</span>
             </el-col>
-            <el-col :span="12" class="mb-5">
+            <el-col :span="12" class="mb-3">
                 <label class="bold" for="discount">Porcentaje de descuento <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
@@ -32,7 +32,7 @@
                 />
                 <span class="text-error" v-if="errors.discount">El porcentaje es obligatorio.</span>
             </el-col>
-            <el-col :span="12" class="mb-5">
+            <el-col :span="12">
                 <label class="bold" for="quantity">Cantidad disponible <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
@@ -44,6 +44,7 @@
                 />
                 <span class="text-error" v-if="errors.quantity">La cantidad es obligatoria.</span>
             </el-col>
+
             <!-- <el-col :span="12" class="mb-5">
                 <label class="bold" for="tickets">Asignar código a <span class="has-text-danger">*</span></label>
                 <el-select
@@ -78,8 +79,8 @@
                 </el-select>
                 <span class="text-error" v-if="errors.tickets">Debe elegir al menos un boleto.</span>
             </el-col> -->
-            <el-col :span="12" class="mb-5">
-                <label class="bold" for="expiration">Fecha de expiración <span class="has-text-grey-light">(Opcional)</span></label>
+            <el-col :span="12">
+                <label class="bold" for="expiration">Fecha de expiración</label>
                 <el-date-picker
                     class="el-form-item mb-0 mt-1 w-100"
                     :class="{'is-error': errors.expiration}"
@@ -92,6 +93,30 @@
                     value-format="YYYY-MM-DD"
                 />
                 <span class="text-error" v-if="errors.expiration">La fecha de expiración es obligatoria.</span>
+            </el-col>
+            <el-col :span="24">
+                <hr>
+            </el-col>
+            <el-col :span="12" class="mb-3">
+                <label class="bold">Empresa o influencer</label>
+                <el-input size="large" v-model="code.influencer" />
+            </el-col>
+            <el-col :span="12" class="mb-3">
+                <label class="bold">Correo electrónico</label>
+                <el-input size="large" class="el-form-item mb-0" :class="{'is-error': errors.email}" v-model="code.email" />
+                <span class="text-error" v-if="errors.email">Ingresa un correo válido.</span>
+            </el-col>
+            <el-col :span="12" class="mb-3">
+                <label class="bold">Contraseña</label>
+                <el-input size="large" class="el-form-item mb-0" :class="{'is-error': errors.password_incorrect}" v-model="code.password" />
+                <span class="text-error" v-if="errors.password_incorrect">Las contraseñas no coinciden.</span>
+            </el-col>
+            <el-col :span="12" class="mb-3">
+                <label class="bold">Confirmar contraseña</label>
+                <el-input size="large" class="el-form-item mb-0" :class="{'is-error': errors.password_incorrect}" v-model="code.password_confirm" />
+            </el-col>
+            <el-col :span="24">
+                <b>Nota:</b> si la empresa o el influencer ya estan registrados solo ingrese el nombre y el correo electrónico.
             </el-col>
         </el-row>
         <template #footer>
@@ -127,7 +152,11 @@ export default {
                 quantity: 0,
                 expiration: '',
                 checkAll: false,
-                tickets: []
+                tickets: [],
+                influencer: '',
+                email: '',
+                password: '',
+                password_confirm: ''
             },
             errors: {
                 name: false,
@@ -135,6 +164,8 @@ export default {
                 quantity: false,
                 tickets: false,
                 expiration: false,
+                email: false,
+                password_incorrect: false
             }
         }
     },
@@ -168,7 +199,7 @@ export default {
                 }
                 this.isDisabled = false;
                 if (response.error) {
-                    showNotification('¡Error!', response.msj, 'error');
+                    showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
                 this.getDiscounts();
@@ -186,7 +217,8 @@ export default {
         },
         validate() {
             this.resetErrors();
-            let valid = true;
+            let valid       = true;
+            const mailRegex =  /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/;
             if (!this.code.code) {
                 this.errors.code = true;
                 valid            = false;
@@ -199,6 +231,18 @@ export default {
                 this.errors.quantity = true;
                 valid                = false;
             }
+            if (this.code.email) {
+                if (!mailRegex.test(this.code.email)) {
+                    this.errors.email = true;
+                    valid             = false;
+                }
+            }
+            if (this.code.password && this.code.password_confirm) {
+                if (this.code.password != this.code.password_confirm) {
+                    this.errors.password_incorrect = true;
+                    valid                          = false;
+                }
+            }
             // if (this.ticketsCheck.length === 0) {
             //     this.errors.tickets = true;
             //     valid               = false;
@@ -207,22 +251,30 @@ export default {
         },
         showModal(_code = null) {
             this.resetErrors();
-            this.code.id         = null;
-            this.code.event_id   = this.eventId;
-            this.code.code       = '';
-            this.code.discount   = 0;
-            this.code.quantity   = 0;
-            this.code.expiration = '';
-            this.code.checkAll   = false;
-            this.indeterminate   = false;
-            this.ticketsCheck    = [];
+            this.code.id               = null;
+            this.code.event_id         = this.eventId;
+            this.code.code             = '';
+            this.code.discount         = 0;
+            this.code.quantity         = 0;
+            this.code.expiration       = '';
+            this.code.checkAll         = false;
+            this.indeterminate         = false;
+            this.ticketsCheck          = [];
+            this.code.influencer       = '';
+            this.code.email            = '';
+            this.code.password         = '';
+            this.code.password_confirm = '';
             if (_code) {
                 // console.log(_code.tickets.length, this.tickets.length);
-                this.code.id         = _code.id;
-                this.code.code       = _code.code;
-                this.code.discount   = _code.discount;
-                this.code.quantity   = _code.quantity;
-                this.code.expiration = _code.expiration;
+                this.code.id               = _code.id;
+                this.code.code             = _code.code;
+                this.code.discount         = _code.discount;
+                this.code.quantity         = _code.quantity;
+                this.code.expiration       = _code.expiration;
+                this.code.influencer       = _code.customer_name;
+                this.code.email            = _code.email;
+                this.code.password         = _code.password;
+                this.code.password_confirm = _code.password_confirm;
                 // if (_code.tickets.length === this.tickets.length) {
                 //     this.code.checkAll = true;
                 //     this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
@@ -234,11 +286,13 @@ export default {
             this.activeEditDiscount = true;
         },
         resetErrors() {
-            this.errors.code       = false;
-            this.errors.discount   = false;
-            this.errors.quantity   = false;
-            this.errors.tickets    = false;
-            this.errors.expiration = false;
+            this.errors.code               = false;
+            this.errors.discount           = false;
+            this.errors.quantity           = false;
+            this.errors.tickets            = false;
+            this.errors.expiration         = false;
+            this.errors.email              = false;
+            this.errors.password_incorrect = false;
         },
         isNumber(evt) {
             const charCode = evt.which ? evt.which : evt.keyCode;
@@ -255,5 +309,7 @@ export default {
 </script>
 
 <style scoped>
-    
+    hr {
+        border: 0.01rem solid #eeeceb;
+    }
 </style>

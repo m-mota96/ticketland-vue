@@ -11,6 +11,7 @@ trait OrderTrait {
         $payment = Payment::create([
             'event_id'  => $event_id,
             'order_id'  => $order_id,
+            'code_id'   => $discount['code_id'],
             'name'      => $order['name'],
             'email'     => $order['email'],
             'phone'     => $order['phone'],

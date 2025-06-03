@@ -9,7 +9,8 @@
                         <el-row>
                             <el-col :span="18">
                                 <h4 class="title is-4 has-text-black mb-2">{{ d.code }}</h4>
-                                <h4 class="title is-5 has-text-grey mb-5">Descuento: {{ d.discount }}%</h4>
+                                <h4 class="title is-5 has-text-grey mb-2">Descuento: {{ d.discount }}%</h4>
+                                <h6 class="subtitle is-6 has-text-link mb-5">Boletos vendidos: {{ d.totalTickets }}</h6>
                                 <!-- <p class="mb-5 has-text-link">
                                     [<span v-for="(t, index) in d.tickets" :key="index">
                                         <span v-if="index == 0">{{ t.name }} ({{ t.pivot.used }})</span><span v-if="index != 0">, {{ t.name }} ({{ t.pivot.used }})</span>
@@ -103,6 +104,13 @@ export default {
     methods: {
         async getDiscounts() {
             const response = await apiClient('customer/discounts', 'GET', {event_id: this.event.id});
+            response.data.forEach(r => {
+                let tickets = 0;
+                r.payments.forEach(p => {
+                    tickets = tickets + p.accesses.length;
+                });
+                r.totalTickets = tickets;
+            });
             this.discounts = response.data;
         },
         async updateStatus(id, status) {

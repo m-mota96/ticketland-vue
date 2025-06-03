@@ -1,5 +1,5 @@
 <template>
-    <Menu></Menu>
+    <Menu :viewDashboard="true"></Menu>
     <div class="container">
         <el-row>
             <el-col :span="20" :offset="2">
@@ -34,7 +34,7 @@
                             <p class="has-text-success pt-2 bold" v-if="user.status"><font-awesome-icon :icon="['fas', 'file']" /> Con contrato</p>
                             <p class="has-text-danger pt-2 bold" v-if="!user.status"><font-awesome-icon :icon="['fas', 'file']" /> Sin contrato</p>
                         </el-col>
-                        <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb-4">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb-4" v-if="$page.props.auth.user.contract == 'inactive'">
                             <p class="text-justify">
                                 <b>Nota: </b>Para que tu cuenta tenga contrato debes completar toda la información solicitada y subir tus documentos.<br>
                                 Una ves hecho esto, se revisará todo por el equipo legal de Ticketland y si todo es correcto se activará tu cuenta.<br>
@@ -177,6 +177,7 @@
                                 v-model="bank_data.bank"
                                 :disabled="disabledBankData"
                             />
+                            <span class="text-error" v-if="errors.bank">El banco es obligatorio.</span>
                         </el-col>
                         <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" class="mb-4">
                             <label class="has-text-dark" for="key">Clave <span class="has-text-danger">*</span></label>
@@ -188,6 +189,7 @@
                                 :disabled="disabledBankData"
                                 @keypress="isNumber($event)"
                             />
+                            <span class="text-error" v-if="errors.key">La clave es obligatoria.</span>
                         </el-col>
                         <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" class="mb-4">
                             <label class="has-text-dark" for="number_account">Número de cuenta <span class="has-text-danger">*</span></label>
@@ -199,6 +201,7 @@
                                 :disabled="disabledBankData"
                                 @keypress="isNumber($event)"
                             />
+                            <span class="text-error" v-if="errors.number_account">El número de cuenta es obligatorio.</span>
                         </el-col>
                         <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" class="mb-4">
                             <label class="has-text-dark" for="name_propietary">Nombre del tarjetahabiente <span class="has-text-danger">*</span></label>
@@ -209,6 +212,7 @@
                                 v-model="bank_data.name_propietary"
                                 :disabled="disabledBankData"
                             />
+                            <span class="text-error" v-if="errors.name_propietary">El nombre es obligatorio.</span>
                         </el-col>
                         <el-col :span="24" class="text-center" v-if="!bank_data.id">
                             <p class="has-text-black mb-2"><b>Nota: </b>Verifica que la información sea correcta una vez guardada no podrá ser modificada.</p>
@@ -453,6 +457,7 @@ export default {
         }
     },
     beforeMount() {
+        document.title = `Ticketland - Mi perfil`;
         this.verifyStatus();
         if (this.$page.props.tax_information) {
             this.tax_information.id                   = this.$page.props.tax_information.id;
@@ -504,6 +509,7 @@ export default {
             }
         },
         validateTaxInformation() {
+            this.resetErrorsTaxInfo();
             let valid = true;
             if (!this.tax_information.legal_representative) {
                 this.errors.legal_representative = true;
@@ -544,24 +550,42 @@ export default {
             return valid;
         },
         validateBankData() {
+            this.resetErrorsBankData();
             let valid = true;
-            if (this.bank_data.name_propietary) {
+            if (!this.bank_data.name_propietary) {
                 this.errors.name_propietary = true;
                 valid                       = false;
             }
-            if (this.bank_data.bank) {
+            if (!this.bank_data.bank) {
                 this.errors.bank = true;
                 valid            = false;
             }
-            if (this.bank_data.key) {
+            if (!this.bank_data.key) {
                 this.errors.key = true;
                 valid           = false;
             }
-            if (this.bank_data.number_account) {
+            if (!this.bank_data.number_account) {
                 this.errors.number_account = true;
                 valid                      = false;
             }
             return valid;
+        },
+        resetErrorsTaxInfo() {
+            this.errors.legal_representative = false;
+            this.errors.business_name        = false;
+            this.errors.rfc                  = false;
+            this.errors.address              = false;
+            this.errors.external_number      = false;
+            this.errors.colony               = false;
+            this.errors.postal_code          = false;
+            this.errors.state                = false;
+            this.errors.city                 = false;
+        },
+        resetErrorsBankData() {
+            this.errors.name_propietary = false;
+            this.errors.bank            = false;
+            this.errors.key             = false;
+            this.errors.number_account  = false;
         },
         handleSuccess(response, file, fileList) {
             // const refImage = this.typeUpload == 'profile' ? 'update-profile' : 'update-logo';

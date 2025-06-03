@@ -53,11 +53,14 @@ class MyProfileController extends Controller {
 
     public function bankData(Request $request) {
         try {
-            // $bank_data = BankData::create([
-            //     'user_id'         => auth()->user()->id,
-            //     'name_propietary' => trim($request->name_propietary),
-
-            // ]);
+            $bank_data = BankData::create([
+                'user_id'         => auth()->user()->id,
+                'name_propietary' => trim($request->name_propietary),
+                'bank'            => trim($request->bank),
+                'key'             => trim($request->key),
+                'number_account'  => trim($request->number_account),
+            ]);
+            return ResponseTrait::response('La información bancaria se guardó correctamente.', $bank_data);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

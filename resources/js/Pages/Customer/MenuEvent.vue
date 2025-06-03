@@ -6,9 +6,13 @@
         background-color="#100e0d"
         text-color="white"
     >
-        <el-menu-item index="0" class="ms-10"><font-awesome-icon :icon="['fas', 'link']" /> <a class="ml-1 mt-1" :href="appUrl+'/evento/'+$page.props.event.url" target="_blank">{{appUrl}}/evento/{{$page.props.event.url}}</a></el-menu-item>
-        <el-menu-item index="1"><font-awesome-icon :icon="['fas', 'house-chimney']" /><a class="ml-1 mt-1" :href="route('cliente.mis_eventos')">Dashboard</a></el-menu-item>
-        <el-sub-menu index="2" class="me-10 mt-1">
+        <el-menu-item index="0" class="ms-10 pr-0"><font-awesome-icon :icon="['fas', 'link']" /> <a class="ml-1 mt-1" :href="appUrl+'/evento/'+$page.props.event.url" target="_blank">{{appUrl}}/evento/{{$page.props.event.url}}</a></el-menu-item>
+        <el-menu-item index="1">
+            <span class="has-text-success mt-1" v-if="$page.props.auth.user.contract == 'active'"><font-awesome-icon :icon="['fas', 'file']" /> Con contrato</span>
+            <span class="has-text-danger mt-1" v-if="$page.props.auth.user.contract == 'inactive'"><font-awesome-icon :icon="['fas', 'file']" /> Sin contrato</span>
+        </el-menu-item>
+        <el-menu-item index="2"><font-awesome-icon :icon="['fas', 'house-chimney']" /><a class="ml-1 mt-1" :href="route('cliente.mis_eventos')">Dashboard</a></el-menu-item>
+        <el-sub-menu index="3" class="me-10 mt-1">
             <template #title>{{ $page.props.auth.user.name }}</template>
             <el-menu-item index="2-1">
                 <ResponsiveNavLink
@@ -52,7 +56,7 @@ export default {
     .me-10 {
         margin-right: 41vh !important;
     }
-    .el-menu--horizontal > .el-menu-item:nth-child(1) {
+    .el-menu--horizontal > .el-menu-item:nth-child(2) {
         margin-right: auto;
     }
 </style>

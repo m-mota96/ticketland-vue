@@ -8,7 +8,7 @@ use DateTimeInterface;
 class Payment extends Model
 {
     protected $fillable = [
-        'event_id', 'order_id', 'name', 'email', 'phone', 'type', 'reference', 'amount', 'code', 'discount', 'status', 
+        'event_id', 'order_id', 'code_id', 'name', 'email', 'phone', 'type', 'reference', 'amount', 'code', 'discount', 'status', 
     ];
 
     public function accesses() {
@@ -17,6 +17,10 @@ class Payment extends Model
 
     public function event() {
         return $this->belongsTo(Event::class);
+    }
+
+    public function discountCode() {
+        return $this->belongsTo(Code::class);
     }
 
     protected function serializeDate(DateTimeInterface $date) {
