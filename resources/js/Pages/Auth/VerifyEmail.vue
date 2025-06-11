@@ -1,8 +1,7 @@
 <script setup>
-import { computed } from 'vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import apiClient from '@/apiClient';
 
 const props = defineProps({
     status: {
@@ -10,10 +9,16 @@ const props = defineProps({
     },
 });
 
+const appUrl = ref(window.location.origin);
 const form = useForm({});
 
 const submit = () => {
     form.post(route('verification.send'));
+};
+
+const logout = async () => {
+    await apiClient('logout', 'POST');
+    location.href = window.location.origin;
 };
 
 const verificationLinkSent = computed(
@@ -22,40 +27,43 @@ const verificationLinkSent = computed(
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Email Verification" />
-
-        <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            Thanks for signing up! Before getting started, could you verify your
-            email address by clicking on the link we just emailed to you? If you
-            didn't receive the email, we will gladly send you another.
-        </div>
-
-        <div
-            class="mb-4 text-sm font-medium text-green-600 dark:text-green-400"
-            v-if="verificationLinkSent"
-        >
-            A new verification link has been sent to the email address you
-            provided during registration.
-        </div>
-
-        <form @submit.prevent="submit">
-            <div class="mt-4 flex items-center justify-between">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Resend Verification Email
-                </PrimaryButton>
-
-                <Link
-                    :href="route('logout')"
-                    method="post"
-                    as="button"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                    >Log Out</Link
-                >
-            </div>
-        </form>
-    </GuestLayout>
+    <el-row>
+        <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 5, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6">
+            <el-card class="p-5">
+                <el-col :span="24">
+                    <a :href="appUrl" class="is-justify-content-center is-flex">
+                        <img src="../../../../public/general/ticketland.png" alt="Ticketland" class="w-25 mb-5">
+                    </a>
+                </el-col>
+                <p class="text-justify has-text-black">
+                    ¡Gracias por registrarte!
+                    <br>Antes de empezar, ¿Podrías verificar tu dirección de correo electrónico 
+                    haciendo clic en el enlace que te acabamos de enviar? Si no lo recibiste, con gusto te enviaremos otro.
+                </p>
+                <p class="text-justify has-text-success mt-4 mb-5" v-if="verificationLinkSent">
+                    Se ha enviado un nuevo enlace de verificación a la dirección de correo electrónico que proporcionaste durante el registro.
+                </p>
+                <el-row class="mt-3">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14" class="mb-3">
+                        <el-button
+                            type="primary"
+                            class="w-100"
+                            :class="{ 'opacity-25': form.processing }"
+                            :disabled="form.processing"
+                            @click="submit"
+                        >
+                            Reenviar correo
+                        </el-button>
+                    </el-col>
+                    <el-col :xs="24" :sm="24" :md="12" :lg="10" :xl="14" class="has-text-right-desktop pt-1 mb-3">
+                        <p @click="logout" class="has-text-link pointer">Cerrar sesión</p>
+                    </el-col>
+                </el-row>
+            </el-card>
+        </el-col>
+    </el-row>
 </template>
+
+<style scoped>
+
+</style>

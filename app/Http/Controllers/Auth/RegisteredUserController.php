@@ -48,6 +48,8 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        $user->sendEmailVerificationNotification();
+
         return redirect(route('dashboard', absolute: false));
     }
 }

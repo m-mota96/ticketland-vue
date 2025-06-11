@@ -16,10 +16,10 @@ una respuesta que no tiene permiso de modificar dicho evento */
 /* NOTA: cuando se acceda a una vista que requiere el id del evento siempre se debe pasar un parámetro con el nombre event_id.
 Y cuando se realice una petición para editar o agregar datos al evento de igual manera se le debe mandar un parámetro con el nombre mencionado anteriormente. */
 
-Route::get('cliente/mis_eventos', [EventController::class, 'index'])->middleware('auth')->name('cliente.mis_eventos');
-Route::get('cliente/mi_perfil', [MyProfileController::class, 'index'])->middleware('auth')->name('cliente.mi_perfil');
+Route::get('cliente/mis_eventos', [EventController::class, 'index'])->middleware(['auth', 'verified'])->name('cliente.mis_eventos');
+Route::get('cliente/mi_perfil', [MyProfileController::class, 'index'])->middleware(['auth', 'verified'])->name('cliente.mi_perfil');
 
-Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'role:customer', 'validate_event:view'])->group(function() {
+Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'verified', 'role:customer', 'validate_event:view'])->group(function() {
     Route::get('evento/{event_id}', [EventController::class, 'event'])->name('evento');
     Route::get('boletos/{event_id}', [TicketController::class, 'tickets'])->name('boletos');
     Route::get('descuentos/{event_id}', [DiscountController::class, 'discounts'])->name('descuentos');

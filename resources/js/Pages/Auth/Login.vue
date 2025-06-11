@@ -1,20 +1,9 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
-defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
+const passwordVisible = ref(false);
+const appUrl = ref(window.location.origin);
 
 const form = useForm({
     email: '',
@@ -27,74 +16,68 @@ const submit = () => {
         onFinish: () => form.reset('password'),
     });
 };
+
+const togglePassword = () => {
+    passwordVisible.value = !passwordVisible.value;
+};
 </script>
-
 <template>
-    <GuestLayout>
-        <Head title="Log in" />
-
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
-            {{ status }}
-        </div>
-
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4 block">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600 dark:text-gray-400"
-                        >Remember me</span
+    <el-row>
+        <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 5, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6 text-center">
+            <el-card class="p-5">
+                <el-col :span="24">
+                    <a :href="appUrl" class="is-justify-content-center is-flex">
+                        <img src="../../../../public/general/ticketland.png" alt="Ticketland" class="w-25 mb-3">
+                    </a>
+                </el-col>
+                <h3 class="title is-3 has-text-dark mb-5">Iniciar sesión</h3>
+                <form class="text-left mb-5">
+                    <label for="email" class="has-text-grey">Correo electrónico</label>
+                    <el-input class="mb-0" name="email" id="email" autocomplete="email" v-model="form.email" />
+                    <span class="text-error" v-if="form.errors.email">{{ form.errors.email }}</span>
+                    <el-col :span="24" class="mt-5 mb-5">
+                        <label for="password" class="has-text-grey">Contraseña</label>
+                        <el-input
+                            id="password"
+                            class="el-form-input mb-0"
+                            :type="passwordVisible ? 'text' : 'password'"
+                            v-model="form.password"
+                            placeholder="Introduce tu contraseña"
+                            suffix-icon="Eye"
+                            @suffix-icon-click="togglePassword"
+                        >
+                            <template #suffix>
+                            <el-icon @click="togglePassword" class="password-eye">
+                                <component :is="passwordVisible ? 'View' : 'Hide'" />
+                            </el-icon>
+                            </template>
+                        </el-input>
+                        <span class="text-error" v-if="form.errors.password">{{ form.errors.password }}</span>
+                    </el-col>
+                    <el-checkbox v-model="form.remember" label="Recuérdame" size="large" class="mb-5" />
+                    <el-button
+                        type="primary"
+                        class="w-100 mt-1"
+                        :class="{ 'opacity-25': form.processing }"
+                        :disabled="form.processing"
+                        @click="submit"
                     >
-                </label>
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                >
-                    Forgot your password?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Log in
-                </PrimaryButton>
-            </div>
-        </form>
-    </GuestLayout>
+                        Iniciar sesión
+                    </el-button>
+                </form>
+                <a class="has-text-link" :href="route('password.request')">¿Olvidaste tu contraseña?</a>
+            </el-card>
+        </el-col>
+    </el-row>
 </template>
+
+<style scoped>
+    .password-eye {
+        color: black;
+        cursor: pointer;
+    }
+    :global(input:-webkit-autofill) {
+        box-shadow: 0 0 0px 1000px white inset !important;
+        -webkit-text-fill-color: #000 !important;
+    }
+</style>

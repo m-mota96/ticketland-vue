@@ -19,13 +19,14 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@element-plus/icons-vue": "^2.3.1",
         "@fortawesome/fontawesome-svg-core": "^6.6.0",
         "@fortawesome/free-brands-svg-icons": "^6.6.0",
         "@fortawesome/free-regular-svg-icons": "^6.6.0",
         "@fortawesome/free-solid-svg-icons": "^6.6.0",
         "@fortawesome/vue-fontawesome": "^3.0.8",
         "bulma": "^1.0.2",
-        "element-plus": "^2.8.6",
+        "element-plus": "^2.10.1",
         "highcharts-vue": "^2.0.1",
         "sweetalert2": "^11.21.2",
         "tw-elements": "^2.0.0",

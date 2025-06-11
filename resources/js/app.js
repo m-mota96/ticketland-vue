@@ -18,6 +18,7 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { fab } from '@fortawesome/free-brands-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import HighchartsVue from 'highcharts-vue';
+import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
 library.add(fas,fab,far);
 
@@ -34,16 +35,31 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue)
-            .use(ElementPlus, {
-                locale: es
-            })
-            .use(VueTheMask)
-            .use(HighchartsVue)
-            .component("font-awesome-icon",FontAwesomeIcon)
-            .mount(el);
+        const appInstance = createApp({ render: () => h(App, props) })
+
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            appInstance.component(key, component)
+        }
+        // return createApp({ render: () => h(App, props) })
+        //     .use(plugin)
+        //     .use(ZiggyVue)
+        //     .use(ElementPlus, {
+        //         locale: es
+        //     })
+        //     .use(VueTheMask)
+        //     .use(HighchartsVue)
+        //     // .use(Eye)
+        //     // .use(EyeClosed)
+        //     .component("font-awesome-icon",FontAwesomeIcon)
+        //     .mount(el);
+        appInstance
+        .use(plugin)
+        .use(ZiggyVue)
+        .use(ElementPlus, { locale: es })
+        .use(VueTheMask)
+        .use(HighchartsVue)
+        .component("font-awesome-icon", FontAwesomeIcon)
+        .mount(el);
     },
     progress: {
         color: '#4B5563',
