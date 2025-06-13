@@ -38,6 +38,12 @@ class NewPasswordController extends Controller
             'token' => 'required',
             'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.required' => 'Por favor ingresa tu correo electrónico.',
+            'email.email' => 'El correo electrónico ingresado no es válido.',
+            'email.token' => 'El token de restablecimiento de contraseña no es válido o ha expirado.',
+            'password.required' => 'Por favor ingresa una contraseña.',
+            'password.confirmed' => 'Las contraseñas no coinciden.'
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
@@ -62,8 +68,14 @@ class NewPasswordController extends Controller
             return redirect()->route('login')->with('status', __($status));
         }
 
+        $message = match ($status) {
+            Password::INVALID_TOKEN => 'El enlace para restablecer la contraseña ya expiró o no es válido.',
+            Password::INVALID_USER => 'No encontramos ningún usuario con ese correo electrónico.',
+            default => trans($status),
+        };
+
         throw ValidationException::withMessages([
-            'email' => [trans($status)],
+            'email' => [$message],
         ]);
     }
 }

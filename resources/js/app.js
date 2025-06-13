@@ -19,6 +19,7 @@ import { fab } from '@fortawesome/free-brands-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import HighchartsVue from 'highcharts-vue';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+import { router } from '@inertiajs/vue3';
 
 library.add(fas,fab,far);
 
@@ -35,7 +36,12 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        const appInstance = createApp({ render: () => h(App, props) })
+        window.addEventListener('popstate', () => {
+            document.body.style.display = 'none';
+            window.location.href = '/login';
+        });
+
+        const appInstance = createApp({ render: () => h(App, props) });
 
         for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
             appInstance.component(key, component)

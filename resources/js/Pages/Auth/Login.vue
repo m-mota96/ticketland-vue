@@ -33,23 +33,31 @@ const togglePassword = () => {
                 <h3 class="title is-3 has-text-dark mb-5">Iniciar sesión</h3>
                 <form class="text-left mb-5">
                     <label for="email" class="has-text-grey">Correo electrónico</label>
-                    <el-input class="mb-0" name="email" id="email" autocomplete="email" v-model="form.email" />
+                    <el-input
+                        class="el-form-item mb-0"
+                        :class="{'is-error': form.errors.email}"
+                        name="email"
+                        id="email"
+                        autocomplete="email"
+                        v-model="form.email"
+                        clearable
+                    />
                     <span class="text-error" v-if="form.errors.email">{{ form.errors.email }}</span>
                     <el-col :span="24" class="mt-5 mb-5">
                         <label for="password" class="has-text-grey">Contraseña</label>
                         <el-input
+                            class="el-form-item mb-0"
+                            :class="{'is-error': form.errors.password}"
                             id="password"
-                            class="el-form-input mb-0"
                             :type="passwordVisible ? 'text' : 'password'"
                             v-model="form.password"
-                            placeholder="Introduce tu contraseña"
                             suffix-icon="Eye"
                             @suffix-icon-click="togglePassword"
                         >
                             <template #suffix>
-                            <el-icon @click="togglePassword" class="password-eye">
-                                <component :is="passwordVisible ? 'View' : 'Hide'" />
-                            </el-icon>
+                                <el-icon @click="togglePassword" class="password-eye">
+                                    <component :is="passwordVisible ? 'View' : 'Hide'" />
+                                </el-icon>
                             </template>
                         </el-input>
                         <span class="text-error" v-if="form.errors.password">{{ form.errors.password }}</span>
@@ -65,7 +73,12 @@ const togglePassword = () => {
                         Iniciar sesión
                     </el-button>
                 </form>
-                <a class="has-text-link" :href="route('password.request')">¿Olvidaste tu contraseña?</a>
+                <el-col class="mb-5">
+                    <a class="has-text-link" :href="route('register')">¿No tienes una cuenta?</a>
+                </el-col>
+                <el-col>
+                    <a class="has-text-link" :href="route('password.request')">¿Olvidaste tu contraseña?</a>
+                </el-col>
             </el-card>
         </el-col>
     </el-row>

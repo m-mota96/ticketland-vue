@@ -102,7 +102,7 @@ class ReservationController extends Controller {
 
             foreach ($payment->accesses as $key => $a) {
                 $url = 'events/pdf/'.$payment->event_id.'/'.$a->folio.'.pdf';
-                $zip->addFile($url, $a->ticket->name.' '.$a->name.'.pdf');
+                $zip->addFile($url, ($key + 1).' '.$a->ticket->name.' '.$a->name.'.pdf');
             }
             $zip->close();
             return ResponseTrait::response(null, ['fileName' => $filename.'?v='.uniqid()]);

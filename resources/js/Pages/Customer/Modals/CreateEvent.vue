@@ -29,7 +29,7 @@
                     v-model="event.website"
                     @input="setWebsite"
                 >
-                <template #prepend>ticketland.mx/evento/</template>
+                <template #prepend>{{ appUrl }}/evento/</template>
                 </el-input>
                 <span class="text-error" v-if="errors.website">El sitio web es obligatorio.</span>
             </el-col>

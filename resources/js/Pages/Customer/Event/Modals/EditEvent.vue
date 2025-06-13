@@ -9,17 +9,18 @@
         <el-row class="mb-4" :gutter="20">
             <el-col class="mb-3" :span="24">
                 <label for="name">Nombre del evento</label>
-                <el-input size="large" id="name" v-model="event.name"/>
+                <el-input size="large" id="name" v-model="event.name" @input="setWebsite" />
             </el-col>
             <el-col class="mb-3" :span="24">
                 <label for="url">Sitio de ventas</label>
                 <div>
                     <el-input
-                    size="large"
-                    id="url"
-                    v-model="event.url"
+                        size="large"
+                        id="url"
+                        v-model="event.url"
+                        @input="setWebsite"
                     >
-                    <template #prepend>{{appUrl}}/</template>
+                    <template #prepend>{{appUrl}}/evento/</template>
                     </el-input>
                 </div>
             </el-col>
@@ -90,6 +91,22 @@ export default {
             this.dadEvent.category.name = option.name;
             showNotification('¡Correcto!', response.msj, 'success');
             this.activeEditEvent = false;
+        },
+        setWebsite(value) {
+            value          = value.toLowerCase();
+            this.event.url = this.filterNonAphaNumeric(value);
+        },
+        filterNonAphaNumeric(str) {
+            let code, i, len, result='';
+            for (i = 0, len = str.length; i < len; i++) {
+                code = str.charCodeAt(i);
+                if ((code > 47 && code < 58) || // numeric (0-9)
+                    (code > 64 && code < 91) || // upper alpha (A-Z)
+                    (code > 96 && code < 123)) { // lower alpha (a-z)
+                        result += str.charAt(i);
+                }
+            }
+            return result;
         }
     }
 }

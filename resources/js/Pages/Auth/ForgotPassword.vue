@@ -1,16 +1,14 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineProps({
     status: {
         type: String,
     },
 });
+
+const appUrl = ref(window.location.origin);
 
 const form = useForm({
     email: '',
@@ -22,47 +20,56 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Forgot Password" />
-
-        <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            Forgot your password? No problem. Just let us know your email
-            address and we will email you a password reset link that will allow
-            you to choose a new one.
-        </div>
-
-        <div
-            v-if="status"
-            class="mb-4 text-sm font-medium text-green-600 dark:text-green-400"
-        >
-            {{ status }}
-        </div>
-
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Email Password Reset Link
-                </PrimaryButton>
-            </div>
-        </form>
-    </GuestLayout>
+    <el-row>
+        <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 5, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6">
+            <el-card class="p-5">
+                <el-col :span="24">
+                    <a :href="appUrl" class="is-justify-content-center is-flex">
+                        <img src="../../../../public/general/ticketland.png" alt="Ticketland" class="w-25 mb-5">
+                    </a>
+                </el-col>
+                <p class="text-justify has-text-black mb-4">
+                    ¿Olvidaste tu contraseña? No hay problema. 
+                    Simplemente indícanos tu correo electrónico 
+                    y te enviaremos un enlace para restablecer 
+                    tu contraseña. Podrás elegir una nueva.
+                </p>
+                <p class="text-justify has-text-success mt-4 mb-5" v-if="status">
+                    {{ status }}
+                </p>
+                <el-col :span="24">
+                    <label for="email">Correo electrónico</label>
+                    <el-input 
+                        class="el-form-item mb-0"
+                        :class="{'is-error': form.errors.email }"
+                        name="email"
+                        id="email"
+                        autocomplete="email"
+                        required
+                        type="email"
+                        v-model="form.email"
+                        clearable
+                    />
+                    <span class="text-error" v-if="form.errors.email">{{ form.errors.email }}</span>
+                </el-col>
+                <el-col :span="24" class="text-right mt-4">
+                    <el-button
+                    type="primary"
+                        :disabled="form.processing"
+                        :class="{'is-error': form.errors.email, 'opacity-25': form.processing}"
+                        @click="submit"
+                    >
+                        Restablecer contraseña
+                    </el-button>
+                </el-col>
+            </el-card>
+        </el-col>
+    </el-row>
 </template>
+
+<style scoped>
+    :global(input:-webkit-autofill) {
+        box-shadow: 0 0 0px 1000px white inset !important;
+        -webkit-text-fill-color: #000 !important;
+    }
+</style>

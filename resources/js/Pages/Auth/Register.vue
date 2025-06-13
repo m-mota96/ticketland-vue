@@ -1,14 +1,15 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+const appUrl = ref(window.location.origin);
+const passwordVisible = ref(false);
+const passwordConfirmVisible = ref(false);
 
 const form = useForm({
     name: '',
     email: '',
+    phone: '',
     password: '',
     password_confirmation: '',
 });
@@ -18,96 +19,131 @@ const submit = () => {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
+
+const togglePassword = () => {
+    passwordVisible.value = !passwordVisible.value;
+};
+
+const togglePasswordConfirm = () => {
+    passwordConfirmVisible.value = !passwordConfirmVisible.value;
+};
+
+const isNumber = (evt) => {
+    const charCode = evt.which ? evt.which : evt.keyCode;
+    if (charCode < 48 || charCode > 57) {
+        evt.preventDefault();
+    }
+};
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Register" />
-
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="name" value="Name" />
-
-                <TextInput
-                    id="name"
-                    type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.name"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
-
-                <InputError class="mt-2" :message="form.errors.name" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                >
-                    Already registered?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Register
-                </PrimaryButton>
-            </div>
-        </form>
-    </GuestLayout>
+    <el-row>
+        <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 5, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6 text-center">
+            <el-card class="p-5">
+                <el-col :span="24">
+                    <a :href="appUrl" class="is-justify-content-center is-flex">
+                        <img src="../../../../public/general/ticketland.png" alt="Ticketland" class="w-25 mb-3">
+                    </a>
+                </el-col>
+                <h3 class="title is-3 has-text-dark mb-5">Registro</h3>
+                <form class="text-left mb-5">
+                    <el-col :span="24" class="mb-5">
+                        <label for="name" class="has-text-grey">Nombre</label>
+                        <el-input
+                            class="el-form-item mb-0"
+                            :class="{'is-error': form.errors.name}"
+                            name="name"
+                            id="name"
+                            autocomplete="name"
+                            v-model="form.name"
+                            clearable
+                        />
+                        <span class="text-error" v-if="form.errors.name">{{ form.errors.name }}</span>
+                    </el-col>
+                    <el-col :span="24" class="mb-5">
+                        <label for="email" class="has-text-grey">Correo electrónico</label>
+                        <el-input
+                            class="el-form-item mb-0"
+                            :class="{'is-error': form.errors.email}"
+                            name="email"
+                            id="email"
+                            autocomplete="email"
+                            v-model="form.email"
+                            clearable
+                        />
+                        <span class="text-error" v-if="form.errors.email">{{ form.errors.email }}</span>
+                    </el-col>
+                    <el-col :span="24" class="mb-5">
+                        <label for="phone" class="has-text-grey">Teléfono</label>
+                        <el-input
+                            class="el-form-item mb-0"
+                            :class="{'is-error': form.errors.phone}"
+                            name="phone"
+                            id="phone"
+                            autocomplete="phone"
+                            v-model="form.phone"
+                            @keypress="isNumber($event)"
+                            clearable
+                        />
+                        <span class="text-error" v-if="form.errors.phone">{{ form.errors.phone }}</span>
+                    </el-col>
+                    <el-col :span="24" class="mb-5">
+                        <label for="password" class="has-text-grey">Contraseña</label>
+                        <el-input
+                            class="el-form-item mb-0"
+                            :class="{ 'is-error': form.errors.password }"
+                            id="password"
+                            v-model="form.password"
+                            :type="passwordVisible ? 'text' : 'password'"
+                            suffix-icon="Eye"
+                            @suffix-icon-click="togglePassword"
+                            >
+                            <template #suffix>
+                                <el-icon @click="togglePassword" class="password-eye">
+                                    <component :is="passwordVisible ? 'View' : 'Hide'" />
+                                </el-icon>
+                            </template>
+                        </el-input>
+                        <span class="text-error" v-if="form.errors.password">{{ form.errors.password }}</span>
+                    </el-col>
+                    <el-col :span="24" class="mb-5">
+                        <label for="password_confirmation" class="has-text-grey">Confirmar contraseña</label>
+                        <el-input
+                            class="el-form-item mb-0"
+                            :class="{ 'is-error': form.errors.password_confirmation }"
+                            id="password_confirmation"
+                            v-model="form.password_confirmation"
+                            :type="passwordConfirmVisible ? 'text' : 'password'"
+                            suffix-icon="Eye"
+                            @suffix-icon-click="togglePasswordConfirm"
+                        >
+                            <template #suffix>
+                                <el-icon @click="togglePasswordConfirm" class="password-eye">
+                                    <component :is="passwordConfirmVisible ? 'View' : 'Hide'" />
+                                </el-icon>
+                            </template>
+                        </el-input>
+                        <span class="text-error" v-if="form.errors.password_confirmation">{{ form.errors.password_confirmation }}</span>
+                    </el-col>
+                    <el-col :span="24" class="mb-5 text-right">
+                        <el-button type="primary" class="w-100" @click="submit">Registrarme</el-button>
+                    </el-col>
+                    <el-col :span="24" class="mb-5 text-center">
+                        <a :href="route('login')" class="has-text-link mr-3">¿Ya estas registrado?</a>
+                    </el-col>
+                </form>
+            </el-card>
+        </el-col>
+    </el-row>
 </template>
+
+<style scoped>
+    .password-eye {
+        color: black;
+        cursor: pointer;
+    }
+    :global(input:-webkit-autofill) {
+        box-shadow: 0 0 0px 1000px white inset !important;
+        -webkit-text-fill-color: #000 !important;
+    }
+</style>
