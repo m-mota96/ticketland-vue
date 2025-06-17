@@ -10,6 +10,9 @@ class HomeController extends Controller {
             case 'customer':
                 return redirect(route('cliente.mis_eventos'));
             break;
+            case 'admin':
+                return redirect(route('administrador.inicio'));
+            break;
         }
     }
 }
