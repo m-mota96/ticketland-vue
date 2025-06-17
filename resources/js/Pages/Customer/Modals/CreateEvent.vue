@@ -205,6 +205,8 @@ export default {
                 this.loading   = true;
                 const response = await apiClient('customer/event', 'POST', this.event);
                 if (response.error) {
+                    this.showHideModal();
+                    this.$emit('activate-animation');
                     this.loading = false;
                     showNotification('¡Error!', response.msj, 'error', 8000);
                     return false;

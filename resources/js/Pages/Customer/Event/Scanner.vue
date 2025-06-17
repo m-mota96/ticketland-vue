@@ -85,9 +85,9 @@ export default {
         onInit(promise) {
             promise.catch(error => {
                 if (error.name === 'NotAllowedError') {
-                    alert('Permiso denegado para usar la cámara')
+                    showNotification('¡Error!', 'Permiso denegado para usar la cámara', 'error');
                 } else {
-                    alert('Error al iniciar cámara')
+                    showNotification('¡Error!', 'Error al iniciar cámara', 'error');
                 }
             })
         },
@@ -103,12 +103,15 @@ export default {
                     showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
-                this.paused = false;
+                this.txtScan      = 'Recargue el escáner para continuar';
+                this.resetScan    = true;
+                this.paused       = true;
                 Swal.fire({
                     icon: 'error',
                     title: '¡ERROR!',
                     html: response.msj,
-                    scrollbarPadding: false
+                    scrollbarPadding: false,
+                    allowEnterKey: false
                 });
                 return false;
             }
@@ -127,19 +130,16 @@ export default {
             this.name         = '';
             this.purchaseDate = '';
             this.access       = '';
+            this.code         = [];
         },
         checkKey(tecla) {
-            if (tecla.key === 'Enter') {
-                const codigoFinal = this.code.join('');
-                this.processCode(codigoFinal);
+            if (tecla.key === 'Enter' && !this.resetScan) {
+                const codeQr = this.code.join('');
+                this.validateAccess(codeQr);
                 this.code = [];
             } else {
                 this.code.push(tecla.key);
             }
-        },
-        processCode(code) {
-            console.log('Código escaneado:', code);
-            // this.validateAccess(code);
         }
     },
     computed: {

@@ -39,7 +39,7 @@
                 <el-row :gutter="30">
                     <el-col :span="16">
                         <h3 class="title is-3 has-text-dark">Acerca de <span class="subtitle is-6 ml-4 pointer" @click="$refs.EditDescription.showModal()"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span></h3>
-                        <p class="has-text-grey justify">
+                        <p class="has-text-grey justify multiline-text">
                             {{event.description}}
                         </p>
                     </el-col>
@@ -261,5 +261,8 @@ export default {
     }
     .links:hover {
         text-decoration: underline;
+    }
+    .multiline-text {
+        white-space: pre-line;
     }
 </style>

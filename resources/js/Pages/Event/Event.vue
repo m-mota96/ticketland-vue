@@ -2,14 +2,17 @@
     <el-row class="container-fluid has-background-white-ter" ref="dataPrincipal">
         <el-col :xs="0" :sm="0" :md="0" :lg="24" :xl="24" class="row content-head p-r">
             <div class="p-a opacy w-100">
-                <img class="h-100 w-100 img-transparent" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+                <img v-if="event.profile" class="h-100 w-100 img-transparent" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+                <img v-if="!event.profile" class="h-100 w-100 img-transparent" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
             </div>
         </el-col>
         <el-col :xs="0" :sm="0" :md="0" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
-            <img class="p-a img-event p-0" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+            <img  v-if="event.profile" class="p-a img-event p-0" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+            <img  v-if="!event.profile" class="p-a img-event p-0" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
         </el-col>
         <el-col :xs="24" :sm="24" :md="24" :lg="0" :xl="0">
-            <img class="shadow" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+            <img  v-if="event.profile" class="shadow" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+            <img  v-if="!event.profile" class="shadow" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
         </el-col>
     </el-row>
     <el-row class="container-fluid pt-6 pb-6 has-background-white-ter padding">
@@ -47,7 +50,7 @@
                                 <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
                                 <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion">{{ formatCurrency(t.priceDiscount) }} MXN</h5>
                                 <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion">{{ formatCurrency(t.price) }} MXN</h5>
-                                <p class="has-text-black justify mb-0" v-if="t.description">{{ t.description }}</p>
+                                <p class="has-text-black justify mb-0 multiline-text" v-if="t.description">{{ t.description }}</p>
                         </el-col>
                         <el-col class="mb-6" :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
                             <el-input-number
@@ -419,7 +422,7 @@
             <el-row :gutter="gutterValue2">
                 <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14" class="mb-3">
                     <h3 class="subtitle is-3 has-text-grey mb-2">Sobre el evento</h3>
-                    <p class="justify has-text-black" v-if="event.description">{{ event.description }}</p>
+                    <p class="justify has-text-black multiline-text" v-if="event.description">{{ event.description }}</p>
                     <div v-if="event.location">
                         <h3 class="subtitle is-3 has-text-grey mb-2 mt-5">Lugar del evento</h3>
                         <h5 class="title is-5 has-text-dark mb-1">{{ event.location.name }}</h5>
@@ -1011,6 +1014,8 @@ export default {
     bottom: 0;
     height: 282px;
     width: 50%;
+    object-fit: cover;
+    object-position: center;
     -webkit-box-shadow: 0px 0px 15px -2px rgba(0,0,0,0.75);
     -moz-box-shadow: 0px 0px 15px -2px rgba(0,0,0,0.75);
     box-shadow: 0px 0px 15px -2px rgba(0,0,0,0.75);
@@ -1113,5 +1118,8 @@ body {
         padding-left: 1vh;
         padding-right: 1vh;
     }
+}
+.multiline-text {
+    white-space: pre-line;
 }
 </style>

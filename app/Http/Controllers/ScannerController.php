@@ -28,7 +28,7 @@ class ScannerController extends Controller {
                 return ResponseTrait::response('No es posible escanear los códigos fuera de las fechas del evento.', null, true, 409);
             }
 
-            $folio       = Crypt::decrypt($request->access);
+            $folio = Crypt::decrypt($request->access);
             // dd($folio);
             $access = Access::select('id', 'ticket_id', 'payment_id', 'name', 'email', 'phone', 'quantity', 'created_at')
             ->with(['ticket:id,event_id,name', 'payment:id,name,email,phone'])->where('folio', $folio)->whereHas('payment', function($query) {

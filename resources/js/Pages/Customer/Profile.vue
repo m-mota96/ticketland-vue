@@ -300,7 +300,7 @@
                                 <template #tip>
                                 <div class="el-upload__tip">
                                     Máx 5 MB, .jpeg, .png, .pdf
-                                    <a v-if="!documents.address.status || documents.address.status == 'rejected'" class="has-text-dark bold example" :href="appUrl+'/general/acta_constitutiva.jpg'" target="_blank">Ver ejemplo</a>
+                                    <a v-if="!documents.address.status || documents.address.status == 'rejected'" class="has-text-dark bold example" :href="appUrl+'/general/cfe.jpg'" target="_blank">Ver ejemplo</a>
                                     <a v-if="documents.address.status == 'pending' || documents.address.status == 'accepted'" class="has-text-dark bold example" :href="appUrl+'/customers/'+documents.address.document" target="_blank">Ver documento</a>
                                 </div>
                                 </template>
@@ -341,7 +341,7 @@
                                 <template #tip>
                                 <div class="el-upload__tip">
                                     Máx 5 MB, .jpeg, .png, .pdf
-                                    <a v-if="!documents.bank_receipt.status || documents.bank_receipt.status == 'rejected'" class="has-text-dark bold example" :href="appUrl+'/general/acta_constitutiva.jpg'" target="_blank">Ver ejemplo</a>
+                                    <a v-if="!documents.bank_receipt.status || documents.bank_receipt.status == 'rejected'" class="has-text-dark bold example" :href="appUrl+'/general/comprobante_bancario.jpg'" target="_blank">Ver ejemplo</a>
                                     <a v-if="documents.bank_receipt.status == 'pending' || documents.bank_receipt.status == 'accepted'" class="has-text-dark bold example" :href="appUrl+'/customers/'+documents.bank_receipt.document" target="_blank">Ver documento</a>
                                 </div>
                                 </template>
@@ -382,7 +382,7 @@
                                 <template #tip>
                                 <div class="el-upload__tip">
                                     Máx 5 MB, .jpeg, .png, .pdf
-                                    <a v-if="!documents.identification.status || documents.identification.status == 'rejected'" class="has-text-dark bold example" :href="appUrl+'/general/acta_constitutiva.jpg'" target="_blank">Ver ejemplo</a>
+                                    <a v-if="!documents.identification.status || documents.identification.status == 'rejected'" class="has-text-dark bold example" :href="appUrl+'/general/ine.png'" target="_blank">Ver ejemplo</a>
                                     <a v-if="documents.identification.status == 'pending' || documents.identification.status == 'accepted'" class="has-text-dark bold example" :href="appUrl+'/customers/'+documents.identification.document" target="_blank">Ver documento</a>
                                 </div>
                                 </template>

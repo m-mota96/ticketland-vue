@@ -1,5 +1,5 @@
 <template>
-    <Menu></Menu>
+    <Menu ref="menu" :animation="animation" @activate-animation="activateAnimation"></Menu>
     <div class="container">
         <el-row :gutter="50" class="mt-10">
             <el-col class="mb-5" :xs="24" :sm="24" :md="0" :lg="0" :xl="0">
@@ -113,7 +113,7 @@
         </el-row>
     </div>
 
-    <CreateEvent ref="CreateEvent" />
+    <CreateEvent ref="CreateEvent" @activate-animation="activateAnimation" />
 </template>
   
 <script>
@@ -142,7 +142,8 @@ export default {
             count: {},
             parseDate: dateEs,
             parseTime: time,
-            loading: false
+            loading: false,
+            animation: false
         }
     },
     beforeMount() {
@@ -190,6 +191,9 @@ export default {
                 showNotification('¡Error!', response.msj, 'error', 8000);
                 return reject(new Error(response.msj));
             })
+        },
+        activateAnimation() {
+            this.animation = !this.animation;
         }
     }
 }

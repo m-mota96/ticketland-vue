@@ -26,7 +26,7 @@ trait ManageFilesTrait {
             $tickets[$i]['eventName']    = $event->name;
             $tickets[$i]['eventDesc']    = $event->description;
             $tickets[$i]['eventAddress'] = $event->location ? $event->location->address : 'Sin información';
-            $tickets[$i]['eventProfile'] = $event->profile ? 'events/images/'.$event->profile->name : 'general/not_image.png';
+            $tickets[$i]['eventProfile'] = $event->profile ? 'events/images/'.$event->profile->name : 'general/slide_ticketland.png';
             $startDate                   = DateFormatTrait::parseDate($event->eventDates[0]->date, '/', 'monthsAbrev');
             $endDate                     = DateFormatTrait::parseDate($event->eventDates[sizeof($event->eventDates) - 1]->date, '/', 'monthsAbrev');
             $tickets[$i]['dates']        = $startDate.' al '.$endDate;
