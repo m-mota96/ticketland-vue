@@ -188,6 +188,7 @@ export default {
                     showNotification('¡Correcto!', response.msj, 'success');
                     return resolve(true);
                 }
+                this.activateAnimation();
                 showNotification('¡Error!', response.msj, 'error', 8000);
                 return reject(new Error(response.msj));
             })

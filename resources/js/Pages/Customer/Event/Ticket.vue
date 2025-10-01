@@ -9,29 +9,32 @@
                         <el-row>
                             <el-col :span="18">
                                 <h4 class="title is-4 has-text-black mb-2">{{ t.name }}</h4>
-                                <h4 class="title is-5 has-text-grey mb-5">{{ formatCurrency(t.price) }} MXN</h4>
+                                <h4 class="title is-5 has-text-grey mb-1">{{ formatCurrency(t.price) }} MXN</h4>
+                                <h6 v-if="t.promotion" class="has-text-info bold">{{ t.promotion }}% de descuento hasta el {{ formatDate(t.date_promotion) }}</h6>
                                 <!-- <h6 class="subtitle is-6"><a class="has-text-link" :href="appUrl+'/'+event.url+'/'+t.name" target="_blank"><font-awesome-icon :icon="['fas', 'link']" /> {{ appUrl+'/'+event.url+'/'+t.name }}</a></h6> -->
-                                <span class="pointer mr-5" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
-                                <el-popconfirm
-                                    confirm-button-text="Eliminar"
-                                    cancel-button-text="Cancelar"
-                                    :hide-icon="true"
-                                    confirm-button-type="danger"
-                                    cancel-button-type="primary"
-                                    :width="200"
-                                    title="¿Seguro que desea eliminar este boleto?"
-                                    @confirm="deleteTicket(t.id)"
-                                >
-                                    <template #reference>
-                                        <span class="pointer"><font-awesome-icon :icon="['fas', 'trash-can']" /> Eliminar</span>
-                                    </template>
-                                </el-popconfirm>
-                                <span v-if="t.status == 1" class="pointer ml-5" @click="updateStatus(t.id, 0)">
-                                    <font-awesome-icon :icon="['far', 'circle-xmark']" /> Desactivar
-                                </span>
-                                <span v-if="t.status == 0" class="pointer ml-5" @click="updateStatus(t.id, 1)">
-                                    <font-awesome-icon :icon="['far', 'circle-check']" /> Activar
-                                </span>
+                                <div class="mt-5">
+                                    <span class="pointer mt-5 mr-5" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                    <el-popconfirm
+                                        confirm-button-text="Eliminar"
+                                        cancel-button-text="Cancelar"
+                                        :hide-icon="true"
+                                        confirm-button-type="danger"
+                                        cancel-button-type="primary"
+                                        :width="200"
+                                        title="¿Seguro que desea eliminar este boleto?"
+                                        @confirm="deleteTicket(t.id)"
+                                    >
+                                        <template #reference>
+                                            <span class="pointer"><font-awesome-icon :icon="['fas', 'trash-can']" /> Eliminar</span>
+                                        </template>
+                                    </el-popconfirm>
+                                    <span v-if="t.status == 1" class="pointer ml-5" @click="updateStatus(t.id, 0)">
+                                        <font-awesome-icon :icon="['far', 'circle-xmark']" /> Desactivar
+                                    </span>
+                                    <span v-if="t.status == 0" class="pointer ml-5" @click="updateStatus(t.id, 1)">
+                                        <font-awesome-icon :icon="['far', 'circle-check']" /> Activar
+                                    </span>
+                                </div>
                             </el-col>
                             <el-col :span="6" class="text-right">
                                 <h4 class="subtitle is-4 has-text-black mb-0">
@@ -98,6 +101,7 @@ import Submenu from '../Submenu.vue';
 import Footer from '../Footer.vue';
 import { EditTicket } from './Modals';
 import Swal from 'sweetalert2';
+import { dateEs } from '@/dateEs';
 
 export default {
     components: {
@@ -171,7 +175,10 @@ export default {
                 style: 'currency',
                 currency: 'MXN'
             }).format(value);
-        }
+        },
+        formatDate(_date) {
+            return dateEs(_date, 1, '/');
+        },
     }
 }
 </script>

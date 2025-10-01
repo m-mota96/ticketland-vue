@@ -74,7 +74,7 @@
                 <el-col :xs="24" :sm="24" :md="16" :lg="18" :xl="18" class="mb-3">
                     <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected != 1">Tienes <b>{{ data.selected }}</b> boletos seleccionados</h4>
                     <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected == 1">Tienes <b>{{ data.selected }}</b> boleto seleccionado</h4>
-                    <h4 class="title is-4 has-text-link">{{ formatCurrency(data.subtotal) }} MXN <span class="subtitle is-6 has-text-grey"> + CARGOS</span></h4>
+                    <h4 class="title is-4 has-text-link">{{ formatCurrency(data.subtotal) }} MXN <span class="subtitle is-6 has-text-grey" v-if="event.model_payment == 'separated'"> + CARGOS</span></h4>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
                     <el-button class="bold w-100" type="success" size="large" @click="loadInfo">
@@ -155,6 +155,7 @@
                         v-model="data.order.phone"
                         placeholder="Teléfono"
                         @keypress="isNumber($event)"
+                        maxlength="10"
                     />
                     <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
                     <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span>
@@ -188,7 +189,7 @@
                                                 <span>Boleto {{ (index + 1) }} - <b class="has-text-primary">{{ t.name }}</b></span>
                                             </el-col>
                                             <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="has-text-right">
-                                                <el-checkbox class="w-100" v-model="t.checked" label="Autocompletar este boleto con datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
+                                                <el-checkbox :class="{'w-100': gutterValue == 0}" v-model="t.checked" label="Autocompletar este boleto con datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
                                             </el-col>
                                         </el-row>
                                     </el-col>
@@ -221,6 +222,8 @@
                                         :class="{'is-error': false}"
                                         v-model="t.phone"
                                         placeholder="Teléfono"
+                                        @keypress="isNumber($event)"
+                                        maxlength="10"
                                     />
                                 </el-col>
                                 <!-- <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
@@ -467,7 +470,7 @@ export default {
             appUrl: window.location.origin,
             event: this.$page.props.event,
             loading: false,
-            gutterValue: window.innerWidth < 768 ? 0 : 20,
+            gutterValue: window.innerWidth <= 768 ? 0 : 20,
             gutterValue2: window.innerWidth < 768 ? 0 : 80,
             txtLoading: 'compra',
             data: {
@@ -479,10 +482,10 @@ export default {
                 total: 0,
                 order: {
                     event_id: this.$page.props.event.id,
-                    name: 'Miguel Angel Mota Murillo',
-                    email: 'miguel.mota.murillo@gmail.com',
-                    confirm_email: 'miguel.mota.murillo@gmail.com',
-                    phone: '4371041976',
+                    name: '',
+                    email: '',
+                    confirm_email: '',
+                    phone: '',
                     payment_method: '',
                     token_id: '',
                     card: '',
@@ -490,7 +493,7 @@ export default {
                 },
                 paymentData: {
                     card: {
-                        name: 'Miguel Angel Mota Murillo',
+                        name: '',
                         number: '4242424242424242',
                         exp_month: '06',
                         exp_year: '26',
@@ -951,7 +954,7 @@ export default {
             this.data.order.code  = formatted;
         },
         handleResize() {
-            this.gutterValue  = window.innerWidth < 768 ? 0 : 20;
+            this.gutterValue  = window.innerWidth <= 768 ? 0 : 20;
             this.gutterValue2 = window.innerWidth < 768 ? 0 : 80;
         },
     },
