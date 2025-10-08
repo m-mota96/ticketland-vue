@@ -1,0 +1,5 @@
+26/09/2025 10:20:21 Error al procesar el pago: La tarjeta tiene fondos insuficientes. Intenta con otra tarjeta o método de pago.
+26/09/2025 10:20:38 Error al procesar el pago: La tarjeta tiene fondos insuficientes. Intenta con otra tarjeta o método de pago.
+26/09/2025 10:20:53 Error al procesar el pago: La tarjeta tiene fondos insuficientes. Intenta con otra tarjeta o método de pago.
+26/09/2025 10:21:20 Error al procesar el pago: El banco emisor de la tarjeta rechazó el pago sin dar más detalles a Conekta. Para resolverlo, contacta al banco o intenta con otra tarjeta o método de pago.
+26/09/2025 10:21:34 Error al procesar el pago: El banco emisor de la tarjeta rechazó el pago sin dar más detalles a Conekta. Para resolverlo, contacta al banco o intenta con otra tarjeta o método de pago.

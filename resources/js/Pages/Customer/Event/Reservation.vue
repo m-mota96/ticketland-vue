@@ -90,7 +90,7 @@
                                     </el-select>
                                 </template>
                                 <template #default="scope">
-                                    {{ scope.row.type == 'card' ? 'Tarjeta' : 'Efectivo' }}
+                                    {{ verifyPaymentMethod(scope.row.type) }}
                                 </template>
                             </el-table-column>
                             <el-table-column label="Código de descuento" width="150" align="center">
@@ -239,7 +239,7 @@ export default {
                 orderBy: 'id',
                 order: 'DESC'
             },
-            payment_methods: [{value: 'all', label: 'Todos los métodos de pago'},{value: 'oxxo', label: 'Efectivo'},{value: 'card', label: 'Tarjeta'}],
+            payment_methods: [{value: 'all', label: 'Todos los métodos de pago'},{value: 'oxxo', label: 'Efectivo'},{value: 'paypal', label: 'PayPal'},{value: 'card', label: 'Tarjeta'}],
             status: [{value: 'all', label: 'Todos los estatus'},{value: 'expired', label: 'Expirado'},{value: 'payed', label: 'Pagado'},{value: 'pending', label: 'Pendiente'}],
             svg: `
                 <path class="path" d="
@@ -331,6 +331,16 @@ export default {
                     return 'Pagado';
                 case 'pending':
                     return 'Pendiente';
+            }
+        },
+        verifyPaymentMethod(payment_method) {
+            switch (payment_method) {
+                case 'card':
+                    return 'Tarjeta';
+                case 'oxxo':
+                    return 'Efectivo';
+                case 'paypal':
+                    return 'Paypal';
             }
         },
         formatDate(_date) {

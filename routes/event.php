@@ -7,3 +7,5 @@ Route::get('evento/{url}', [GeneralEventController::class, 'event'])->name('even
 
 Route::post('makePayment', [GeneralEventController::class, 'makePayment']);
 Route::post('verifyCodes', [GeneralEventController::class, 'verifyCodes']);
+Route::post('createOrder', [GeneralEventController::class, 'createOrder']);
+Route::post('captureOrder', [GeneralEventController::class, 'captureOrder']);

@@ -114,7 +114,9 @@
                     <el-input
                         class="el-form-item mb-0 mt-1"
                         :class="{'is-error': errors.name}"
+                        name="name"
                         id="name"
+                        autocomplete="name"
                         v-model="data.order.name"
                         placeholder="Nombre completo"
                     />
@@ -125,7 +127,9 @@
                     <el-input
                         class="el-form-item mb-0 mt-1"
                         :class="{'is-error': errors.email || errors.confirm_email_invalid2}"
+                        name="email"
                         id="email"
+                        autocomplete="email"
                         v-model="data.order.email"
                         placeholder="Correo electrónico"
                     />
@@ -202,6 +206,8 @@
                                         class="el-form-item mb-0 mt-1"
                                         :class="{'is-error': errors.names[index]}"
                                         v-model="t.customer_name"
+                                        name="name"
+                                        autocomplete="name"
                                         placeholder="Nombre completo"
                                     />
                                     <span class="text-error" v-if="errors.names[index]">El nombre es obligatorio.</span>
@@ -212,7 +218,9 @@
                                         class="el-form-item mb-0 mt-1"
                                         :class="{'is-error': false}"
                                         v-model="t.email"
-                                        placeholder="Correo"
+                                        name="email"
+                                        autocomplete="email"
+                                        placeholder="Correo electrónico"
                                     />
                                 </el-col>
                                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
@@ -330,6 +338,7 @@
                         >
                         <el-option label="Pago en Oxxo" value="oxxo" />
                         <el-option label="Tarjeta de Débito/Crédito" value="card" />
+                        <el-option label="PayPal" value="paypal" />
                     </el-select>
                     <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
                 </el-col>
@@ -357,7 +366,9 @@
                             <el-input
                                 :class="{'is-error': errors.cardName}"
                                 class="el-form-item mb-0"
+                                name="name"
                                 id="cardName"
+                                autocomplete="name"
                                 v-model="data.paymentData.card.name"
                                 placeholder="Nombre del propietario de la tarjeta"
                                 type="text"
@@ -408,10 +419,17 @@
                             />
                             <span class="text-error" v-if="errors.cvc">El código de seguridad es obligatorio.</span>
                         </el-col>
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-if="data.order.payment_method == 'paypal'" class="text-center justify-content-center">
+                            <PaypalButton
+                                :amount="data.subtotal + (Math.round(data.subtotal * .12))"
+                                @update-orderId="data.order.paypal_order_id = $event"
+                                :handleMakePayment="payment"
+                            />
+                        </el-col>
                     </el-row>
                 </el-col>
                 <el-col :span="24" class="has-text-centered mt-3">
-                    <el-button type="primary" size="large" @click="payment" v-if="event.status == 1 && data.order.payment_method">
+                    <el-button type="primary" size="large" @click="payment" v-if="event.status == 1 && (data.order.payment_method === 'oxxo' || data.order.payment_method === 'card')">
                         <font-awesome-icon :icon="['fas', 'dollar-sign']" v-if="data.order.payment_method == 'card'" />
                         <font-awesome-icon :icon="['fas', 'check']" v-if="data.order.payment_method == 'oxxo'" />
                         &nbsp;&nbsp;{{ data.order.payment_method == 'card' ? 'Realizar pago' : 'Realizar pedido' }}
@@ -460,10 +478,12 @@ import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
 import Errors from './Modals/Errors.vue';
 import { ElMessageBox } from 'element-plus';
+import PaypalButton from './PaypalButton.vue';
 
 export default {
     components: {
-        Errors
+        Errors,
+        PaypalButton
     },
     data() {
         return {
@@ -490,17 +510,18 @@ export default {
                     token_id: '',
                     card: '',
                     code: '',
+                    paypal_order_id: ''
                 },
                 paymentData: {
                     card: {
                         name: '',
-                        number: '4242424242424242',
-                        exp_month: '06',
-                        exp_year: '26',
-                        cvc: '123'
+                        number: '',
+                        exp_month: '',
+                        exp_year: '',
+                        cvc: ''
                     }
                 },
-                cardExpiration: '06/26',
+                cardExpiration: '',
             },
             viewInfoCustomer: false,
             errors: {
@@ -552,10 +573,10 @@ export default {
         payment() {
             if (this.validate()) {
                 this.scrollCenterY();
-                const txt    = this.data.order.payment_method == 'card' ? 
+                const txt    = this.data.order.payment_method == 'card' || this.data.order.payment_method == 'paypal' ? 
                 `Tus boletos se enviarán al siguiente correo:<br><b>${this.data.order.email}</b><br>¿El correo esta correcto?<br>` : 
                 `Tu ficha de pago se enviará al siguiente correo:<br><b>${this.data.order.email}</b><br>¿El correo esta correcto?<br>Tendrás 48 horas para realizar tu pago.<br>`;
-                const txtBtn = this.data.order.payment_method == 'card' ? 
+                const txtBtn = this.data.order.payment_method == 'card' || this.data.order.payment_method == 'paypal' ? 
                 'Si, proceder al pago' :
                 'Si, realizar registro';
                 ElMessageBox.confirm(
@@ -571,26 +592,32 @@ export default {
                     }
                 )
                 .then(() => {
-                    this.txtLoading = this.data.order.payment_method == 'card' ? 'compra' : 'registro';
+                    this.txtLoading = this.data.order.payment_method == 'card' || this.data.order.payment_method == 'paypal' ? 'compra' : 'registro';
                     this.scrollCenterY();
                     this.loading = true;
-                    Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
-                    Conekta.setLanguage('es');
-                    Conekta.Token.create(this.data.paymentData,
-                        (token) => this.conektaSuccessHandler(token),
-                        (error) => {
-                            this.loading = false;
-                            console.log('Error al crear token:', error);
-                        }
-                    );
+                    if (this.data.order.payment_method == 'card') {
+                        Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
+                        Conekta.setLanguage('es');
+                        Conekta.Token.create(this.data.paymentData,
+                            (token) => this.makePayment(token),
+                            (error) => {
+                                this.loading = false;
+                                console.log('Error al crear token:', error);
+                            }
+                        );
+                    } else {
+                        this.makePayment();
+                    }
                 });
             } else {
                 this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
             }
         },
-        async conektaSuccessHandler(token) {
-            this.data.order.token_id = token.id;
-            this.data.order.card     = this.data.paymentData.card.number.slice(-4);
+        async makePayment(token = null) {
+            if (this.data.order.payment_method == 'card') {
+                this.data.order.token_id = token.id;
+                this.data.order.card     = this.data.paymentData.card.number.slice(-4);
+            }
             const response = await apiClient('makePayment', 'POST', {
                 selected: this.data.selected,
                 order: this.data.order,
@@ -601,7 +628,7 @@ export default {
             // console.log(response);
             if (response.error) {
                 if (!response.data.type) {
-                    showNotification('¡Error!', response.msj, 'error', 6000);
+                    showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
                 switch (response.data.type) {
@@ -611,12 +638,12 @@ export default {
                     case 'codes':
                         this.verifyCodes('delete');
                         this.totals();
-                        showNotification('¡Error!', response.msj, 'error', 7000);
+                        showNotification('¡Error!', response.msj, 'error', 0);
                         break;
                     case 'event':
                     case 'createCustomer':
                     case 'payment':
-                        showNotification('¡Error!', response.msj, 'error', 7000);
+                        showNotification('¡Error!', response.msj, 'error', 0);
                         break;
                 }
                 return false;
@@ -631,7 +658,7 @@ export default {
             this.resetInfo();
             this.resetErrors();
             this.setTickets();
-            showNotification('¡Correcto!', response.msj, 'success', 20000);
+            showNotification('¡Correcto!', response.msj, 'success', 30000);
             return false;
         },
         async verifyCodes(action = null) {
@@ -876,6 +903,12 @@ export default {
                 this.errors.year_invalid           = false;
                 this.errors.cvc                    = false;
             }
+            if (value === 'paypal') {
+                if (!this.validate()) {
+                    this.data.order.payment_method = '';
+                    this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
         },
         filterTickets() {
             return this.data.tickets.filter(t => t.quantity > 0);
@@ -904,19 +937,20 @@ export default {
             this.data.subtotal                   = 0;
             this.data.discount                   = 0;
             this.data.total                      = 0;
-            this.data.order.name                 = 'Miguel Angel Mota Murillo';
-            this.data.order.email                = 'miguel.mota.murillo@gmail.com';
-            this.data.order.confirm_email        = 'miguel.mota.murillo@gmail.com';
-            this.data.order.phone                = '4371041976';
+            this.data.order.name                 = '';
+            this.data.order.email                = '';
+            this.data.order.confirm_email        = '';
+            this.data.order.phone                = '';
             this.data.order.token_id             = '';
             this.data.order.card                 = '';
             this.data.order.code                 = '';
-            this.data.paymentData.card.name      = 'Miguel Angel Mota Murillo';
-            this.data.paymentData.card.number    = '4242424242424242';
-            this.data.paymentData.card.exp_month = '06';
-            this.data.paymentData.card.exp_year  = '26';
-            this.data.paymentData.card.cvc       = '123';
-            this.data.cardExpiration             = '06/26';
+            this.data.order.paypal_order_id      = '';
+            this.data.paymentData.card.name      = '';
+            this.data.paymentData.card.number    = '';
+            this.data.paymentData.card.exp_month = '';
+            this.data.paymentData.card.exp_year  = '';
+            this.data.paymentData.card.cvc       = '';
+            this.data.cardExpiration             = '';
             this.disabledDiscount                = false;
             this.loadPaymentMethod();
         },
@@ -1124,5 +1158,9 @@ body {
 }
 .multiline-text {
     white-space: pre-line;
+}
+:global(input:-webkit-autofill) {
+    box-shadow: 0 0 0px 1000px white inset !important;
+    -webkit-text-fill-color: #000 !important;
 }
 </style>

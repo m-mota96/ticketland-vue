@@ -63,6 +63,7 @@ class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidt
             DB::raw('CASE 
                 WHEN type = "card" THEN "Tarjeta" 
                 WHEN type = "oxxo" THEN "Efectivo" 
+                WHEN type = "paypal" THEN "Paypal" 
             END type'),
             DB::raw('CASE 
                 WHEN status = "expired" THEN "Expirado" 
@@ -77,7 +78,7 @@ class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidt
     }
 
     public function styles(Worksheet $sheet) {
-        // Estilos para la fila 1 (A1:H1)
+        // Estilos para la fila 1
         $sheet->getStyle('A1:K1')->applyFromArray([
             'font' => [
                 'bold'  => true,
@@ -86,7 +87,7 @@ class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidt
             'fill' => [
                 'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                 'startColor' => [
-                    'rgb' => '9BBB59' // Color verde (puedes cambiarlo)
+                    'rgb' => '9BBB59' // Color verde
                 ],
             ],
         ]);

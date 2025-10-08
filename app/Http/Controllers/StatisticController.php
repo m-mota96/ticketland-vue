@@ -72,6 +72,9 @@ class StatisticController extends Controller {
         $salesCard = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
         ->selectRaw('"Tarjeta de Débito/Crédito" AS type')
         ->where('status', 'payed')->where('type', 'card')->first();
+        $salesPaypal = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
+        ->selectRaw('"Paypal" AS type')
+        ->where('status', 'payed')->where('type', 'paypal')->first();
 
         return ResponseTrait::response('', [
             'sales'              => $array_sales,
@@ -81,7 +84,7 @@ class StatisticController extends Controller {
             'ticketsNotDiscount' => $ticketsNotDiscount,
             'ticketsPending'     => $ticketsPending,
             'ticketsExpired'     => $ticketsExpired,
-            'amounts'              => [$salesCard, $salesOxxo],
+            'amounts'            => [$salesCard, $salesOxxo, $salesPaypal],
         ]);
     }
 }
