@@ -56,8 +56,8 @@
                             para ingresar debe elegir 2, de lo contrario indique para cuántos días funciona.
                         </p>
                     </el-col>
-                    <el-col :span="24" class="mb-5">
-                        <label class="bold" for="discount">¿Desea aplicar descuento para este boleto?</label><br>
+                    <el-col :span="24" class="mb-5" v-if="ticket.cost_type == 'paid'">
+                        <label class="bold" for="discount">¿Deseas aplicar descuento para este boleto?</label><br>
                         <el-switch
                             v-model="ticket.discount"
                             inline-prompt
@@ -74,7 +74,7 @@
                 <el-row :gutter="10">
                     <el-col :span="24" class="mb-4">
                         <label class="bold">Costo <span class="has-text-danger">*</span></label><br>
-                        <el-radio-group class="mb-0 mt-1" v-model="ticket.cost_type">
+                        <el-radio-group class="mb-0 mt-1" v-model="ticket.cost_type" @change="validateCost">
                             <el-radio value="paid" v-if="eventType == 'paid'">Con pago</el-radio>
                             <el-radio value="free">Gratis</el-radio>
                         </el-radio-group><br>
@@ -90,7 +90,7 @@
                                 }"
                                 :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
                             />
-                            <p class="text-error mt-0" v-if="errors.price && ticket.cost_type == 'paid'">El precio mínimo es de $50.</p>
+                            <p class="text-error mt-0" v-if="errors.price && ticket.cost_type == 'paid'">El precio mínimo es de $100.</p>
                             <p class="text-error mt-0" v-if="errors.price_incorrect && ticket.cost_type == 'paid'">El precio es obligatorio y debe ser entero.</p>
                         </div>
                         <p class="mt-2" v-if="modelPayment == 'separated'"><i>* Las comisiones se cobran aparte del precio de tu boleto</i></p>
@@ -185,12 +185,13 @@
                                 <label class="bold" for="start_sale">Porcentaje de descuento <span class="has-text-danger">*</span></label>
                                 <el-input
                                     class="el-form-item mb-0 mt-1"
-                                    :class="{'is-error': errors.promotion}"
+                                    :class="{'is-error': errors.promotion || errors.promotion_invalid}"
                                     v-model="ticket.promotion"
                                     size="large"
                                     @keypress="isNumber($event)"
                                 />
                                 <span class="text-error" v-if="errors.promotion">El porcentaje es obligatorio.</span>
+                                <span class="text-error" v-if="errors.promotion_invalid">El porcentaje solo puede ser máximo de 60%.</span>
                             </el-col>
                             <el-col :span="12">
                                 <label class="bold" for="stop_sale">Expiración <span class="has-text-danger">*</span></label>
@@ -267,6 +268,7 @@ export default {
                 price_incorrect: false,
                 valid: false,
                 promotion: false,
+                promotion_invalid: false,
                 date_promotion: false
             }
         }
@@ -289,6 +291,14 @@ export default {
                 this.getTickets();
                 showNotification('¡Correcto!', response.msj, 'success');
                 this.activeEditTicket = false;
+            }
+        },
+        validateCost() {
+            if (this.ticket.cost_type == 'free') {
+                this.ticket.price          = 0;
+                this.ticket.discount       = false;
+                this.ticket.promotion      = 0;
+                this.ticket.date_promotion = '';
             }
         },
         validate() {
@@ -334,7 +344,7 @@ export default {
                 if (!this.ticket.price || !parseInt(this.ticket.price)) {
                     this.errors.price_incorrect = true;
                     valid                       = false;
-                } else if (this.ticket.price < 50) {
+                } else if (this.ticket.price < 100) {
                     this.errors.price = true;
                     valid             = false;
                 }
@@ -343,6 +353,9 @@ export default {
                 if (!this.ticket.promotion || this.ticket.promotion == 0) {
                     this.errors.promotion = true;
                     valid                 = false;
+                } else if (this.ticket.promotion > 60) {
+                    this.errors.promotion_invalid = true;
+                    valid                         = false;
                 }
                 if (!this.ticket.date_promotion) {
                     this.errors.date_promotion = true;
@@ -387,19 +400,20 @@ export default {
             this.activeEditTicket = true;
         },
         resetErrors() {
-            this.errors.name            = false;
-            this.errors.quantity        = false;
-            this.errors.start_sale      = false;
-            this.errors.stop_sale       = false;
-            this.errors.dates           = false;
-            this.errors.min_reservation = false;
-            this.errors.max_reservation = false;
-            this.errors.min             = false;
-            this.errors.price           = false;
-            this.errors.price_incorrect = false;
-            this.errors.valid           = false;
-            this.errors.promotion       = false,
-            this.errors.date_promotion  = false;
+            this.errors.name              = false;
+            this.errors.quantity          = false;
+            this.errors.start_sale        = false;
+            this.errors.stop_sale         = false;
+            this.errors.dates             = false;
+            this.errors.min_reservation   = false;
+            this.errors.max_reservation   = false;
+            this.errors.min               = false;
+            this.errors.price             = false;
+            this.errors.price_incorrect   = false;
+            this.errors.valid             = false;
+            this.errors.promotion         = false,
+            this.errors.promotion_invalid = false,
+            this.errors.date_promotion    = false;
         },
         isNumber(evt) {
             const charCode = evt.which ? evt.which : evt.keyCode;

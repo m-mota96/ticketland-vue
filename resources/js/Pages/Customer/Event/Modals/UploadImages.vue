@@ -6,7 +6,7 @@
         align-center
         style="margin-top: 5% !important;"
     >
-        <label>{{ textLabel }}</label>
+        <label class="bold">{{ textLabel }} <span class="has-text-danger">*</span></label>
         <el-upload
             ref="uploadRef"
             class="upload-demo mb-5 mt-1"
@@ -21,15 +21,17 @@
             :limit="1"
             :on-success="handleSuccess"
             :on-error="handleError"
+            :on-change="handleFileChange"
         >
             <el-icon class="el-icon--upload"><font-awesome-icon :icon="['fas', 'cloud-arrow-up']" /></el-icon>
             <div class="el-upload__text">
                 Arrastre la imagen o haga <em>click para cargar</em>
             </div>
             <template #tip>
-                <div class="el-upload__tip mt-4">
+                <div class="el-upload__tip">
+                    <span class="text-error" v-if="error">Elige una imagen para cargar.</span>
                     <!-- jpg/png files with a size less than 500kb -->
-                    <h5 class="subtitle is-6 has-text-dark"><b>NOTA:</b> La imagen debe ser en formato jpg, png no mayor a 1MB. Recomendado {{ textSize }}</h5>
+                    <h5 class="subtitle is-6 has-text-dark mt-4"><b>NOTA:</b> La imagen debe ser en formato jpg, png no mayor a 1MB. Recomendado {{ textSize }}</h5>
                 </div>
             </template>
         </el-upload>
@@ -59,7 +61,9 @@ export default {
             appUrl: window.location.origin,
             activeUploadImages: false,
             isDisabled: false,
-            typeUpload: ''
+            typeUpload: '',
+            error: false,
+            selectedFiles: []
         }
     },
     mounted() {
@@ -67,6 +71,7 @@ export default {
     },
     methods: {
         showUploadImages(type) {
+            this.error = false;
             this.clearFile();
             this.typeUpload  = type;
             switch (type) {
@@ -85,6 +90,11 @@ export default {
             this.activeUploadImages = true;
         },
         async saveInfo() {
+            this.error = false;
+            if (this.selectedFiles.length === 0) {
+                this.error = true;
+                return
+            }
             this.isDisabled = true;
             this.$refs.uploadRef.submit();
         },
@@ -100,6 +110,9 @@ export default {
             this.isDisabled = false;
             response = JSON.parse(response.message);
             showNotification('¡Error!', response.data, 'error', 10000);
+        },
+        handleFileChange(file, fileList) {
+            this.selectedFiles = fileList;
         },
         clearFile() {
             if (this.$refs.uploadRef) {

@@ -46,7 +46,7 @@ class TicketController extends Controller {
                 'max_reservation' => 10,
                 'quantity'        => $request->quantity
             ]);
-            return ResponseTrait::response('El boleto se creo correctamente.');
+            return ResponseTrait::response('El boleto se creó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         } 
@@ -75,7 +75,7 @@ class TicketController extends Controller {
 
     public function ticketStatus(Request $request) {
         try {
-            $txt            = $request->status == 1 ? 'activo' : 'desactivo';
+            $txt            = $request->status == 1 ? 'activó' : 'desactivó';
             $ticket         = Ticket::find($request->id);
             $ticket->status = $request->status;
             $ticket->save();

@@ -11,7 +11,7 @@
         <el-sub-menu index="2">
             <template #title><font-awesome-icon class="mr-2" :icon="['fas', 'gear']" />Configuración</template>
             <el-menu-item index="2-1"><a class="has-text-white" :href="route('cliente.evento', dadEvent.id)"><font-awesome-icon class="mr-2" :icon="['fas', 'eye']" /> Apariencia</a></el-menu-item>
-            <el-menu-item index="2-2"><font-awesome-icon class="mr-2" :icon="['fas', 'ticket-simple']" /> Forma por boleto</el-menu-item>
+            <!-- <el-menu-item index="2-2"><font-awesome-icon class="mr-2" :icon="['fas', 'ticket-simple']" /> Forma por boleto</el-menu-item> -->
         </el-sub-menu>
         <el-menu-item index="3"><a :href="route('cliente.boletos', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'ticket']" /> Boletos</a></el-menu-item>
         <el-menu-item index="4"><a :href="route('cliente.descuentos', dadEvent.id)"><font-awesome-icon class="mr-1" :icon="['fas', 'percent']" /> Descuentos</a></el-menu-item>

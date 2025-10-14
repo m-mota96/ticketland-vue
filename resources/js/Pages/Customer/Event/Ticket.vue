@@ -5,13 +5,22 @@
         <el-col :span="14" :offset="5" class="pt-6">
             <el-row :gutter="50">
                 <el-col :span="17">
+                    <el-row class="text-center pt-5" v-if="!tickets.length">
+                        <h3 class="subtitle is-3 has-text-grey w-100">Crea tu primer boleto para comenzar.</h3>
+                    </el-row>
                     <el-card class="p-0 mb-5" v-for="(t, index) in tickets" :key="index">
                         <el-row>
                             <el-col :span="18">
                                 <h4 class="title is-4 has-text-black mb-2">{{ t.name }}</h4>
                                 <h4 class="title is-5 has-text-grey mb-1">{{ formatCurrency(t.price) }} MXN</h4>
-                                <h6 v-if="t.promotion" class="has-text-info bold">{{ t.promotion }}% de descuento hasta el {{ formatDate(t.date_promotion) }}</h6>
-                                <!-- <h6 class="subtitle is-6"><a class="has-text-link" :href="appUrl+'/'+event.url+'/'+t.name" target="_blank"><font-awesome-icon :icon="['fas', 'link']" /> {{ appUrl+'/'+event.url+'/'+t.name }}</a></h6> -->
+                                <h6
+                                    class="subtitle is-6 mb-2 mt-2 has-text-link bold pointer"
+                                    @click="copyUrl(t.name)"
+                                    title="Haz click para copiar URL"
+                                >
+                                    <font-awesome-icon :icon="['fas', 'link']" /> {{ appUrl+'/evento/'+event.url+'/'+t.name }}
+                                </h6>
+                                <h6 v-if="t.promotion" class="has-text-warning bold">{{ t.promotion }}% de descuento hasta el {{ formatDate(t.date_promotion) }}</h6>
                                 <div class="mt-5">
                                     <span class="pointer mt-5 mr-5" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
                                     <el-popconfirm
@@ -19,7 +28,7 @@
                                         cancel-button-text="Cancelar"
                                         :hide-icon="true"
                                         confirm-button-type="danger"
-                                        cancel-button-type="primary"
+                                        cancel-button-type="info"
                                         :width="200"
                                         title="¿Seguro que desea eliminar este boleto?"
                                         @confirm="deleteTicket(t.id)"
@@ -59,9 +68,9 @@
                             <font-awesome-icon class="mr-1 bold" :icon="['fas', 'plus']" /> Nuevo tipo de boleto
                         </el-button>
                         <br>
-                        <el-button class="w-100 mt-4 bg-purple has-text-white bold" size="large">
+                        <!-- <el-button class="w-100 mt-4 bg-purple has-text-white bold" size="large">
                             <font-awesome-icon class="mr-1 bold" :icon="['fas', 'plus']" /> Generar coresías
-                        </el-button>
+                        </el-button> -->
                     </el-card>
                     <el-card class="text-center pb-4 mt-5">
                         <h5 class="subtitle is-5 has-text-dark mb-5">MODELO DE COBRO</h5>
@@ -179,6 +188,23 @@ export default {
         formatDate(_date) {
             return dateEs(_date, 1, '/');
         },
+        copyUrl(ticketName) {
+            const url = this.appUrl + '/evento/' + this.event.url + '/' + ticketName.replaceAll(' ', '%20');
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url)
+                .then(() => showNotification(null, 'URL copiada al portapapeles.', 'success'))
+                .catch(err => console.error('Error copiando la URL:', err));
+            } else {
+                const input = document.createElement('input');
+                input.value = url;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showNotification(null, 'URL copiada al portapapeles.', 'success');
+            }
+        }
     }
 }
 </script>

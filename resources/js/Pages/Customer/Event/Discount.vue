@@ -5,6 +5,9 @@
         <el-col :span="14" :offset="5" class="pt-6">
             <el-row :gutter="50">
                 <el-col :span="17">
+                    <el-row class="text-center pt-5" v-if="!discounts.length">
+                        <h3 class="subtitle is-3 has-text-grey w-100">Ningún código de descuento disponible.</h3>
+                    </el-row>
                     <el-card class="p-0 mb-5" v-for="(d, index) in discounts" :key="index">
                         <el-row>
                             <el-col :span="18">
@@ -22,7 +25,7 @@
                                     cancel-button-text="Cancelar"
                                     :hide-icon="true"
                                     confirm-button-type="danger"
-                                    cancel-button-type="primary"
+                                    cancel-button-type="info"
                                     :width="200"
                                     title="¿Seguro que desea eliminar este código?"
                                     @confirm="deleteDiscount(d.id)"

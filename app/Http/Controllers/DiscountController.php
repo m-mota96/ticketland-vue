@@ -67,7 +67,7 @@ class DiscountController extends Controller {
                 'expiration'    => $request->expiration
             ]);
             // $code->tickets()->sync($request->tickets);
-            return ResponseTrait::response('El código se creo correctamente.');
+            return ResponseTrait::response('El código se creó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
@@ -111,7 +111,7 @@ class DiscountController extends Controller {
 
     public function discountStatus(Request $request) {
         try {
-            $txt          = $request->status == 1 ? 'activo' : 'desactivo';
+            $txt          = $request->status == 1 ? 'activó' : 'desactivó';
             $code         = Code::find($request->id);
             $code->status = $request->status;
             $code->save();

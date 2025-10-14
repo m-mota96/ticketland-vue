@@ -28,7 +28,7 @@
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
                     <h6 class="subtitle is-6 bold has-text-black mb-5">COMPARTE ESTE EVENTO</h6>
-                    <a class="subtitle is-5 p-3 bg-green-500 has-text-white rounded-circle" :href="`https://api.whatsapp.com/send?text=Voy a asistir al evento ${event.name}: https://ticketland.mx/evento/${event.url}`" target="_blank"><font-awesome-icon :icon="['fab', 'whatsapp']" /></a>
+                    <a class="subtitle is-5 pt-2 pb-2 pl-3 pr-3 bg-green-500 has-text-white rounded-circle" :href="`https://api.whatsapp.com/send?text=Voy a asistir al evento ${event.name}: https://ticketland.mx/evento/${event.url}`" target="_blank"><font-awesome-icon :icon="['fab', 'whatsapp']" /></a>
                 </el-col>
             </el-row>
         </el-col>
@@ -42,27 +42,33 @@
                 </el-col>
                 <el-col :span="24">
                     <el-row class="mb-6" :gutter="gutterValue2" v-for="(t, index) in data.tickets" :key="index">
-                        <el-col class="mb-3" :sm="24" :md="16" :lg="18" :xl="18">
-                                <h4 class="subtitle is-4 has-text-dark mb-0" v-if="!t.promotion">{{ t.name }}</h4>
-                                <el-badge :value="`-${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion">
-                                    <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
-                                </el-badge>
-                                <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
-                                <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion">{{ formatCurrency(t.priceDiscount) }} MXN</h5>
-                                <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion">{{ formatCurrency(t.price) }} MXN</h5>
-                                <p class="has-text-black justify mb-0 multiline-text" v-if="t.description">{{ t.description }}</p>
-                        </el-col>
-                        <el-col class="mb-6" :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-                            <el-input-number
-                                class="w-100"
-                                v-model="t.quantity"
-                                size="large"
-                                :min="0"
-                                :max="t.available"
-                                @change="calculate"
-                                :controls="true"
-                            />
-                        </el-col>
+                        <div class="w-100" :ref="t.name" >
+                            <el-col :span="24">
+                                <el-row :class="{'card has-background-light p-5': t.name == ticket}">
+                                    <el-col class="mb-3" :sm="24" :md="16" :lg="18" :xl="18">
+                                            <h4 class="subtitle is-4 has-text-dark mb-0" v-if="!t.promotion">{{ t.name }}</h4>
+                                            <el-badge :value="`-${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion">
+                                                <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
+                                            </el-badge>
+                                            <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
+                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion">{{ formatCurrency(t.priceDiscount) }} MXN</h5>
+                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion">{{ formatCurrency(t.price) }} MXN</h5>
+                                            <p class="has-text-black justify mb-0 multiline-text" v-if="t.description">{{ t.description }}</p>
+                                    </el-col>
+                                    <el-col class="mb-6" :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
+                                        <el-input-number
+                                            class="w-100"
+                                            v-model="t.quantity"
+                                            size="large"
+                                            :min="0"
+                                            :max="t.available"
+                                            @change="calculate"
+                                            :controls="true"
+                                        />
+                                    </el-col>
+                                </el-row>
+                            </el-col>
+                        </div>
                     </el-row>
                 </el-col>
             </el-row>
@@ -479,6 +485,7 @@ import { showNotification } from '@/notification';
 import Errors from './Modals/Errors.vue';
 import { ElMessageBox } from 'element-plus';
 import PaypalButton from './PaypalButton.vue';
+import { nextTick } from 'vue';
 
 export default {
     components: {
@@ -489,6 +496,7 @@ export default {
         return {
             appUrl: window.location.origin,
             event: this.$page.props.event,
+            ticket: this.$page.props.ticket,
             loading: false,
             gutterValue: window.innerWidth <= 768 ? 0 : 20,
             gutterValue2: window.innerWidth < 768 ? 0 : 80,
@@ -565,6 +573,18 @@ export default {
     mounted() {
         document.title = `${this.event.name}`;
         window.addEventListener('resize', this.handleResize);
+        nextTick(() => {
+            if (this.ticket) {
+                setTimeout(() => {
+                    const el = this.$refs[this.ticket];
+                    if (el && el[0]) {
+                        this.scrollToElementWithOffset(el[0], 80);
+                    } else if (el) {
+                        this.scrollToElementWithOffset(el, 80);
+                    }
+                }, 100);
+            }
+        });
     },
     beforeDestroy() {
         window.removeEventListener('resize', this.handleResize);
@@ -991,6 +1011,11 @@ export default {
             this.gutterValue  = window.innerWidth <= 768 ? 0 : 20;
             this.gutterValue2 = window.innerWidth < 768 ? 0 : 80;
         },
+        scrollToElementWithOffset(el, offset = 80) {
+            if (!el) return;
+            const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({ top, behavior: 'smooth' });
+        }
     },
     computed: {
         filteredTickets() {
@@ -1019,7 +1044,7 @@ export default {
     border-radius: 6px !important;
 } */
 .rounded-circle {
-    border-radius: 50% !important;
+    border-radius: 30% !important;
 }
 .w-100 {
     width: 100% !important;

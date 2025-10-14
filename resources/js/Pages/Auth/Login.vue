@@ -23,7 +23,7 @@ const togglePassword = () => {
 </script>
 <template>
     <el-row>
-        <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 5, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6 text-center">
+        <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 6, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6 text-center">
             <el-card class="p-5">
                 <el-col :span="24">
                     <a :href="appUrl" class="is-justify-content-center is-flex">
@@ -31,7 +31,7 @@ const togglePassword = () => {
                     </a>
                 </el-col>
                 <h3 class="title is-3 has-text-dark mb-5">Iniciar sesión</h3>
-                <form class="text-left mb-5">
+                <form class="text-left mb-3">
                     <label for="email" class="has-text-grey">Correo electrónico</label>
                     <el-input
                         class="el-form-item mb-0"
@@ -43,7 +43,7 @@ const togglePassword = () => {
                         clearable
                     />
                     <span class="text-error" v-if="form.errors.email">{{ form.errors.email }}</span>
-                    <el-col :span="24" class="mt-5 mb-5">
+                    <el-col :span="24" class="mt-5 mb-3">
                         <label for="password" class="has-text-grey">Contraseña</label>
                         <el-input
                             class="el-form-item mb-0"
@@ -62,7 +62,7 @@ const togglePassword = () => {
                         </el-input>
                         <span class="text-error" v-if="form.errors.password">{{ form.errors.password }}</span>
                     </el-col>
-                    <el-checkbox v-model="form.remember" label="Recuérdame" size="large" class="mb-5" />
+                    <el-checkbox v-model="form.remember" label="Recuérdame" size="large" class="mb-3" />
                     <el-button
                         type="primary"
                         class="w-100 mt-1"
@@ -73,7 +73,7 @@ const togglePassword = () => {
                         Iniciar sesión
                     </el-button>
                 </form>
-                <el-col class="mb-5">
+                <el-col class="mb-5 mt-5">
                     <a class="has-text-link" :href="route('register')">¿No tienes una cuenta?</a>
                 </el-col>
                 <el-col>

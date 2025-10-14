@@ -8,7 +8,7 @@
     >
         <el-row :gutter="20" class="mb-4">
             <el-col :span="12" class="mb-3">
-                <label class="text-black" for="name">Nombre del evento:</label>
+                <label class="bold" for="name">Nombre del evento <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
                     :class="{'is-error': errors.name}"
@@ -20,7 +20,7 @@
                 <span class="text-error" v-if="errors.name">El nombre del evento es obligatorio.</span>
             </el-col>
             <el-col :span="12" class="mb-3">
-                <label class="text-black" for="website">Sitio web:</label>
+                <label class="bold" for="website">Sitio web <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
                     :class="{'is-error': errors.website}"
@@ -34,7 +34,7 @@
                 <span class="text-error" v-if="errors.website">El sitio web es obligatorio.</span>
             </el-col>
             <el-col :span="12" class="mb-3">
-                <label class="text-black" for="capacity">Asistencia estimada:</label>
+                <label class="bold" for="capacity">Asistencia estimada <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
                     :class="{'is-error': errors.capacity}"
@@ -46,7 +46,7 @@
                 <span class="text-error" v-if="errors.capacity">La asistencia estimada es obligatoria.</span>
             </el-col>
             <el-col :span="12" class="mb-3">
-                <label class="text-black" for="category">Categoría:</label>
+                <label class="bold" for="category">Categoría <span class="has-text-danger">*</span></label>
                 <el-select
                     class="el-form-item mb-0 mt-1"
                     :class="{'is-error': errors.category}"
@@ -65,14 +65,14 @@
                 <span class="text-error" v-if="errors.category">La categoría es obligatoria.</span>
             </el-col>
             <el-col :span="12" class="mb-6">
-                <p class="text-black">Tipo de evento:</p>
+                <p class="bold">Tipo de evento</p>
                 <el-radio-group v-model="event.type">
                     <el-radio value="paid">De consumo</el-radio>
                     <el-radio value="free">De registro</el-radio>
                 </el-radio-group>
             </el-col>
             <el-col :span="12" class="mb-6">
-                <label>Fechas del evento:</label>
+                <label class="bold">Fechas del evento <span class="has-text-danger">*</span></label>
                 <el-date-picker
                     class="el-form-item mb-0 mt-1 w-100"
                     :class="{'is-error': errors.dates}"
@@ -127,7 +127,7 @@
                 </el-row>
             </el-col>
             <el-col :span="24">
-                <label class="text-black" for="description">Describa su evento:</label>
+                <label class="text-black" for="description">Describe tu evento</label>
                 <el-input
                     id="description"
                     v-model="event.description"

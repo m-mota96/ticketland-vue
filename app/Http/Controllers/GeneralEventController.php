@@ -15,11 +15,12 @@ use App\Http\Traits\SendMailTrait;
 use App\Http\Traits\ValidateCodesTrait;
 use App\Http\Traits\ValidateStockTrait;
 use App\Models\Event;
+use App\Models\Ticket;
 
 class GeneralEventController extends Controller {
     use PaypalTrait;
 
-    public function event($url) {
+    public function event($url, $ticket = null) {
         $event = Event::with(['tickets' => function($query) {
             $query->select('*', DB::raw('quantity - (sales + reserved) available'), DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))
             ->where('start_sale', '<=', date('Y-m-d'))
@@ -30,8 +31,15 @@ class GeneralEventController extends Controller {
         if (!$event) {
             return redirect('/');
         }
+        if ($ticket) {
+            $searchTicket = Ticket::where('name', $ticket)->first();
+            if (!$searchTicket) {
+                $ticket = null;
+            }
+        }
         return Inertia::render('Event/Event', [
-            'event'   => $event
+            'event'  => $event,
+            'ticket' => $ticket
         ]);
     }
 

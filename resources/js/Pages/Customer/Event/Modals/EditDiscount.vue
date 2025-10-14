@@ -24,13 +24,14 @@
                 <label class="bold" for="discount">Porcentaje de descuento <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
-                    :class="{'is-error': errors.discount}"
+                    :class="{'is-error': errors.discount || errors.discount_invalid}"
                     size="large"
                     id="discount"
                     v-model="code.discount"
                     @keypress="isNumber($event)"
                 />
                 <span class="text-error" v-if="errors.discount">El porcentaje es obligatorio.</span>
+                <span class="text-error" v-if="errors.discount_invalid">El porcentaje solo puede ser máximo de 60%.</span>
             </el-col>
             <el-col :span="12">
                 <label class="bold" for="quantity">Cantidad disponible <span class="has-text-danger">*</span></label>
@@ -161,6 +162,7 @@ export default {
             errors: {
                 name: false,
                 discount: false,
+                discount_invalid: false,
                 quantity: false,
                 tickets: false,
                 expiration: false,
@@ -226,6 +228,9 @@ export default {
             if (!this.code.discount) {
                 this.errors.discount = true;
                 valid                = false;
+            } else if (this.code.discount > 60) {
+                this.errors.discount_invalid = true;
+                valid                        = false;
             }
             if (!this.code.quantity) {
                 this.errors.quantity = true;
@@ -288,6 +293,7 @@ export default {
         resetErrors() {
             this.errors.code               = false;
             this.errors.discount           = false;
+            this.errors.discount_invalid   = false;
             this.errors.quantity           = false;
             this.errors.tickets            = false;
             this.errors.expiration         = false;

@@ -71,7 +71,7 @@ class EventController extends Controller {
         try {
             $countEvents = Event::where('user_id', auth()->user()->id)->count();
             if (auth()->user()->contract == 'inactive' && $countEvents >= 1) {
-                return ResponseTrait::response('No puedes crear mas eventos.<br>Te invitamos a completar tu perfil para que puedas disfrutar de todos los beneficios.', null, true, 409);
+                return ResponseTrait::response('No puedes crear mas eventos.<br>Te invitamos a completar la sección "Mi perfil" para que puedas disfrutar de todos los beneficios.', null, true, 409);
             }
             
             $event = Event::where('name', $request->name)->where('user_id', '<>', auth()->user()->id)->count();
@@ -116,7 +116,7 @@ class EventController extends Controller {
             ]);
 
             DB::commit();
-            return ResponseTrait::response('El evento se creo correctamente.', $event);
+            return ResponseTrait::response('El evento se creó correctamente.', $event);
         } catch (\Throwable $th) {
             DB::rollBack();
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
@@ -126,14 +126,14 @@ class EventController extends Controller {
     public function changeStatusEvent(Request $request) {
         try {
             if ($request->status && auth()->user()->contract == 'inactive') {
-                return ResponseTrait::response('Para activar tu evento es necesario que completes tu perfil.<br>Te invitamos a hacerlo para disfrutar de todos los beneficios.', null, true, 409);
+                return ResponseTrait::response('Para activar tu evento es necesario que completes la sección "Mi perfil".<br>Te invitamos a hacerlo para disfrutar de todos los beneficios.', null, true, 409);
             }
 
             $event         = Event::find($request->event_id);
             $event->status = ($request->status) ? 1 : 0;
             $event->save();
 
-            return ResponseTrait::response('El estatus se cambio correctamente.');
+            return ResponseTrait::response('El estatus se cambió correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
@@ -203,7 +203,7 @@ class EventController extends Controller {
             $url = asset('events/images/' . $fileName);
 
             DB::commit();
-            return ResponseTrait::response('La imagen se cargo correctamente.', $url);
+            return ResponseTrait::response('La imagen se cargó correctamente.', $url);
         } catch (\Throwable $th) {
             DB::rollBack();
             return ResponseTrait::response($th->getMessage(), 'La imagen debe estar en formato<br>JPG o PNG y pesar menos de 1MB.', true, 422);
