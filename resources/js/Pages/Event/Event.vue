@@ -384,7 +384,7 @@
                         <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="cardNumber">Número de tarjeta <span class="has-text-danger">*</span></label>
                             <el-input
-                                :class="{'is-error': errors.cardNumber}"
+                                :class="{'is-error': errors.cardNumber || errors.cardInvalid}"
                                 class="el-form-item mb-0"
                                 id="cardNumber"
                                 v-mask="'#### #### #### ####'"
@@ -394,6 +394,7 @@
                                 clearable
                             />
                             <span class="text-error" v-if="errors.cardNumber">El número de tarjeta es obligatorio.</span>
+                            <span class="text-error" v-if="errors.cardInvalid">El número de tarjeta debe contener 16 dígitos.</span>
                         </el-col>
                         <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="expiration">Fecha de expiración <span class="has-text-danger">*</span></label>
@@ -543,6 +544,7 @@ export default {
                 payment_method: false,
                 cardName: false,
                 cardNumber: false,
+                cardInvalid: false,
                 expiration: false,
                 month_invalid: false,
                 year_invalid: false,
@@ -868,6 +870,9 @@ export default {
                 if (!this.data.paymentData.card.number) {
                     this.errors.cardNumber = true;
                     valid                  = false;
+                } else if (this.data.paymentData.card.number.length !== 16) {
+                    this.errors.cardInvalid = true;
+                    valid                   = false;
                 }
                 if (!this.data.cardExpiration) {
                     this.errors.expiration = true;
@@ -907,6 +912,7 @@ export default {
             this.errors.payment_method         = false;
             this.errors.cardName               = false;
             this.errors.cardNumber             = false;
+            this.errors.cardInvalid            = false;
             this.errors.expiration             = false;
             this.errors.month_invalid          = false;
             this.errors.year_invalid           = false;
