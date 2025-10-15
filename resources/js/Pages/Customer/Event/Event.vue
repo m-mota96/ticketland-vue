@@ -61,16 +61,16 @@
                                 <span class="text-edit has-text-dark bold ml-5 pointer" @click="$refs.EditLocation.showModal()"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
                                 <div class="mt-2 mb-0" v-if="event.location">
                                     <span class="bold">{{ event.location.name }}</span><br>
-                                    <span class="bold">{{ event.location.address }}</span>
-                                    <div class="w-100" v-html="event.location.iframe">
-    
-                                    </div>
+                                    <span class="bold">{{ event.location.address }}</span><br>
+                                    <p class="mt-2">
+                                        <iframe :src="event.location.iframe" allowfullscreen width="100%" height="200vh"></iframe>
+                                    </p>
                                 </div>
                             </div>
                             <hr>
                             <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['fas', 'address-card']" /> CONTACTO</span>
-                                <span class="text-edit has-text-dark bold ml-5 pointer" @click="$refs.EditContact.activeEditContact = true"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                <span class="text-edit has-text-dark bold ml-5 pointer" @click="$refs.EditContact.showModal()"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
                                 <div class="mt-2 mb-0" v-if="event.email || event.phone || event.twitter || event.facebook || event.instagram || event.website">
                                     <p class="size-contact mb-1" v-if="event.email"><font-awesome-icon class="bold" :icon="['fas', 'envelope']" /> {{ event.email }}</p>
                                     <p class="size-contact mb-1" v-if="event.phone"><font-awesome-icon class="bold" :icon="['fas', 'phone-flip']" /> {{ event.phone }}</p>

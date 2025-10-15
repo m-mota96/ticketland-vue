@@ -70,8 +70,8 @@ class SendTickets extends Mailable
         foreach ($this->accesses as $path => $a) {
             // $adjuntos[] = Attachment::fromPath($path)
             $adjuntos[] = Attachment::fromPath('events/pdf/'.$this->event->id.'/'.$a->folio.'.pdf')
-            ->as($a->ticket->name.'_'.$a->name.'.pdf')
-            ->withMime('application/pdf'); // opcional
+            ->as($a->ticket->name.' '.$a->name.'.pdf')
+            ->withMime('application/pdf');
         }
 
         return $adjuntos;

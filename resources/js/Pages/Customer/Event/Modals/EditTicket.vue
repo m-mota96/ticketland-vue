@@ -1,7 +1,7 @@
 <template>
     <el-dialog
         v-model="activeEditTicket"
-        title="Agrega un tipo de boleto"
+        :title="title"
         width="800"
         align-center
         style="margin-top: 2% !important;"
@@ -238,6 +238,7 @@ export default {
             activeEditTicket: false,
             isDisabled: false,
             eventType: 'paid',
+            title: '',
             ticket: {
                 ticket_id: null,
                 event_id: this.eventId,
@@ -366,6 +367,10 @@ export default {
         },
         showModal(_ticket = null) {
             this.resetErrors();
+            this.title                  = 'Agrega un tipo de boleto';
+            if (_ticket) {
+                this.title = 'Editar boleto';
+            }
             this.ticket.ticket_id       = null;
             this.ticket.name            = '';
             this.ticket.description     = '';

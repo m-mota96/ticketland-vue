@@ -65,9 +65,12 @@ export default {
     },
     methods: {
         showModal() {
-            this.errors.name    = false;
-            this.errors.address = false;
-            this.errors.iframe  = false;
+            this.location.name      = this.dadEvent.location ? this.dadEvent.location.name : '';
+            this.location.address   = this.dadEvent.location ? this.dadEvent.location.address : '';
+            this.location.iframe    = this.dadEvent.location ? this.dadEvent.location.iframe : '';
+            this.errors.name        = false;
+            this.errors.address     = false;
+            this.errors.iframe      = false;
             this.activeEditLocation = true;
         },
         async saveInfo() {

@@ -46,13 +46,13 @@ trait PaypalTrait {
     }
 
     public function createOrder(Request $request) {
-        $applicationContext = OrderApplicationContext::init([
-            'brandName' => 'Maxwell',
-            'landingPage' => 'NO_PREFERENCE',
-            'shippingPreference' => 'NO_SHIPPING',
-            'userAction' => 'PAY_NOW',
-            'locale' => 'es'
-        ])->build();
+        // $applicationContext = OrderApplicationContext::init([
+        //     'brandName' => 'Maxwell',
+        //     'landingPage' => 'NO_PREFERENCE',
+        //     'shippingPreference' => 'NO_SHIPPING',
+        //     'userAction' => 'PAY_NOW',
+        //     'locale' => 'es'
+        // ])->build();
 
         $collect = [
             'body' => OrderRequestBuilder::init(
@@ -65,14 +65,14 @@ trait PaypalTrait {
                         )->build()
                     )->build()
                 ],
-                $applicationContext
+                // $applicationContext
             )
-            ->setApplicationContext([
-                'brand_name' => 'Maxwell',
-                'landing_page' => 'NO_PREFERENCE',
-                'shipping_preference' => 'NO_SHIPPING',
-                'user_action' => 'PAY_NOW'
-            ])
+            // ->setApplicationContext([
+            //     'brand_name' => 'Maxwell',
+            //     'landing_page' => 'NO_PREFERENCE',
+            //     'shipping_preference' => 'NO_SHIPPING',
+            //     'user_action' => 'PAY_NOW'
+            // ])
             ->build(),
             // 'prefer' => 'return=minimal'
         ];

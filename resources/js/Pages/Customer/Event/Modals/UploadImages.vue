@@ -25,13 +25,13 @@
         >
             <el-icon class="el-icon--upload"><font-awesome-icon :icon="['fas', 'cloud-arrow-up']" /></el-icon>
             <div class="el-upload__text">
-                Arrastre la imagen o haga <em>click para cargar</em>
+                Arrastra la imagen o haz <em>clic para cargar</em>
             </div>
             <template #tip>
                 <div class="el-upload__tip">
                     <span class="text-error" v-if="error">Elige una imagen para cargar.</span>
                     <!-- jpg/png files with a size less than 500kb -->
-                    <h5 class="subtitle is-6 has-text-dark mt-4"><b>NOTA:</b> La imagen debe ser en formato jpg, png no mayor a 1MB. Recomendado {{ textSize }}</h5>
+                    <h5 class="subtitle is-6 has-text-dark mt-4"><b>NOTA:</b> La imagen debe ser en formato jpg o png no mayor a 1MB. Recomendado {{ textSize }}</h5>
                 </div>
             </template>
         </el-upload>

@@ -9,11 +9,12 @@
         <el-row class="mb-4" :gutter="20">
             <el-col class="mb-3" :span="24">
                 <label for="email">Correo electrónico</label>
-                <el-input class="el-form-item mb-0" size="large" id="email" v-model="data.email"/>
+                <el-input class="el-form-item mb-0" :class="{'is-error': errors.email}" size="large" id="email" v-model="data.email"/>
+                <span class="text-error" v-if="errors.email">Correo inválido.</span>
             </el-col>
             <el-col class="mb-3" :span="24">
                 <label for="phone">Teléfono</label>
-                <el-input class="el-form-item mb-0" size="large" id="phone" v-model="data.phone"/>
+                <el-input class="el-form-item mb-0" size="large" id="phone" v-model="data.phone" @keypress="isNumber($event)" maxlength="10"/>
             </el-col>
             <el-col class="mb-3" :span="24">
                 <label for="twitter">Twitter</label>
@@ -60,13 +61,28 @@ export default {
                 facebook: this.dadEvent.facebook,
                 instagram: this.dadEvent.instagram,
                 website: this.dadEvent.website
+            },
+            errors: {
+                email: false
             }
         }
     },
     methods: {
+        showModal() {
+            this.errors.email   = false;
+            this.data.email     = this.dadEvent.email;
+            this.data.phone     = this.dadEvent.phone;
+            this.data.twitter   = this.dadEvent.twitter;
+            this.data.facebook  = this.dadEvent.facebook;
+            this.data.instagram = this.dadEvent.instagram;
+            this.data.website   = this.dadEvent.website;
+            this.activeEditContact = true;
+        },
         async saveInfo() {
             if (!this.validateForm()) {
-                showNotification('¡Atención!', 'No hay información que guardar', 'warning');
+                if (!this.errors.email) {
+                    showNotification('¡Atención!', 'No hay información que guardar', 'warning');
+                }
                 return false;
             }
             this.isDisabled = true;
@@ -85,9 +101,22 @@ export default {
             showNotification('¡Correcto!', response.msj, 'success');
             this.activeEditContact = false;
         },
+        isNumber(evt) {
+            const charCode = evt.which ? evt.which : evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+        },
         validateForm() {
-            let valid = false;
+            this.errors.email = false;
+            const intRegex    = /^\d{10}$/;
+            const mailRegex   =  /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/;
+            let valid         = false;
             if (this.data.email) {
+                if (!mailRegex.test(this.data.email)) {
+                    this.errors.email = true;
+                    return false;
+                }
                 valid = true;
             }
             if (this.data.phone) {

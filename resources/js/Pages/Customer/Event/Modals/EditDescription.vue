@@ -51,7 +51,8 @@ export default {
     },
     methods: {
         showModal() {
-            this.errors.description = false;
+            this.data.description      = this.dadEvent.description;
+            this.errors.description    = false;
             this.activeEditDescription = true;
         },
         async saveInfo() {

@@ -26,7 +26,7 @@ trait ManageFilesTrait {
             $tickets[$i]['eventName']    = $event->name;
             $tickets[$i]['eventDesc']    = $event->description;
             $tickets[$i]['eventAddress'] = $event->location ? $event->location->address : 'Sin información';
-            $tickets[$i]['eventProfile'] = $event->profile ? 'events/images/'.$event->profile->name : 'general/slide_ticketland.png';
+            $tickets[$i]['eventProfile'] = $event->profile ? asset('events/images/'.$event->profile->name) : asset('general/slide_ticketland.png');
             $startDate                   = DateFormatTrait::parseDate($event->eventDates[0]->date, '/', 'monthsAbrev');
             $endDate                     = DateFormatTrait::parseDate($event->eventDates[sizeof($event->eventDates) - 1]->date, '/', 'monthsAbrev');
             $tickets[$i]['dates']        = $startDate.' al '.$endDate;
@@ -37,7 +37,9 @@ trait ManageFilesTrait {
             $folioCrypt                  = Crypt::encrypt($folio);
             $qr_code                     = QrCode::backgroundColor(255, 125, 0, 0.5)->size(800)->format('svg')->generate($folioCrypt);
             $tickets[$i]['qr_code']      = base64_encode($qr_code);
-            $pdf                         = PDF::loadView('pdfTicket', $tickets[$i]);
+            $pdf                         = PDF::setOptions([
+                'isRemoteEnabled' => true,
+            ])->loadView('pdfTicket', $tickets[$i]);
             $pdf->save('events/pdf/'.$event->id.'/'.$folio.'.pdf');
             $files[] = $folio;
             // $folio = Crypt::decrypt($folio);

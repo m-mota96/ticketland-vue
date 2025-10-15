@@ -172,7 +172,7 @@ class EventController extends Controller {
             $file            = $request->file;
             $extension       = $file->getClientOriginalExtension();
             $fileName        = uniqid().'.'.$extension;
-            $destinationPath = public_path('events/images');
+            $destinationPath = 'events/images';
             
             $gallery = GalleryEvent::where('event_id', $request->event_id)->where('type', $type)->first();
 
@@ -238,12 +238,17 @@ class EventController extends Controller {
     }
 
     public function editLocation(Request $request) {
-        try {
+        try {$doc = new \DOMDocument();
+            libxml_use_internal_errors(true);
+            $doc->loadHTML($request->iframe);
+            $iframe = $doc->getElementsByTagName('iframe')->item(0);
+            $src    = $iframe ? $iframe->getAttribute('src') : null;
+
             $location = LocationEvent::where('event_id', $request->event_id)->first();
             if ($location) {
                 $location->name    = trim($request->name);
                 $location->address = trim($request->address);
-                $location->iframe  = trim($request->iframe);
+                $location->iframe  = $src;
                 $location->save();
                 $txt = 'modificó';
             } else {
@@ -251,7 +256,7 @@ class EventController extends Controller {
                     'event_id' => $request->event_id,
                     'name'     => trim($request->name),
                     'address'  => trim($request->address),
-                    'iframe'   => trim($request->iframe)
+                    'iframe'   => $src
                 ]);
                 $txt = 'guardó';
             }

@@ -11,8 +11,8 @@
             <img  v-if="!event.profile" class="p-a img-event p-0" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
         </el-col>
         <el-col :xs="24" :sm="24" :md="24" :lg="0" :xl="0">
-            <img  v-if="event.profile" class="shadow" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
-            <img  v-if="!event.profile" class="shadow" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
+            <img  v-if="event.profile" class="shadow w-100" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+            <img  v-if="!event.profile" class="shadow w-100" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
         </el-col>
     </el-row>
     <el-row class="container-fluid pt-6 pb-6 has-background-white-ter padding">
@@ -28,7 +28,7 @@
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
                     <h6 class="subtitle is-6 bold has-text-black mb-5">COMPARTE ESTE EVENTO</h6>
-                    <a class="subtitle is-5 pt-2 pb-2 pl-3 pr-3 bg-green-500 has-text-white rounded-circle" :href="`https://api.whatsapp.com/send?text=Voy a asistir al evento ${event.name}: https://ticketland.mx/evento/${event.url}`" target="_blank"><font-awesome-icon :icon="['fab', 'whatsapp']" /></a>
+                    <a class="subtitle is-5 pt-2 pb-2 pl-3 pr-3 bg-green-500 has-text-white rounded-circle" :href="`https://api.whatsapp.com/send?text=Voy a asistir al evento ${event.name}: ${appUrl}/evento/${event.url}`" target="_blank"><font-awesome-icon :icon="['fab', 'whatsapp']" /></a>
                 </el-col>
             </el-row>
         </el-col>
@@ -129,6 +129,20 @@
                     <span class="text-error" v-if="errors.name">El nombre es obligatorio.</span>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
+                    <label class="bold has-text-dark" for="phone">Teléfono <span class="has-text-danger">*</span></label>
+                    <el-input
+                        class="el-form-item mb-0 mt-1"
+                        :class="{'is-error': errors.phone}"
+                        id="phone"
+                        v-model="data.order.phone"
+                        placeholder="Teléfono"
+                        @keypress="isNumber($event)"
+                        maxlength="10"
+                    />
+                    <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
+                    <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span>
+                </el-col>
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
                     <label class="bold has-text-dark" for="email">Correo <span class="has-text-danger">*</span></label>
                     <el-input
                         class="el-form-item mb-0 mt-1"
@@ -155,20 +169,6 @@
                     <span class="text-error" v-if="errors.confirm_email">Confirme el correo.</span>
                     <span class="text-error" v-if="errors.confirm_email_invalid">Correo inválido.</span>
                     <span class="text-error" v-if="errors.confirm_email_invalid2">Los correos no coinciden.</span>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
-                    <label class="bold has-text-dark" for="phone">Teléfono <span class="has-text-danger">*</span></label>
-                    <el-input
-                        class="el-form-item mb-0 mt-1"
-                        :class="{'is-error': errors.phone}"
-                        id="phone"
-                        v-model="data.order.phone"
-                        placeholder="Teléfono"
-                        @keypress="isNumber($event)"
-                        maxlength="10"
-                    />
-                    <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
-                    <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span>
                 </el-col>
                 <el-col :span="24">
                     <i class="has-text-dark"><font-awesome-icon :icon="['fas', 'circle-info']" /> Debes de tener acceso al correo ya que a esta dirección se enviarán los boletos.</i>
@@ -454,9 +454,7 @@
                         <h3 class="subtitle is-3 has-text-grey mb-2 mt-5">Lugar del evento</h3>
                         <h5 class="title is-5 has-text-dark mb-1">{{ event.location.name }}</h5>
                         <p class="has-text-dark mb-4">{{ event.location.address }}</p>
-                        <div class="w-100" v-html="event.location.iframe">
-
-                        </div>
+                        <iframe :src="event.location.iframe" allowfullscreen width="100%" height="400vh"></iframe>
                     </div>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="10" :xl="10" class="pr-0 mr-0">

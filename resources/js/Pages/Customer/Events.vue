@@ -38,11 +38,13 @@
                             <div>
                                 <el-row :gutter="5">
                                     <el-col :xs="24" :sm="24" :md="7" :lg="7" :xl="7">
-                                        <img v-if="!e.profile" class="w-100" src="/general/not_image.png" alt="Ticketland">
-                                        <img v-if="e.profile" class="w-100 image-profile" :src="`/events/images/${e.profile.name}`" :alt="e.name">
+                                        <a :href="route('cliente.evento', e.id)">
+                                            <img v-if="!e.profile" class="w-100" src="/general/not_image.png" alt="Ticketland">
+                                            <img v-if="e.profile" class="w-100 image-profile" :src="`/events/images/${e.profile.name}`" :alt="e.name">
+                                        </a>
                                     </el-col>
                                     <el-col class="pt-5 pl-5 mb-4" :xs="24" :sm="24" :md="10" :lg="13" :xl="13">
-                                        <a class="title is-4 has-text-dark mb-0" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></a><br>
+                                        <a class="title is-4 has-text-dark mb-0 active" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></a><br>
                                         <span class="has-text-dark mt-0">
                                             {{ 
                                                 parseDate(e.event_dates[0].date, 1, ' ')
