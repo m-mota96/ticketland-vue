@@ -61,8 +61,8 @@
                                             v-model="t.quantity"
                                             size="large"
                                             :min="0"
-                                            :max="t.available"
-                                            @change="calculate"
+                                            :max="10"
+                                            @change="(val, oldVal) => calculate(val, oldVal, t)"
                                             :controls="true"
                                         />
                                     </el-col>
@@ -718,12 +718,23 @@ export default {
                 }
             });
         },
-        calculate(val, oldVal) {
+        calculate(val, oldVal, t) {
+            const quantity = this.totalTickets();
+            if (quantity > 10) {
+                t.quantity = t.quantity - 1;
+            }
             if ((this.data.selected + (val - oldVal)) > 10) {
                 return false;
             }
             this.data.selected = this.data.selected + (val - oldVal);
             this.totals(false, true);
+        },
+        totalTickets() {
+            let total = 0;
+            this.data.tickets.forEach(t => {
+                total = total + t.quantity;
+            });
+            return total;
         },
         totals(code = false, save = false) {
             this.data.subtotal        = 0;
@@ -870,9 +881,12 @@ export default {
                 if (!this.data.paymentData.card.number) {
                     this.errors.cardNumber = true;
                     valid                  = false;
-                } else if (this.data.paymentData.card.number.length !== 16) {
-                    this.errors.cardInvalid = true;
-                    valid                   = false;
+                } else {
+                    const card = this.data.paymentData.card.number.replaceAll(' ', '');
+                    if (card.length !== 16) {
+                        this.errors.cardInvalid = true;
+                        valid                   = false;
+                    }
                 }
                 if (!this.data.cardExpiration) {
                     this.errors.expiration = true;
