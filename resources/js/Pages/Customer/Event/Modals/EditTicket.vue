@@ -74,10 +74,10 @@
                 <el-row :gutter="10">
                     <el-col :span="24" class="mb-4">
                         <label class="bold">Costo <span class="has-text-danger">*</span></label><br>
-                        <el-radio-group class="mb-0 mt-1" v-model="ticket.cost_type" @change="validateCost">
+                        <!-- <el-radio-group class="mb-0 mt-1" v-model="ticket.cost_type" @change="validateCost">
                             <el-radio value="paid" v-if="eventType == 'paid'">Con pago</el-radio>
                             <el-radio value="free">Gratis</el-radio>
-                        </el-radio-group><br>
+                        </el-radio-group><br> -->
                         <div v-if="eventType == 'paid'">
                             <el-input
                                 class="el-form-item mt-2 mb-0 w-50"

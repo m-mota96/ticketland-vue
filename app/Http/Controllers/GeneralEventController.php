@@ -22,7 +22,7 @@ class GeneralEventController extends Controller {
 
     public function event($url, $ticket = null) {
         $event = Event::with(['tickets' => function($query) {
-            $query->select('*', DB::raw('quantity - (sales + reserved) available'), DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))
+            $query->select('*', DB::raw('quantity - (sales + reserved) available'), DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))
             ->where('start_sale', '<=', date('Y-m-d'))
             ->where('stop_sale', '>=', date('Y-m-d'))
             ->whereRaw('quantity > (sales + reserved)');

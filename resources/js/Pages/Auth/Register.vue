@@ -35,8 +35,9 @@ const togglePasswordConfirm = () => {
 };
 
 const validate = () => {
-    let valid       = true;
-    const mailRegex =  /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/;
+    errors.value.email = false;
+    let valid          = true;
+    const mailRegex    =  /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/;
     if (!mailRegex.test(form.email)) {
         errors.value.email = true;
         valid              = false;
@@ -124,7 +125,7 @@ const isNumber = (evt) => {
                         <span class="text-error" v-if="form.errors.password">{{ form.errors.password }}</span>
                     </el-col>
                     <el-col :span="24" class="mb-3">
-                        <label for="password_confirmation" class="has-text-grey">Confirmar contraseña</label>
+                        <label for="password_confirmation" class="has-text-grey">Confirmar contraseña <span class="has-text-danger">*</span></label>
                         <el-input
                             class="el-form-item mb-0"
                             :class="{ 'is-error': form.errors.password_confirmation }"

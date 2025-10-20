@@ -6,9 +6,9 @@
                 <img v-if="!event.profile" class="h-100 w-100 img-transparent" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
             </div>
         </el-col>
-        <el-col :xs="0" :sm="0" :md="0" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
-            <img  v-if="event.profile" class="p-a img-event p-0" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
-            <img  v-if="!event.profile" class="p-a img-event p-0" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
+        <el-col :xs="0" :sm="0" :md="0" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}" class="p-r">
+            <img  v-if="event.profile" class="p-a img-event p-0 w-100" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
+            <img  v-if="!event.profile" class="p-a img-event p-0 w-100" :src="appUrl+'/general/slide_ticketland.png'" :alt="event.name">
         </el-col>
         <el-col :xs="24" :sm="24" :md="24" :lg="0" :xl="0">
             <img  v-if="event.profile" class="shadow w-100" :src="appUrl+'/events/images/'+event.profile.name" :alt="event.name">
@@ -16,7 +16,7 @@
         </el-col>
     </el-row>
     <el-row class="container-fluid pt-6 pb-6 has-background-white-ter padding">
-        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
+        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row>
                 <el-col :xs="24" :sm="24" :md="18" :lg="18" :xl="18">
                     <h1 class="title is-1 mb-0 bold has-text-black">{{ event.name }}</h1>
@@ -34,7 +34,7 @@
         </el-col>
     </el-row>
     <el-row class="container-fluid has-background-white pt-6 padding" v-if="!viewInfoCustomer" ref="dataTickets">
-        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
+        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue">
                 <el-col :span="24" class="mb-6">
                     <h2 class="title is-2 mb-0 bold has-text-black mb-2">Selecciona tus boletos</h2>
@@ -47,7 +47,7 @@
                                 <el-row :class="{'card has-background-light p-5': t.name == ticket}">
                                     <el-col class="mb-3" :sm="24" :md="16" :lg="18" :xl="18">
                                             <h4 class="subtitle is-4 has-text-dark mb-0" v-if="!t.promotion">{{ t.name }}</h4>
-                                            <el-badge :value="`-${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion">
+                                            <el-badge :value="`${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion">
                                                 <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
                                             </el-badge>
                                             <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
@@ -75,14 +75,14 @@
         </el-col>
     </el-row>
     <el-row class="has-background-white pb-5 b-t b-b pt-6 pb-5 padding" v-if="!viewInfoCustomer">
-        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
+        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue2">
-                <el-col :xs="24" :sm="24" :md="16" :lg="18" :xl="18" class="mb-3">
+                <el-col :xs="24" :sm="24" :md="16" :lg="15" :xl="18" class="mb-3">
                     <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected != 1">Tienes <b>{{ data.selected }}</b> boletos seleccionados</h4>
                     <h4 class="subtitle is-4 has-text-dark mb-2" v-if="data.selected == 1">Tienes <b>{{ data.selected }}</b> boleto seleccionado</h4>
                     <h4 class="title is-4 has-text-link">{{ formatCurrency(data.subtotal) }} MXN <span class="subtitle is-6 has-text-grey" v-if="event.model_payment == 'separated'"> + CARGOS</span></h4>
                 </el-col>
-                <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
+                <el-col :xs="24" :sm="24" :md="8" :lg="9" :xl="6">
                     <el-button class="bold w-100" type="success" size="large" @click="loadInfo">
                         <font-awesome-icon :icon="['fas', 'money-check-dollar']" />&nbsp;&nbsp;Comprar boletos
                     </el-button>
@@ -100,7 +100,7 @@
         element-loading-svg-view-box="-10, -10, 50, 50"
         element-loading-background="rgba(0, 0, 0, 0.9)"
     >
-        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
+        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue" class="mb-6">
                 <el-col :span="24" class="mb-3">
                     <el-row>
@@ -130,7 +130,7 @@
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
                     <label class="bold has-text-dark" for="phone">Teléfono <span class="has-text-danger">*</span></label>
-                    <el-input
+                    <!-- <el-input
                         class="el-form-item mb-0 mt-1"
                         :class="{'is-error': errors.phone}"
                         id="phone"
@@ -138,6 +138,15 @@
                         placeholder="Teléfono"
                         @keypress="isNumber($event)"
                         maxlength="10"
+                    /> -->
+                    <VueTelInput
+                        v-model="data.order.phone"
+                        mode="international"
+                        class="mt-1"
+                        style="color: #606266; height: 32px;"
+                        :auto-format="true"
+                        :input-options="{ placeholder: 'Ingresa tu número de teléfono' }"
+                        @input="onPhoneChange"
                     />
                     <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
                     <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span>
@@ -162,7 +171,9 @@
                     <el-input
                         class="el-form-item mb-0 mt-1"
                         :class="{'is-error': errors.confirm_email || errors.confirm_email_invalid || errors.confirm_email_invalid2}"
+                        name="email"
                         id="confirm_email"
+                        autocomplete="email"
                         v-model="data.order.confirm_email"
                         placeholder="Confirmar correo electrónico"
                     />
@@ -199,7 +210,7 @@
                                                 <span>Boleto {{ (index + 1) }} - <b class="has-text-primary">{{ t.name }}</b></span>
                                             </el-col>
                                             <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="has-text-right">
-                                                <el-checkbox :class="{'w-100': gutterValue == 0}" v-model="t.checked" label="Autocompletar este boleto con datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
+                                                <el-checkbox class="bold" :class="{'w-100': gutterValue == 0}" v-model="t.checked" label="Autocompletar este boleto con datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
                                             </el-col>
                                         </el-row>
                                     </el-col>
@@ -231,13 +242,22 @@
                                 </el-col>
                                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
                                     <label class="bold has-text-dark">Teléfono</label>
-                                    <el-input
+                                    <!-- <el-input
                                         class="el-form-item mb-0 mt-1"
                                         :class="{'is-error': false}"
                                         v-model="t.phone"
                                         placeholder="Teléfono"
                                         @keypress="isNumber($event)"
                                         maxlength="10"
+                                    /> -->
+                                    <VueTelInput
+                                        v-model="t.phone"
+                                        mode="international"
+                                        class="mt-1"
+                                        style="color: #606266; height: 32px;"
+                                        :auto-format="true"
+                                        :input-options="{ placeholder: 'Número de teléfono' }"
+                                        @input="(val) => onPhoneChangeTickets(val, index)"
                                     />
                                 </el-col>
                                 <!-- <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
@@ -312,7 +332,7 @@
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6" :inline="true">
                     <el-row :gutter="5">
-                        <el-col :xs="17" :sm="17" :md="18" :lg="18" :xl="18">
+                        <el-col :xs="17" :sm="17" :md="18" :lg="16" :xl="18">
                             <label class="bold has-text-dark">¿Tienes un código de descuento?</label>
                             <el-input
                                 class="el-form-item mb-0"
@@ -323,7 +343,7 @@
                                 :disabled="disabledDiscount"
                             />
                         </el-col>
-                        <el-col :xs="7" :sm="7" :md="6" :lg="6" :xl="6">
+                        <el-col :xs="7" :sm="7" :md="6" :lg="8" :xl="6">
                             <br>
                             <el-button class="w-100" type="success" @click="verifyCodes" v-if="!data.discount">Validar cupón</el-button>
                             <el-button class="w-100" type="danger" @click="verifyCodes('delete')" v-if="data.discount">Borrar cupón</el-button>
@@ -342,9 +362,9 @@
                         @change="verifyPaymentMethod"
                         :disabled="disabledPaymentMethod"
                         >
-                        <el-option label="Pago en Oxxo" value="oxxo" />
-                        <el-option label="Tarjeta de Débito/Crédito" value="card" />
-                        <el-option label="PayPal" value="paypal" />
+                        <el-option label="Pago en Oxxo (México)" value="oxxo" />
+                        <el-option label="Tarjeta de Débito/Crédito (México)" value="card" />
+                        <el-option label="PayPal (Internacional)" value="paypal" />
                     </el-select>
                     <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
                 </el-col>
@@ -353,7 +373,7 @@
                         Subtotal: <b>{{ formatCurrency(data.total) }} MXN</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Descuento: <b>{{ data.discount == 0 ? 'N/A' : formatCurrency(data.discount)+' MXN' }}</b>
+                        Código de descuento: <b>{{ data.discount == 0 ? 'N/A' : formatCurrency(data.discount)+' MXN' }}</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
                         Total: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
@@ -446,7 +466,7 @@
         </el-col>
     </el-row>
     <el-row class="container-fluid has-background-white pb-6 pt-6 padding" ref="moreInfo">
-        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 12, offset: 6}" :xl="{span: 12, offset: 6}">
+        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue2">
                 <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14" class="mb-3">
                     <h3 class="subtitle is-3 has-text-grey mb-2">Sobre el evento</h3>
@@ -485,11 +505,14 @@ import Errors from './Modals/Errors.vue';
 import { ElMessageBox } from 'element-plus';
 import PaypalButton from './PaypalButton.vue';
 import { nextTick } from 'vue';
+import { VueTelInput } from 'vue3-tel-input'
+import 'vue3-tel-input/dist/vue3-tel-input.css'
 
 export default {
     components: {
         Errors,
-        PaypalButton
+        PaypalButton,
+        VueTelInput
     },
     data() {
         return {
@@ -530,6 +553,7 @@ export default {
                 },
                 cardExpiration: '',
             },
+            phone: '',
             viewInfoCustomer: false,
             errors: {
                 name: false,
@@ -692,6 +716,7 @@ export default {
             if (this.data.order.code) {
                 const response = await apiClient('verifyCodes', 'POST', {event_id: this.event.id, code: this.data.order.code});
                 if (response.error) {
+                    this.data.order.code = '';
                     showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
@@ -832,6 +857,7 @@ export default {
                 this.errors.confirm_email = true;
                 valid                     = false;
             }
+            console.log(this.data.order);
             if (!this.data.order.phone) {
                 this.errors.phone = true;
                 valid             = false;
@@ -854,12 +880,12 @@ export default {
                     valid                              = false;
                 }
             }
-            if (this.data.order.phone) {
-                if (!intRegex.test(this.data.order.phone)) {
-                    this.errors.phone_invalid = true;
-                    valid                     = false;
-                }
-            }
+            // if (this.data.order.phone) {
+            //     if (!intRegex.test(this.data.order.phone)) {
+            //         this.errors.phone_invalid = true;
+            //         valid                     = false;
+            //     }
+            // }
 
             this.data.ticketsReserved.forEach((t, i) => {
                 if (!t.customer_name) {
@@ -1033,6 +1059,20 @@ export default {
             if (!el) return;
             const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
             window.scrollTo({ top, behavior: 'smooth' });
+        },
+        onPhoneChange(val) {
+            if (typeof val === 'string') {
+                this.data.order.phone = val.replaceAll(' ', '');
+            } else if (val && val.number) {
+                this.data.order.phone = val.number.replaceAll(' ', '');
+            }
+        },
+        onPhoneChangeTickets(val, index) {
+            if (typeof val === 'string') {
+                this.data.ticketsReserved[index].phone = val.replaceAll(' ', '');
+            } else if (val && val.number) {
+                this.data.ticketsReserved[index].phone = val.number.replaceAll(' ', '');
+            }
         }
     },
     computed: {
@@ -1068,7 +1108,7 @@ export default {
     width: 100% !important;
 }
 .content-head {
-    height: 20rem;
+    height: 30rem;
 }
 .opacy {
     overflow: hidden;
@@ -1092,8 +1132,9 @@ export default {
 .img-event {
     border-radius: 3px;
     bottom: 0;
-    height: 282px;
-    width: 50%;
+    margin-top: 5vh !important;
+    height: 430px;
+    /* width: 50%; */
     object-fit: cover;
     object-position: center;
     -webkit-box-shadow: 0px 0px 15px -2px rgba(0,0,0,0.75);

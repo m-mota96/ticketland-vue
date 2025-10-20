@@ -18,7 +18,7 @@
                 <span class="text-error" v-if="errors.address">La dirección es obligatoria.</span>
             </el-col>
             <el-col class="mb-3" :span="24">
-                <label for="iframe">Iframe <a :href="appUrl+'/../../general/Llenar campo iframe.pdf'" target="_blank"><font-awesome-icon class="pointer bold has-text-black" title="¿Como lleno este campo?" :icon="['fas', 'question-circle']" /></a></label>
+                <label for="iframe">Iframe <a :href="appUrl+'/../../general/Llenar campo iframe.pdf?v=2'" target="_blank"><font-awesome-icon class="pointer bold has-text-black" title="¿Como lleno este campo?" :icon="['fas', 'question-circle']" /></a></label>
                 <el-mention
                     class="w-100"
                     id="address"
