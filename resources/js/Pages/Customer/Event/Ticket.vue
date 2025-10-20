@@ -2,7 +2,7 @@
     <MenuEvent></MenuEvent>
     <Submenu :dadEvent="event"></Submenu>
     <el-row class="wrapper">
-        <el-col :span="14" :offset="5" class="pt-6">
+        <el-col :span="18" :offset="3" class="pt-6">
             <el-row :gutter="50">
                 <el-col :span="17">
                     <el-row class="text-center pt-5" v-if="!tickets.length">

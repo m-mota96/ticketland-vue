@@ -2,7 +2,7 @@
     <MenuEvent></MenuEvent>
     <Submenu :dadEvent="event"></Submenu>
     <el-row :gutter="20" class="wrapper">
-        <el-col :span="14" :offset="5" class="p-0 bg-profile" :style="{ 'background-image': `url(${imageProfile})` }">
+        <el-col :span="18" :offset="3" class="p-0 bg-profile" :style="{ 'background-image': `url(${imageProfile})` }">
             <div class="action-profile" @click="$refs.UploadImages.showUploadImages('profile')">
                 <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
                 Cambiar imagen de fondo
@@ -34,7 +34,7 @@
                 </div>
             </el-col>
         </el-col>
-        <el-col :span="12" :offset="6">
+        <el-col :span="16" :offset="4">
             <el-card class="pt-3">
                 <el-row :gutter="30">
                     <el-col :span="16">
@@ -185,7 +185,7 @@ export default {
     }
     .action-profile {
         position: absolute;
-        top: 15vh;
+        top: 5vh;
         right: 5vh;
         background-color: black;
         color: white;
@@ -194,7 +194,7 @@ export default {
         cursor: pointer;
     }
     .bg-profile {
-        height: 45vh;
+        height: 65vh;
         background-size: 100%;
         background-position: center;
         background-repeat: no-repeat;
