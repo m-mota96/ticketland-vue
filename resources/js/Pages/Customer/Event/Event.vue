@@ -12,8 +12,8 @@
                 <h5 class="title is-5 has-text-white mb-2">Categoría: {{ event.category.name }}</h5>
                 <h5 class="title is-5 has-text-white"><a class="text-white" :href="appUrl+'/evento/'+event.url" target="_blank">Ver sitio web</a></h5>
                 <div class="content-logo" :style="{ 'background-image': imageLogo == '' ? 'unset': `url(${imageLogo})` }">
-                    <div class="text-center pt-4 container-logo" v-if="imageLogo == ''" @click="$refs.UploadImages.showUploadImages('logo')">
-                        <h5 class="subtitle is-5 mt-5 text-logo">Agregar logo</h5>
+                    <div class="text-center pt-1 container-logo" v-if="imageLogo == ''" @click="$refs.UploadImages.showUploadImages('logo')">
+                        <h5 class="subtitle is-5 mt-4 text-logo">Agregar logo</h5>
                     </div>
                     <span class="p-1 edit-logo pointer" v-if="imageLogo != ''" @click="$refs.UploadImages.showUploadImages('logo')">
                         <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
