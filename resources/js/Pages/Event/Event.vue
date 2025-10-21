@@ -201,7 +201,7 @@
                 </el-col>
                 <el-col :span="24">
                     <el-row>
-                        <el-card class="w-100 mb-5" v-for="(t, index) in data.ticketsReserved" :key="index">
+                        <el-card class="w-100 mb-5 my-card" v-for="(t, index) in data.ticketsReserved" :key="index">
                             <template #header>
                                 <div class="card-header">
                                     <el-col :span="24">
@@ -210,7 +210,7 @@
                                                 <span>Boleto {{ (index + 1) }} - <b class="has-text-primary">{{ t.name }}</b></span>
                                             </el-col>
                                             <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="has-text-right">
-                                                <el-checkbox class="bold" :class="{'w-100': gutterValue == 0}" v-model="t.checked" label="Autocompletar este boleto con datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
+                                                <el-checkbox class="bold" :class="{'w-100': gutterValue == 0}" v-model="t.checked" label="Autocompletar este boleto con los datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
                                             </el-col>
                                         </el-row>
                                     </el-col>
@@ -252,6 +252,7 @@
                                     /> -->
                                     <VueTelInput
                                         v-model="t.phone"
+                                        :value="t.phone"
                                         mode="international"
                                         class="mt-1"
                                         style="color: #606266; height: 32px;"
@@ -260,17 +261,6 @@
                                         @input="(val) => onPhoneChangeTickets(val, index)"
                                     />
                                 </el-col>
-                                <!-- <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
-                                    <label class="bold has-text-dark">¿Tienes un código de descuento?</label>
-                                    <el-input
-                                        class="el-form-item mb-0 mt-1"
-                                        :class="{'is-error': false}"
-                                        v-model="t.code"
-                                        placeholder="Ingresa tu código"
-                                        @input="val => formatInput(val, index)"
-                                        @blur="val => verifyCodes(val, index)"
-                                    />
-                                </el-col> -->
                             </el-row>
                         </el-card>
                     </el-row>
@@ -790,7 +780,9 @@ export default {
             if(checked) {
                 this.data.ticketsReserved[index].customer_name = this.data.order.name;
                 this.data.ticketsReserved[index].email         = this.data.order.email;
-                this.data.ticketsReserved[index].phone         = this.data.order.phone;
+                if (this.data.order.phone) {
+                    this.data.ticketsReserved[index].phone         = this.data.order.phone;
+                }
             }
         },
         viewTickets() {
@@ -857,7 +849,6 @@ export default {
                 this.errors.confirm_email = true;
                 valid                     = false;
             }
-            console.log(this.data.order);
             if (!this.data.order.phone) {
                 this.errors.phone = true;
                 valid             = false;
@@ -1068,10 +1059,12 @@ export default {
             }
         },
         onPhoneChangeTickets(val, index) {
-            if (typeof val === 'string') {
-                this.data.ticketsReserved[index].phone = val.replaceAll(' ', '');
-            } else if (val && val.number) {
-                this.data.ticketsReserved[index].phone = val.number.replaceAll(' ', '');
+            if (val) {
+                if (typeof val === 'string') {
+                    this.data.ticketsReserved[index].phone = val.replaceAll(' ', '');
+                } else if (val && val.number) {
+                    this.data.ticketsReserved[index].phone = val.number.replaceAll(' ', '');
+                }
             }
         }
     },
@@ -1199,10 +1192,10 @@ body {
 }
 @media only screen and (max-width: 2500px) and (min-width: 1700px) {
     .content-head {
-        height: 25rem !important;
+        height: 35rem !important;
     }
     .img-event {
-        height: 354px !important;
+        height: 500px !important;
     }
 }
 @media only screen and (max-width: 1024px) and (min-width: 501px) {

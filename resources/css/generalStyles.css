@@ -60,3 +60,12 @@ html, body {
 .wrapper {
     min-height: 70vh;
 }
+.vti__dropdown-item strong {
+    color: rgb(95, 95, 95) !important;
+}
+.my-card {
+  overflow: visible !important;
+}
+.vti__dropdown-list {
+    z-index: 999 !important;
+}

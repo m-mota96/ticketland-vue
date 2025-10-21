@@ -38,9 +38,11 @@ const validate = () => {
     errors.value.email = false;
     let valid          = true;
     const mailRegex    =  /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/;
-    if (!mailRegex.test(form.email)) {
-        errors.value.email = true;
-        valid              = false;
+    if (form.email) {
+        if (!mailRegex.test(form.email)) {
+            errors.value.email = true;
+            valid              = false;
+        }
     }
     return valid;
 };
@@ -88,7 +90,7 @@ const isNumber = (evt) => {
                             v-model="form.email"
                             clearable
                         />
-                        <span class="text-error" v-if="form.errors.email">{{ form.errors.email }}</span>
+                        <span class="text-error" v-if="form.errors.email && !errors.email">{{ form.errors.email }}</span>
                         <span class="text-error" v-if="errors.email">Por favor ingresa un correo válido.</span>
                     </el-col>
                     <el-col :span="24" class="mb-3">
