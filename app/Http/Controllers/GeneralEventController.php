@@ -32,7 +32,7 @@ class GeneralEventController extends Controller {
             return redirect('/');
         }
         if ($ticket) {
-            $searchTicket = Ticket::where('name', $ticket)->first();
+            $searchTicket = Ticket::where('event_id', $event->id)->where('name', $ticket)->first();
             if (!$searchTicket) {
                 $ticket = null;
             }
@@ -133,7 +133,8 @@ class GeneralEventController extends Controller {
                     $txt = 'Registro realizado exitosamente.<br>Recibirás tu ficha de pago en tu correo electrónico.<br> Si no la ves en tu bandeja de entrada, por favor revisa en Spam.';
                     break;
                 case 'paypal':
-                    $proccess = self::captureOrder($request->order['paypal_order_id']);
+                    // Se procesa el pago con Paypal
+                    $proccess = self::captureOrder($request->order['paypal_order_id']); // La función captureOrder se encuentra en el trait PaypalTrait
                     if (!$proccess['success']) {
                         ManageFilesTrait::deleteFiles($event->id, $files);
                         DB::rollBack();
