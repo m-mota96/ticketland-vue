@@ -302,7 +302,7 @@ class EventController extends Controller {
 
     public function getEventsPublic() {
         try {
-            $events = Event::with(['profile:id,event_id,name', 'eventDates', 'location:id,event_id,name'])->where('status', 1)->get();
+            $events = Event::with(['profile:id,event_id,name', 'eventDates', 'location:id,event_id,name'])->whereHas('profile')->where('status', 1)->get();
             return ResponseTrait::response(null, $events);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
