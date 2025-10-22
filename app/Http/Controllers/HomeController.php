@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 class HomeController extends Controller {
     public function index() {
@@ -14,5 +16,9 @@ class HomeController extends Controller {
                 return redirect(route('administrador.inicio'));
             break;
         }
+    }
+
+    public function home() {
+        return Inertia::render('Home');
     }
 }

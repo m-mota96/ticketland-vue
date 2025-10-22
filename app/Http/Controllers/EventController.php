@@ -239,10 +239,13 @@ class EventController extends Controller {
 
     public function editLocation(Request $request) {
         try {$doc = new \DOMDocument();
-            libxml_use_internal_errors(true);
-            $doc->loadHTML($request->iframe);
-            $iframe = $doc->getElementsByTagName('iframe')->item(0);
-            $src    = $iframe ? $iframe->getAttribute('src') : null;
+            $src = null;
+            if ($request->iframe) {
+                libxml_use_internal_errors(true);
+                $doc->loadHTML($request->iframe);
+                $iframe = $doc->getElementsByTagName('iframe')->item(0);
+                $src    = $iframe ? $iframe->getAttribute('src') : null;
+            }
 
             $location = LocationEvent::where('event_id', $request->event_id)->first();
             if ($location) {
@@ -292,6 +295,15 @@ class EventController extends Controller {
             $event->model_payment = $request->model_payment;
             $event->save();
             return ResponseTrait::response('El modelo de cobro se modificó correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function getEventsPublic() {
+        try {
+            $events = Event::with(['profile:id,event_id,name', 'eventDates', 'location:id,event_id,name'])->where('status', 1)->get();
+            return ResponseTrait::response(null, $events);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

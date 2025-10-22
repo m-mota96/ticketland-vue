@@ -62,7 +62,7 @@
                                 <div class="mt-2 mb-0" v-if="event.location">
                                     <span class="bold">{{ event.location.name }}</span><br>
                                     <span class="bold">{{ event.location.address }}</span><br>
-                                    <p class="mt-2">
+                                    <p class="mt-2" v-if="event.location.iframe">
                                         <iframe :src="event.location.iframe" allowfullscreen width="100%" height="200vh"></iframe>
                                     </p>
                                 </div>

@@ -465,7 +465,7 @@
                         <h3 class="subtitle is-3 has-text-grey mb-2 mt-5">Lugar del evento</h3>
                         <h5 class="title is-5 has-text-dark mb-1">{{ event.location.name }}</h5>
                         <p class="has-text-dark mb-4">{{ event.location.address }}</p>
-                        <iframe :src="event.location.iframe" allowfullscreen width="100%" height="400vh"></iframe>
+                        <iframe v-if="event.location.iframe" :src="event.location.iframe" allowfullscreen width="100%" height="400vh"></iframe>
                     </div>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="10" :xl="10" class="pr-0 mr-0">
