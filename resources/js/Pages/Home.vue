@@ -69,6 +69,7 @@ const viewDates = (dates) => {
 </script>
 
 <template>
+    <div class="bg">
     <nav class="navbar is-fixed-top pt-2 pb-2 pl-5 pr-5" style="background-color: rgba(33, 38, 43, 0.7);">
         <div class="navbar-brand">
             <a class="navbar-item" href="">
@@ -153,7 +154,7 @@ const viewDates = (dates) => {
                     <div class="card">
                         <div class="card-image">
                             <a :href="`/evento/${item.url}`">
-                                <img :src="`events/images/${item.profile.name}`" :alt="item.name">
+                                <img :src="`events/images/${item.profile.name}`" :alt="item.name" class="w-100">
                             </a>
                         </div>
                         <div class="card-content has-background-white">
@@ -195,9 +196,13 @@ const viewDates = (dates) => {
             </el-row>
         </el-col>
     </el-row>
+    </div>
 </template>
 
 <style scoped>
+.bg {
+    background-color: rgb(247, 241, 241);
+}
 a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-link:focus, .navbar-link:focus-within, .navbar-link:hover {
     --bulma-navbar-item-background-l-delta: unset !important;
     --bulma-navbar-item-background-a: unset !important;
