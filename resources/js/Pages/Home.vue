@@ -69,7 +69,7 @@ const viewDates = (dates) => {
 </script>
 
 <template>
-    <div class="bg">
+    <div class="bg w-100">
     <nav class="navbar is-fixed-top pt-2 pb-2 pl-5 pr-5" style="background-color: rgba(33, 38, 43, 0.7);">
         <div class="navbar-brand">
             <a class="navbar-item" href="">
@@ -104,7 +104,7 @@ const viewDates = (dates) => {
             </div>
         </div>
     </nav>
-    <el-carousel height="75vh">
+    <el-carousel class="header">
         <el-carousel-item v-for="(item, i) in events" :key="i" :interval="4000">
             <div class="carousel-item">
                 <img
@@ -113,8 +113,8 @@ const viewDates = (dates) => {
                 />
                 <div class="caption pt-4 pb-5">
                     <p class="title is-3 mb-1">{{ item.name }}</p>
-                    <p class="mb-1 subtitle is-6 has-text-white" v-if="item.location">{{ item.location.name }}</p>
-                    <p class="mb-1 subtitle is-6 has-text-white">{{ viewDates(item.event_dates) }}</p>
+                    <p class="mb-1 subtitle is-6 has-text-white location" v-if="item.location">{{ item.location.name }}</p>
+                    <p class="mb-1 subtitle is-6 has-text-white dates">{{ viewDates(item.event_dates) }}</p>
                     <a class="button is-outlined is-white mt-3" :href="`/evento/${item.url}`">Comprar boletos</a>
                 </div>
             </div>
@@ -132,25 +132,25 @@ const viewDates = (dates) => {
             <h4 class="title is-3 has-text-white mb-3">¿Tienes un evento?</h4>
             <p class="subtitle is-5 has-text-white">Regístrate en Ticketland y comienza a ver todos los beneficios que tenemos para ti.</p>
             <el-row :gutter="20">
-                <el-col :span="4" :offset="4">
+                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
                     <img src="/general/img1.png" alt="Ticketland">
                 </el-col>
-                <el-col :span="4">
+                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
                     <img src="/general/img2.png" alt="Ticketland">
                 </el-col>
-                <el-col :span="4">
+                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
                     <img src="/general/img3.png" alt="Ticketland">
                 </el-col>
-                <el-col :span="4">
+                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
                     <img src="/general/img4.jpg" alt="Ticketland">
                 </el-col>
             </el-row>
-            <a class="button is-outlined is-white mt-6 bold" href="/register">¡REGÍSTRATE Y VIVE UNA NUEVA EXPERIENCIA!</a>
+            <a class="button is-outlined is-white mt-6 bold w-100" href="/register">¡REGÍSTRATE Y VIVE UNA NUEVA EXPERIENCIA!</a>
         </el-col>
         <el-col :span="24" class="p-6">
             <h2 class="title is-2 has-text-black has-text-centered mt-6">Próximos eventos</h2>
             <el-row :gutter="20" class="mb-6">
-                <el-col :span="6" v-for="(item, i) in events" :key="i">
+                <el-col :xs="24" :sm="24" :md="12" :lg="6" :xl="6" v-for="(item, i) in events" :key="i">
                     <div class="card">
                         <div class="card-image">
                             <a :href="`/evento/${item.url}`">
@@ -200,6 +200,9 @@ const viewDates = (dates) => {
 </template>
 
 <style scoped>
+.header {
+    height: 75vh;
+}
 .bg {
     background-color: rgb(247, 241, 241);
 }
@@ -236,5 +239,21 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     height: 30vh;
     object-fit: cover;
     object-position: center;
+}
+@media only screen and (max-width: 500px) and (min-width: 200px) {
+    .header {
+        height: unset;
+    }
+    .dates {
+        display: none;
+    }
+    .location {
+        display: none;
+    }
+    .caption {
+        bottom: 5px;
+        padding: 4px 8px !important;
+        width: 90%;
+    }
 }
 </style>
