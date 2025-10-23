@@ -154,7 +154,7 @@ const viewDates = (dates) => {
                     <div class="card">
                         <div class="card-image">
                             <a :href="`/evento/${item.url}`">
-                                <img :src="`events/images/${item.profile.name}`" :alt="item.name" class="w-100">
+                                <img :src="`events/images/${item.profile.name}`" :alt="item.name" class="w-100  image-card">
                             </a>
                         </div>
                         <div class="card-content has-background-white">
@@ -231,5 +231,10 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     border-radius: 8px;
     font-size: 1.2rem;
     text-align: center;
+}
+.image-card {
+    height: 30vh;
+    object-fit: cover;
+    object-position: center;
 }
 </style>

@@ -577,6 +577,7 @@ export default {
             currentYear: new Date().getFullYear(),
             disabledPaymentMethod: false,
             disabledDiscount: false,
+            publicKey: import.meta.env.VITE_CONEKTA_PUBLIC_KEY,
         }
     },
     beforeMount() {
@@ -630,7 +631,7 @@ export default {
                     this.scrollCenterY();
                     this.loading = true;
                     if (this.data.order.payment_method == 'card') {
-                        Conekta.setPublicKey("key_DV7ryzTwLNxT2Ye66xpm6uA");
+                        Conekta.setPublicKey(this.publicKey);
                         Conekta.setLanguage('es');
                         Conekta.Token.create(this.data.paymentData,
                             (token) => this.makePayment(token),

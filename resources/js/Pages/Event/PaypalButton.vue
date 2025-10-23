@@ -18,10 +18,15 @@ export default {
             required: true
         }
     },
+    data() {
+        return {
+            clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID,
+        }
+    },
     mounted() {
         if (typeof window.paypal === "undefined") {
             const script  = document.createElement("script");
-            script.src    ="https://www.paypal.com/sdk/js?client-id=ATPIxQhqpEEK7DhZ-QlaGbA6V7SfAr1dr7hbWyeJnAl5oNu5rOEv37SV-LP1EZLjQf55nRy5uff-LE54&currency=MXN&locale=es_MX";
+            script.src    = `https://www.paypal.com/sdk/js?client-id=${this.clientId}&currency=MXN&locale=es_MX`;
             script.onload = this.renderPaypalButton;
             document.body.appendChild(script);
         } else {

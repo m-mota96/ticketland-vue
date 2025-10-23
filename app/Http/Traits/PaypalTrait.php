@@ -21,7 +21,7 @@ trait PaypalTrait {
     public function __construct() {
         $clientId = env('PAYPAL_CLIENT_ID');
         $secret   = env('PAYPAL_SECRET');
-        $mode     = env('PAYPAL_MODE', 'sandbox');
+        $mode     = env('PAYPAL_MODE', 'Sandbox');
 
         $authBuilder = ClientCredentialsAuthCredentialsBuilder::init(
             $clientId,
@@ -40,19 +40,19 @@ trait PaypalTrait {
 
         // Crear cliente PayPal
         $this->client = PaypalServerSdkClientBuilder::init()
-        ->environment(Environment::SANDBOX)
+        ->environment($mode)
         ->clientCredentialsAuthCredentials($authBuilder)
         ->build();
     }
 
     public function createOrder(Request $request) {
-        // $applicationContext = OrderApplicationContext::init([
-        //     'brandName' => 'Maxwell',
-        //     'landingPage' => 'NO_PREFERENCE',
-        //     'shippingPreference' => 'NO_SHIPPING',
-        //     'userAction' => 'PAY_NOW',
-        //     'locale' => 'es'
-        // ])->build();
+        $applicationContext = new OrderApplicationContext([
+            'brandName' => 'Maxwell',
+            'landingPage' => 'NO_PREFERENCE',
+            'shippingPreference' => 'NO_SHIPPING',
+            'userAction' => 'PAY_NOW',
+            'locale' => 'es'
+        ]);
 
         $collect = [
             'body' => OrderRequestBuilder::init(
@@ -63,16 +63,10 @@ trait PaypalTrait {
                             'MXN',
                             $request->amount
                         )->build()
-                    )->build()
+                    )->build(),
                 ],
-                // $applicationContext
+                $applicationContext
             )
-            // ->setApplicationContext([
-            //     'brand_name' => 'Maxwell',
-            //     'landing_page' => 'NO_PREFERENCE',
-            //     'shipping_preference' => 'NO_SHIPPING',
-            //     'user_action' => 'PAY_NOW'
-            // ])
             ->build(),
             // 'prefer' => 'return=minimal'
         ];

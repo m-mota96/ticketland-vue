@@ -63,22 +63,22 @@
                                 </template>
                             </el-table-column> -->
                             <el-table-column prop="id" label="#" width="70" align="center" />
-                            <el-table-column prop="name">
+                            <el-table-column prop="name" width="200">
                                 <template #header>
-                                    <el-input v-model="search.name" placeholder="Buscar Cliente" @input="getPayments" />
+                                    <el-input v-model="search.name" placeholder="Buscar Cliente" @input="getPayments" clearable />
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="email">
+                            <el-table-column prop="email" width="200">
                                 <template #header>
-                                    <el-input v-model="search.email" placeholder="Buscar Correo electrónico" @input="getPayments" />
+                                    <el-input v-model="search.email" placeholder="Buscar Correo electrónico" @input="getPayments" clearable />
                                 </template>
                             </el-table-column>
                             <el-table-column prop="phone" width="150">
                                 <template #header>
-                                    <el-input v-model="search.phone" placeholder="Buscar Teléfono" @input="getPayments" />
+                                    <el-input v-model="search.phone" placeholder="Buscar Teléfono" @input="getPayments" clearable />
                                 </template>
                             </el-table-column>
-                            <el-table-column>
+                            <el-table-column width="150">
                                 <template #header>
                                     <el-select v-model="search.type" placeholder="Método de pago" @change="getPayments">
                                         <el-option
@@ -103,7 +103,7 @@
                                     {{ formatCurrency(scope.row.amount) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Descuento" width="130" align="center">
+                            <el-table-column label="% de C/Descuento" width="130" align="center">
                                 <template #default="scope">
                                     {{ scope.row.discount }}%
                                 </template>
@@ -134,7 +134,7 @@
                                     </span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Fecha de compra" align="center">
+                            <el-table-column label="Fecha de compra" align="center" width="150">
                                 <template #default="scope">
                                     {{ formatDate(scope.row.created_at) }}<br>{{ formatTime(scope.row.created_at) }}
                                 </template>

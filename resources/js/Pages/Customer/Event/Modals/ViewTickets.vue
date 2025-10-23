@@ -8,9 +8,9 @@
     >
         <el-table class="w-100 mb-6" :data="tickets" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
             <el-table-column prop="ticket.name" label="Tipo de boleto" />
-            <el-table-column label="Descuento">
+            <el-table-column label="Descuento del boleto">
                 <template #default="scope">
-                    {{ scope.row.promotion ? `-${scope.row.promotion}%` : 'N/A' }}
+                    {{ scope.row.promotion ? `-${scope.row.promotion}%` : 'Sin descuento' }}
                 </template>
             </el-table-column>
             <el-table-column label="Precio">

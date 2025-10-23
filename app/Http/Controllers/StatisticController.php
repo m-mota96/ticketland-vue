@@ -50,31 +50,31 @@ class StatisticController extends Controller {
             $array_expired[$date->format('Y-m-d')] = $expired;
         }
 
-        $ticketsDiscount = Access::wherehas('payment', function($query) {
-            $query->whereNotNull('code')->where('status', 'payed');
+        $ticketsDiscount = Access::wherehas('payment', function($query) use($event_id) {
+            $query->whereNotNull('code')->where('status', 'payed')->where('event_id', $event_id);
         })->count();
 
-        $ticketsNotDiscount = Access::wherehas('payment', function($query) {
-            $query->whereNull('code')->where('status', 'payed');
+        $ticketsNotDiscount = Access::wherehas('payment', function($query) use($event_id) {
+            $query->whereNull('code')->where('status', 'payed')->where('event_id', $event_id);
         })->count();
 
-        $ticketsPending = Access::wherehas('payment', function($query) {
-            $query->where('status', 'pending');
+        $ticketsPending = Access::wherehas('payment', function($query) use($event_id) {
+            $query->where('status', 'pending')->where('event_id', $event_id);
         })->count();
 
-        $ticketsExpired = Access::wherehas('payment', function($query) {
-            $query->where('status', 'expired');
+        $ticketsExpired = Access::wherehas('payment', function($query) use($event_id) {
+            $query->where('status', 'expired')->where('event_id', $event_id);
         })->count();
 
         $salesOxxo = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
         ->selectRaw('"Pago en Oxxo" AS type')
-        ->where('status', 'payed')->where('type', 'oxxo')->first();
+        ->where('status', 'payed')->where('type', 'oxxo')->where('event_id', $event_id)->first();
         $salesCard = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
         ->selectRaw('"Tarjeta de Débito/Crédito" AS type')
-        ->where('status', 'payed')->where('type', 'card')->first();
+        ->where('status', 'payed')->where('type', 'card')->where('event_id', $event_id)->first();
         $salesPaypal = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
         ->selectRaw('"Paypal" AS type')
-        ->where('status', 'payed')->where('type', 'paypal')->first();
+        ->where('status', 'payed')->where('type', 'paypal')->where('event_id', $event_id)->first();
 
         return ResponseTrait::response('', [
             'sales'              => $array_sales,

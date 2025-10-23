@@ -47,6 +47,12 @@ class EventController extends Controller {
             })->selectRaw('COUNT(*)')])
             ->whereRaw($where)->orderBy('date', $order)->offset($offset)->limit($limit)->get();
 
+            $query = Event::where('user_id', auth()->user()->id);
+            if ($request->status || $request->status === '0') {
+                $query->where('status', $request->status);
+            }
+            $pagination = $query->count();
+
             $active   = Event::where('user_id', auth()->user()->id)->where('status', 1)->count();
             $inactive = Event::where('user_id', auth()->user()->id)->where('status', 0)->count();
             $past     = Event::where('user_id', auth()->user()->id)->where('status', 2)->count();
@@ -58,7 +64,8 @@ class EventController extends Controller {
                     'active'   => $active,
                     'inactive' => $inactive,
                     'past'     => $past,
-                    'all'      => $all
+                    'all'      => $all,
+                    'records'  => $pagination
                 ]
             ];
             return ResponseTrait::response(null, $data);

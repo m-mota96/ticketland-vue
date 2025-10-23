@@ -29,7 +29,7 @@ class ReservationController extends Controller {
             $search     = $request->search;
             $query      = Payment::with(['accesses.ticket'])->where('event_id', $request->event_id);
 
-            if ($search['email']) {
+            if ($search['name']) {
                 $query->whereRaw('name LIKE "%'.$search['name'].'%"');
             }
             if ($search['email']) {
