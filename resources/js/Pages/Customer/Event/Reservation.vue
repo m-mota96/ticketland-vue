@@ -63,17 +63,17 @@
                                 </template>
                             </el-table-column> -->
                             <el-table-column prop="id" label="#" width="70" align="center" />
-                            <el-table-column prop="name" width="200">
+                            <el-table-column prop="name" min-width="200">
                                 <template #header>
                                     <el-input v-model="search.name" placeholder="Buscar Cliente" @input="getPayments" clearable />
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="email" width="200">
+                            <el-table-column prop="email" min-width="200">
                                 <template #header>
                                     <el-input v-model="search.email" placeholder="Buscar Correo electrónico" @input="getPayments" clearable />
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="phone" width="150">
+                            <el-table-column prop="phone" min-width="150">
                                 <template #header>
                                     <el-input v-model="search.phone" placeholder="Buscar Teléfono" @input="getPayments" clearable />
                                 </template>
@@ -134,7 +134,7 @@
                                     </span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Fecha de compra" align="center" width="150">
+                            <el-table-column label="Fecha de compra" align="center" min-width="150">
                                 <template #default="scope">
                                     {{ formatDate(scope.row.created_at) }}<br>{{ formatTime(scope.row.created_at) }}
                                 </template>

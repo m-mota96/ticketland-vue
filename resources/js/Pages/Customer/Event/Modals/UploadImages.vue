@@ -5,6 +5,7 @@
         width="500"
         align-center
         style="margin-top: 5% !important;"
+        :lock-scroll="false"
     >
         <label class="bold">{{ textLabel }} <span class="has-text-danger">*</span></label>
         <el-upload

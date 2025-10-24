@@ -5,6 +5,7 @@
         width="1500"
         align-center
         style="margin-top: 5% !important;"
+        :lock-scroll="false"
     >
         <el-table class="w-100 mb-6" :data="tickets" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
             <el-table-column prop="ticket.name" label="Tipo de boleto" />

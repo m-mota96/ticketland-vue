@@ -1,6 +1,6 @@
 <script setup>
 import apiClient from '@/apiClient';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 const appUrl = ref(window.location.origin);
 const events = ref([]);
@@ -32,9 +32,31 @@ const monthsAbrev = [
     'Nov',
     'Dic'
 ];
+const heightCarousel = ref('75vh');
 
 onMounted(() => {
+    const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+
+    // Add a click event on each of them
+    $navbarBurgers.forEach( el => {
+        el.addEventListener('click', () => {
+
+        // Get the target from the "data-target" attribute
+        const target = el.dataset.target;
+        const $target = document.getElementById(target);
+
+        // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+        el.classList.toggle('is-active');
+        $target.classList.toggle('is-active');
+
+        });
+    });
+    window.addEventListener('resize', handleResize);
     getEvents();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 
 const getEvents = async () => {
@@ -66,6 +88,15 @@ const viewDates = (dates) => {
     }
     return txt;
 };
+
+const handleResize = () => {
+    heightCarousel.value  = '75vh';
+    if (window.innerWidth > 500 && window.innerWidth <= 1024) {
+        heightCarousel.value  = '35vh';
+    } else if (window.innerWidth <= 500) {
+        heightCarousel.value  = '30vh';
+    }
+};
 </script>
 
 <template>
@@ -94,9 +125,12 @@ const viewDates = (dates) => {
                         style="width: 30vh;"
                     />
                 </a> -->
+                <a class="navbar-item has-text-white login-small" href="/login">
+                    <font-awesome-icon class="mr-2" :icon="['fas', 'sign-in-alt']" /> Iniciar sesión
+                </a>
             </div>
 
-            <div class="navbar-end pl-4 pr-3" style="background-color: rgba(53, 67, 80, 0.8); border-radius: 5px;">
+            <div class="navbar-end pl-4 pr-3 login-large" style="background-color: rgba(53, 67, 80, 0.8); border-radius: 5px;">
                 <span class="has-text-white pt-4" style="font-size: 0.9rem;">Acceso a organizadores</span>
                 <a class="navbar-item" href="/login">
                     <span class="pl-3 pr-3 pt-1 pb-1" style="border: 1px solid white; border-radius: 15px; color: white; font-weight: bold; font-size: 0.8rem;">Ingresar</span>
@@ -104,7 +138,7 @@ const viewDates = (dates) => {
             </div>
         </div>
     </nav>
-    <el-carousel class="header">
+    <el-carousel :height="heightCarousel">
         <el-carousel-item v-for="(item, i) in events" :key="i" :interval="4000">
             <div class="carousel-item">
                 <img
@@ -120,7 +154,7 @@ const viewDates = (dates) => {
             </div>
         </el-carousel-item>
     </el-carousel>
-    <el-row :gutter="20">
+    <el-row>
         <el-col :span="24" class="pl-6 p-6">
             <div class="card has-background-white p-5 mt-5 mb-5">
                 <h2 class="title is-4 has-text-black mb-3">Ya puedes pagar con tarjetas <span class="has-text-link">emitidas fuera de México</span> en Ticketland</h2>
@@ -132,20 +166,25 @@ const viewDates = (dates) => {
             <h4 class="title is-3 has-text-white mb-3">¿Tienes un evento?</h4>
             <p class="subtitle is-5 has-text-white">Regístrate en Ticketland y comienza a ver todos los beneficios que tenemos para ti.</p>
             <el-row :gutter="20">
-                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
+                <el-col class="mb-6" :xs="12" :sm="12" :md="6" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
                     <img src="/general/img1.png" alt="Ticketland">
                 </el-col>
-                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
+                <el-col class="mb-6" :xs="12" :sm="12" :md="6" :lg="4" :xl="4">
                     <img src="/general/img2.png" alt="Ticketland">
                 </el-col>
-                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
+                <el-col class="mb-6" :xs="12" :sm="12" :md="6" :lg="4" :xl="4">
                     <img src="/general/img3.png" alt="Ticketland">
                 </el-col>
-                <el-col class="mb-4" :xs="12" :sm="12" :md="4" :lg="{span: 4, offset: 4}" :xl="{span: 4, offset: 4}">
+                <el-col class="mb-6" :xs="12" :sm="12" :md="6" :lg="4" :xl="4">
                     <img src="/general/img4.jpg" alt="Ticketland">
                 </el-col>
             </el-row>
-            <a class="button is-outlined is-white mt-6 bold w-100" href="/register">¡REGÍSTRATE Y VIVE UNA NUEVA EXPERIENCIA!</a>
+            <el-col :xs="0" :sm="24" :md="24" :lg="24" :xl="24">
+                <a class="button is-outlined is-white bold" href="/register">¡REGÍSTRATE Y VIVE UNA NUEVA EXPERIENCIA!</a>
+            </el-col>
+            <el-col :xs="24" :sm="0" :md="0" :lg="0" :xl="0">
+                <a class="button is-outlined is-white bold" href="/register">¡REGÍSTRATE AHORA!</a>
+            </el-col>
         </el-col>
         <el-col :span="24" class="p-6">
             <h2 class="title is-2 has-text-black has-text-centered mt-6">Próximos eventos</h2>
@@ -177,19 +216,19 @@ const viewDates = (dates) => {
         </el-col>
         <el-col :span="24" class="has-background-black has-text-white p-6">
             <el-row :gutter="20" class="mb-5 pl-6 pr-6">
-                <el-col :span="8">
+                <el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8" class="mb-6 my-footer">
                     <h4 class="title is-4">Ticketland</h4>
                     <p class="mb-2">Av. Tizoc 324, Colonia Ciudad del sol, Zapopan Jalisco</p>
                     <p class="mb-2">(33) 23 86 50 15</p>
                     <p class="mb-2">contacto@ticketland.mx</p>
                     <p>Una empresa de Maxwell Corp</p>
                 </el-col>
-                <el-col :span="8">
+                <el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8" class="mb-6 my-footer">
                     <p class="is-align-content-center is-justify-content-center is-flex">
-                        <img src="/general/logoG.png" alt="Ticketland" class="w-25">
+                        <img src="/general/logoG.png" alt="Ticketland" class="w-25 logo-maxwell">
                     </p>
                 </el-col>
-                <el-col :span="8" class="has-text-right">
+                <el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8" class="has-text-right mb-6 my-footer">
                     <h4 class="title is-4">Atención al cliente</h4>
                     <p>Lunes a viernes de 9:00 a.m - 6:00 p.m.</p>
                 </el-col>
@@ -200,8 +239,8 @@ const viewDates = (dates) => {
 </template>
 
 <style scoped>
-.header {
-    height: 75vh;
+.login-small {
+    display: none !important;
 }
 .bg {
     background-color: rgb(247, 241, 241);
@@ -240,10 +279,35 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     object-fit: cover;
     object-position: center;
 }
-@media only screen and (max-width: 500px) and (min-width: 200px) {
-    .header {
-        height: unset;
+@media only screen and (max-width: 1024px) and (min-width: 501px) {
+    .logo-maxwell {
+        width: 50% !important;
     }
+    .caption {
+        bottom: 5px;
+        padding: 6px 4px !important;
+        width: 50%;
+    }
+    .login-large {
+        display: none !important;
+    }
+    .navbar-menu {
+        border-radius: 5px !important;
+    }
+    .login-small {
+        display: unset !important;
+    }
+}
+@media only screen and (max-width: 500px) and (min-width: 200px) {
+    .navbar-menu {
+        border-radius: 5px !important;
+    }
+    .login-large {
+        display: none !important;
+    }
+    /* .header {
+        height: 200px !important;
+    } */
     .dates {
         display: none;
     }
@@ -252,8 +316,24 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     }
     .caption {
         bottom: 5px;
-        padding: 4px 8px !important;
-        width: 90%;
+        padding: 6px 4px !important;
+        width: 70%;
+    }
+    .caption .title {
+        font-size: 1.2rem !important;
+        margin-bottom: 0px !important;
+    }
+    .my-footer {
+        text-align: center !important;
+    }
+    .logo-maxwell {
+        width: 75% !important;
+    }
+    .carousel-item img {
+        border-radius: unset;
+    }
+    .login-small {
+        display: unset !important;
     }
 }
 </style>

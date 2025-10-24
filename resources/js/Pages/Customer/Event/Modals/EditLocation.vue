@@ -5,6 +5,7 @@
         width="600"
         align-center
         style="margin-top: 2% !important;"
+        :lock-scroll="false"
     >
         <el-row class="mb-4" :gutter="20">
             <el-col class="mb-3" :span="24">

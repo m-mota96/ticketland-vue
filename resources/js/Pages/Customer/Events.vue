@@ -43,7 +43,7 @@
                                             <img v-if="e.profile" class="w-100 image-profile" :src="`/events/images/${e.profile.name}`" :alt="e.name">
                                         </a>
                                     </el-col>
-                                    <el-col class="pt-5 pl-5 mb-4" :xs="24" :sm="24" :md="10" :lg="13" :xl="13">
+                                    <el-col class="pt-5 pl-5 mb-4" :xs="24" :sm="24" :md="10" :lg="11" :xl="13">
                                         <a class="title is-4 has-text-dark mb-0 active" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></a><br>
                                         <span class="has-text-dark mt-0">
                                             {{ 
@@ -75,7 +75,7 @@
                                             />
                                         </div>
                                     </el-col>
-                                    <el-col class="pt-5 pr-5 mb-4 text-right" :xs="24" :sm="24" :md="7" :lg="4" :xl="4">
+                                    <el-col class="pt-5 pr-5 mb-4 text-right" :xs="24" :sm="24" :md="7" :lg="6" :xl="4">
                                         <h3 class="subtitle mb-0 is-3 w-100 text-right">
                                             <span class="has-text-blue-400 has-text-weight-light">{{ e.sales }}/</span><span class="has-text-blue-300 has-text-weight-light">{{ e.quantity_tickets }}</span>
                                         </h3>
@@ -93,7 +93,7 @@
                             size="large"
                             background
                             layout="Total, Anterior, pager, Siguiente"
-                            :total="count.all"
+                            :total="count.records"
                             @current-change="handleCurrentChange"
                             />
                         </div>
