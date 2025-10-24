@@ -16,9 +16,9 @@ use PaypalServerSdkLib\Environment;
 
 trait PaypalTrait {
 
-    private $client;
+    protected static $client;
 
-    public function __construct() {
+    protected static function initPaypal() {
         $clientId = env('PAYPAL_CLIENT_ID');
         $secret   = env('PAYPAL_SECRET');
         $mode     = env('PAYPAL_MODE', 'Sandbox');
@@ -39,13 +39,15 @@ trait PaypalTrait {
         });
 
         // Crear cliente PayPal
-        $this->client = PaypalServerSdkClientBuilder::init()
+        self::$client = PaypalServerSdkClientBuilder::init()
         ->environment($mode)
         ->clientCredentialsAuthCredentials($authBuilder)
         ->build();
     }
 
-    public function createOrder(Request $request) {
+    public static function createOrderPaypal($amount) {
+        self::initPaypal();
+
         $applicationContext = new OrderApplicationContext([
             'brandName' => 'Maxwell',
             'landingPage' => 'NO_PREFERENCE',
@@ -61,7 +63,7 @@ trait PaypalTrait {
                     PurchaseUnitRequestBuilder::init(
                         AmountWithBreakdownBuilder::init(
                             'MXN',
-                            $request->amount
+                            $amount
                         )->build()
                     )->build(),
                 ],
@@ -71,7 +73,7 @@ trait PaypalTrait {
             // 'prefer' => 'return=minimal'
         ];
 
-        $apiResponse = $this->client->getOrdersController()->createOrder($collect);
+        $apiResponse = self::$client->getOrdersController()->createOrder($collect);
 
         if ($apiResponse->isSuccess()) {
             $order = $apiResponse->getResult();
@@ -80,20 +82,22 @@ trait PaypalTrait {
             ]);
         } else {
             $errors = $apiResponse->getResult();
-            return [
+            return response()->json([
                 'success' => false,
                 'msj'     => $errors
-            ];
+            ]);
         }
     }
 
-    public function captureOrder($orderId) {
+    public static function captureOrder($orderId) {
+        self::initPaypal();
+
         $collect = [
             'id' => $orderId,
             'prefer' => 'return=minimal'
         ];
 
-        $apiResponse = $this->client->getOrdersController()->captureOrder($collect);
+        $apiResponse = self::$client->getOrdersController()->captureOrder($collect);
 
         if ($apiResponse->isSuccess()) {
             $order = $apiResponse->getResult();

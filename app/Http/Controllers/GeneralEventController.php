@@ -18,7 +18,6 @@ use App\Models\Event;
 use App\Models\Ticket;
 
 class GeneralEventController extends Controller {
-    use PaypalTrait;
 
     public function event($url, $ticket = null) {
         $event = Event::with(['tickets' => function($query) {
@@ -134,7 +133,7 @@ class GeneralEventController extends Controller {
                     break;
                 case 'paypal':
                     // Se procesa el pago con Paypal
-                    $proccess = self::captureOrder($request->order['paypal_order_id']); // La función captureOrder se encuentra en el trait PaypalTrait
+                    $proccess = PaypalTrait::captureOrder($request->order['paypal_order_id']);
                     if (!$proccess['success']) {
                         ManageFilesTrait::deleteFiles($event->id, $files);
                         DB::rollBack();
@@ -166,6 +165,14 @@ class GeneralEventController extends Controller {
                 return ResponseTrait::response($proccess['msj'], null, true, 409); // Hubo problemas con el código de descuento
             }
             return ResponseTrait::response('', $proccess['data']); // Código válido
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function createOrder(Request $request) {
+        try {
+            return PaypalTrait::createOrderPaypal($request->amount);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
