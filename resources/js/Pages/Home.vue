@@ -1,6 +1,6 @@
 <script setup>
 import apiClient from '@/apiClient';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, onBeforeMount } from 'vue';
 
 const appUrl = ref(window.location.origin);
 const events = ref([]);
@@ -33,6 +33,15 @@ const monthsAbrev = [
     'Dic'
 ];
 const heightCarousel = ref('75vh');
+
+onBeforeMount(() => {
+    heightCarousel.value  = '75vh';
+    if (window.innerWidth > 500 && window.innerWidth <= 1024) {
+        heightCarousel.value  = '35vh';
+    } else if (window.innerWidth <= 500) {
+        heightCarousel.value  = '30vh';
+    }
+});
 
 onMounted(() => {
     const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);

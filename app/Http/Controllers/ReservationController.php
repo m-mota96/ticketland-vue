@@ -28,27 +28,33 @@ class ReservationController extends Controller {
             $offset     = ($page - 1) * $limit; // Calcular el offset
             $search     = $request->search;
             $query      = Payment::with(['accesses.ticket'])->where('event_id', $request->event_id);
+            $count      = Payment::where('event_id', $request->event_id);
 
             if ($search['name']) {
                 $query->whereRaw('name LIKE "%'.$search['name'].'%"');
+                $count->whereRaw('name LIKE "%'.$search['name'].'%"');
             }
             if ($search['email']) {
                 $query->whereRaw('email LIKE "%'.$search['email'].'%"');
+                $count->whereRaw('email LIKE "%'.$search['email'].'%"');
             }
             if ($search['phone']) {
                 $query->whereRaw('phone LIKE "%'.$search['phone'].'%"');
+                $count->whereRaw('phone LIKE "%'.$search['phone'].'%"');
             }
             if ($search['type'] !== 'all') {
                 $query->where('type', $search['type']);
+                $count->where('type', $search['type']);
             }
             if ($search['status'] !== 'all') {
                 $query->where('status', $search['status']);
+                $count->where('status', $search['status']);
             }
 
             $payments = $query->orderBy($request->order['orderBy'], $request->order['order'])
             ->offset($offset)->limit($limit)
             ->get();
-            $allPayments = Payment::where('event_id', $request->event_id)->count();
+            $allPayments = $count->count();
             // dd($payments);
             return ResponseTrait::response(null, ['payments' => $payments, 'count' => $allPayments]);
         } catch (\Throwable $th) {
