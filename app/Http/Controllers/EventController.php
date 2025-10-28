@@ -29,13 +29,9 @@ class EventController extends Controller {
             $page   = $request->currentPage; // Página actual
             $limit  = $request->sizePage; // Tamaño de la página
             $offset = ($page - 1) * $limit; // Calcular el offset
+            $order  = ($request->status == 1) ? 'ASC' : 'DESC';
 
-            $where = 'user_id = '.auth()->user()->id;
-            $where = ($request->status !== null) ? $where.' AND status = '.$request->status : $where;
-            $where = (!empty($request->search)) ? $where.' AND name LIKE "%'.$request->search.'%"' : $where;
-            $order = ($request->status == 1) ? 'ASC' : 'DESC';
-
-            $events   = Event::with(['profile', 'eventDates'])
+            $e = Event::with(['profile', 'eventDates'])
             ->addSelect(['quantity_tickets' => Ticket::selectRaw('SUM(quantity) as quantity')
                 ->whereColumn('event_id', 'events.id')
                 ->groupBy('event_id')
@@ -45,13 +41,21 @@ class EventController extends Controller {
             ])->addSelect(['sales' => Access::whereHas('payment', function($query) {
                 $query->whereColumn('event_id', 'events.id')->where('status', 'payed');
             })->selectRaw('COUNT(*)')])
-            ->whereRaw($where)->orderBy('date', $order)->offset($offset)->limit($limit)->get();
+            ->where('user_id', auth()->user()->id);
 
-            $query = Event::where('user_id', auth()->user()->id);
+            $q = Event::where('user_id', auth()->user()->id);
+
             if ($request->status || $request->status === '0') {
-                $query->where('status', $request->status);
+                $e->where('status', $request->status);
+                $q->where('status', $request->status);
             }
-            $pagination = $query->count();
+            if ($request->search) {
+                $e->whereRaw('name LIKE "%'.$request->search.'%"');
+                $q->whereRaw('name LIKE "%'.$request->search.'%"');
+            }
+
+            $events     = $e->orderBy('date', $order)->offset($offset)->limit($limit)->get();
+            $pagination = $q->count();
 
             $active   = Event::where('user_id', auth()->user()->id)->where('status', 1)->count();
             $inactive = Event::where('user_id', auth()->user()->id)->where('status', 0)->count();
