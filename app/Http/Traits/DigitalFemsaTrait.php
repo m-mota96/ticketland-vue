@@ -3,7 +3,7 @@
 namespace App\Http\Traits;
 use Carbon\Carbon;
 
-trait DigitalFemsaTRait {
+trait DigitalFemsaTrait {
     public static function createOrder($event_name, $totalToPay, $order, $discounts, $model_payment) {
         $date = Carbon::now();
         $expiration = (new \DateTime($date->addDays(2)->format('Y-m-d 23:59:59')))->getTimestamp();

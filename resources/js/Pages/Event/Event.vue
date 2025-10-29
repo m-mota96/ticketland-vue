@@ -143,6 +143,7 @@
                         v-model="data.order.phone"
                         mode="international"
                         class="mt-1"
+                        :class="{'error-phone': errors.phone}"
                         style="color: #606266; height: 32px;"
                         :auto-format="true"
                         :input-options="{ placeholder: 'Ingresa tu número de teléfono' }"
@@ -282,7 +283,11 @@
                 </el-col>
                 <el-col :span="24">
                     <el-table class="w-100 mb-3" :data="filteredTickets" stripe header-cell-class-name="has-text-dark" empty-text="Ningún dato disponible en esta tabla">
-                        <el-table-column prop="name" label="Producto" />
+                        <el-table-column label="Producto" width="150">
+                            <template #default="scope">
+                                <span style="font-size: 1.1rem;">{{ scope.row.name }}</span>
+                            </template>
+                        </el-table-column>
                         <el-table-column label="Cantidad" align="center">
                             <template #default="scope">
                                 {{ scope.row.quantity }}
@@ -318,7 +323,7 @@
                             </template>
                         </el-table-column> -->
                     </el-table>
-                    <i class="has-text-danger"><font-awesome-icon :icon="['fas', 'circle-info']" /> Si aplicas un código de descuento no se tomará en cuenta el precio con descuento.</i>
+                    <i class="has-text-link"><font-awesome-icon :icon="['fas', 'circle-info']" /> Si aplicas un código de descuento no se tomará en cuenta el precio con descuento.</i>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6" :inline="true">
                     <el-row :gutter="5">
@@ -1240,5 +1245,8 @@ body {
 :global(input:-webkit-autofill) {
     box-shadow: 0 0 0px 1000px white inset !important;
     -webkit-text-fill-color: #000 !important;
+}
+.error-phone {
+    border: 1px solid red !important;
 }
 </style>

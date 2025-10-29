@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Http\Traits\ResponseTrait;
 use App\Http\Traits\ConektaPaymentTrait;
-use App\Http\Traits\DigitalFemsaTRait;
+use App\Http\Traits\DigitalFemsaTrait;
 use App\Http\Traits\ManageFilesTrait;
 use App\Http\Traits\OrderTrait;
 use App\Http\Traits\PaypalTrait;
@@ -116,7 +116,7 @@ class GeneralEventController extends Controller {
                     $txt = 'Pago realizado exitosamente.<br>Recibirás tus boletos en tu correo electrónico.<br> Si no los ves en tu bandeja de entrada, por favor revisa en Spam.';
                     break;
                 case 'oxxo':
-                    $proccess = DigitalFemsaTRait::createOrder($event->name, $totalToPay, $request->order, $discount, $event->model_payment); // Crea la referencia de pago en DigitalFemsa
+                    $proccess = DigitalFemsaTrait::createOrder($event->name, $totalToPay, $request->order, $discount, $event->model_payment); // Crea la referencia de pago en DigitalFemsa
                     if (!$proccess['success']) {
                         ManageFilesTrait::deleteFiles($event->id, $files);
                         DB::rollBack();
