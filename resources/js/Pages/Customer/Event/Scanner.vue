@@ -47,6 +47,7 @@ import apiClient from '@/apiClient';
 import { showNotification } from '@/notification';
 import { dateEs } from '@/dateEs';
 import Swal from 'sweetalert2';
+import { printZPL } from '@/zebraPrinter';
 
 export default {
     components: {
@@ -121,6 +122,8 @@ export default {
             this.name         = response.data.name;
             this.purchaseDate = dateEs(response.data.created_at, 1, '/');
             this.access       = 'Correcto';
+            this.ptintTicket(response.data.name);
+            // this.ptintTicket('Federico Sebastián Fernández de la Torre');
         },
         resetScanner() {
             this.txtScan      = 'Validando código de acceso...';
@@ -140,7 +143,21 @@ export default {
             } else {
                 this.code.push(tecla.key);
             }
-        }
+        },
+        async ptintTicket(name) {
+            const top = name.length > 35 ? 70 : 95; 
+            const zpl = `
+                ^XA
+                ^CI28
+                ^FO80,${top}
+                ^A0N,35,35
+                ^FB300,3,20,C,0
+                ^FD${name}^FS
+                ^XZ
+            `;
+            const print = await printZPL(zpl);
+            console.log(print);
+        },
     },
     computed: {
         validationPending() {
@@ -152,19 +169,19 @@ export default {
 
 <style scoped>
 .validation-pending {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+    position: absolute;
+    width: 100%;
+    height: 100%;
 
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  text-align: center;
-  font-weight: bold;
-  font-size: 1.4rem;
-  color: black;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: black;
 
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
 }
 </style>

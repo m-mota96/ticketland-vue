@@ -10,7 +10,7 @@ export const dateEs = (date, usage = 0, separator = null)=> {
 
 export const time = (time)=> {
     let hour = parseInt(time.substring(0, 2));
-    const txt = (hour > 12) ? 'PM' : 'AM';
+    const txt = (hour >= 12) ? 'PM' : 'AM';
     hour = (hour > 12) ? (hour - 12) : hour;
     hour = (hour < 10) ? '0'+hour : hour;
     return hour+time.substring(2, 5)+' '+txt;

@@ -28,6 +28,7 @@ trait ValidateStockTrait {
                 } else { // Correcto
                     switch ($payment_method) {
                         case 'card':
+                        case 'paypal':
                             $ticket->sales = $ticket->sales + $t['quantity'];
                             break;
                         case 'oxxo':

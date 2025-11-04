@@ -19,6 +19,7 @@
         {{-- <script src="https://pay.conekta.com/v1.0/js/conekta-checkout.min.js"></script> --}}
         <script type="text/javascript" src="https://cdn.conekta.io/js/latest/conekta.js"></script>
         <link rel="shortcut icon" href="../../general/ticketland.png" type="image/x-icon">
+        <script src="../../libs/BrowserPrint-3.1.250.min.js"></script>
     </head>
     <body class="font-sans antialiased">
         @inertia

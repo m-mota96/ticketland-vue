@@ -355,9 +355,8 @@
                         id="payment_method"
                         clearable
                         @change="verifyPaymentMethod"
-                        :disabled="disabledPaymentMethod"
                         >
-                        <el-option label="Pago en Oxxo (México)" value="oxxo" />
+                        <el-option label="Pago en Oxxo (México)" value="oxxo" :disabled="disabledPaymentMethod" v-if="!disabledPaymentMethod" />
                         <el-option label="Tarjeta de Débito/Crédito (México)" value="card" />
                         <el-option label="PayPal (Internacional)" value="paypal" />
                     </el-select>
@@ -1025,7 +1024,7 @@ export default {
             currentDate = currentDate.toISOString().split('T')[0];
             if (currentDate >= date) {
                 this.disabledPaymentMethod     = true;
-                this.data.order.payment_method = 'card';
+                // this.data.order.payment_method = 'card';
             }
         },
         scrollCenterY() {

@@ -66,15 +66,24 @@ class StatisticController extends Controller {
             $query->where('status', 'expired')->where('event_id', $event_id);
         })->count();
 
-        $salesOxxo = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
-        ->selectRaw('"Pago en Oxxo" AS type')
-        ->where('status', 'payed')->where('type', 'oxxo')->where('event_id', $event_id)->first();
-        $salesCard = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
-        ->selectRaw('"Tarjeta de Débito/Crédito" AS type')
-        ->where('status', 'payed')->where('type', 'card')->where('event_id', $event_id)->first();
-        $salesPaypal = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
-        ->selectRaw('"Paypal" AS type')
-        ->where('status', 'payed')->where('type', 'paypal')->where('event_id', $event_id)->first();
+        // $salesOxxo = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
+        // ->selectRaw('"Pago en Oxxo" AS type')
+        // ->where('status', 'payed')->where('type', 'oxxo')->where('event_id', $event_id)->first();
+        // $salesCard = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
+        // ->selectRaw('"Tarjeta de Débito/Crédito" AS type')
+        // ->where('status', 'payed')->where('type', 'card')->where('event_id', $event_id)->first();
+        // $salesPaypal = Payment::selectRaw('IF(SUM(amount - ROUND(amount * (discount / 100))) IS NOT NULL, SUM(amount - ROUND(amount * (discount / 100))), 0) AS total')
+        // ->selectRaw('"Paypal" AS type')
+        // ->where('status', 'payed')->where('type', 'paypal')->where('event_id', $event_id)->first();
+        $sales = Payment::selectRaw("
+            CASE type
+                WHEN 'card' THEN 'Tarjeta de Débito/Crédito'
+                WHEN 'oxxo' THEN 'Pago en Oxxo'
+                WHEN 'paypal' THEN 'Paypal'
+            END type
+        ")->selectRaw("
+            SUM(IF(`code` IS NULL, amount, (amount - (amount * (discount / 100))))) total
+        ")->where('status', 'payed')->where('event_id', $event_id)->groupBy('type')->get();
 
         return ResponseTrait::response('', [
             'sales'              => $array_sales,
@@ -84,7 +93,7 @@ class StatisticController extends Controller {
             'ticketsNotDiscount' => $ticketsNotDiscount,
             'ticketsPending'     => $ticketsPending,
             'ticketsExpired'     => $ticketsExpired,
-            'amounts'            => [$salesCard, $salesOxxo, $salesPaypal],
+            'amounts'            => $sales,
         ]);
     }
 }
