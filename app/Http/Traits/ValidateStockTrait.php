@@ -10,7 +10,7 @@ trait ValidateStockTrait {
         $errors     = [];
         $totalToPay = 0;
         foreach ($tickets as $key => $t) {
-            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'price', DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))
+            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'reserved', 'price', DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))
             ->where('id', $t['id'])
             ->where('status', 1)
             ->where('start_sale', '<=', date('Y-m-d'))

@@ -77,7 +77,7 @@
                                     </el-col>
                                     <el-col class="pt-5 pr-5 mb-4 text-right" :xs="24" :sm="24" :md="7" :lg="6" :xl="4">
                                         <h3 class="subtitle mb-0 is-3 w-100 text-right">
-                                            <span class="has-text-blue-400 has-text-weight-light">{{ e.sales }}/</span><span class="has-text-blue-300 has-text-weight-light">{{ e.quantity_tickets }}</span>
+                                            <span class="has-text-blue-400 has-text-weight-light">{{ e.sales }}/</span><span class="has-text-blue-300 has-text-weight-light">{{ e.quantity_tickets ? e.quantity_tickets : 0 }}</span>
                                         </h3>
                                         <h3 class="subtitle is-7 has-text-grey mt-1">BOLETOS RESERVADOS</h3>
                                     </el-col>

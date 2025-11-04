@@ -2,7 +2,7 @@
 
 namespace App\Http\Traits;
 
-trait ResponseTRait {
+trait ResponseTrait {
     public static function response($msj, $data = null, $error = false, $code = 200) {
         return response()->json([
             'error' => $error,

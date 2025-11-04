@@ -71,12 +71,12 @@ class ReservationController extends Controller {
             }
             switch ($payment->status) {
                 case 'payed':
-                    $txt      = 'Lob boletos se reenviaron correctamente';
-                    $proccess = SendMailTRait::index('tickets', $payment->id);
+                    $txt      = 'Los boletos se reenviaron correctamente.';
+                    $proccess = SendMailTrait::index('tickets', $payment->id);
                     break;
                 case 'pending':
-                    $txt      = 'La ficha de pago se reenvio correctamente';
-                    $proccess = SendMailTRait::index('reference', $payment->id);
+                    $txt      = 'La ficha de pago se reenvio correctamente.';
+                    $proccess = SendMailTrait::index('reference', $payment->id);
                     break;
             }
 

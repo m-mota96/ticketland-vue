@@ -149,7 +149,7 @@
                                             placement="top"
                                             v-if="scope.row.status !== 'expired'"
                                         >
-                                            <el-button class="pl-2 pr-2" type="primary" @click="resendEmail(scope.row.id, scope.row.email)">
+                                            <el-button class="pl-2 pr-2" type="primary" @click="resendEmail(scope.row.id, scope.row.email, scope.row.status)">
                                                 <font-awesome-icon :icon="['fas', 'share']" />
                                             </el-button>
                                         </el-tooltip>
@@ -158,7 +158,7 @@
                                             effect="dark"
                                             content="Ver boletos de la orden"
                                             placement="top"
-                                            v-if="scope.row.status == 'payed'"
+                                            v-if="scope.row.status == 'payed' || scope.row.status == 'pending'"
                                         >
                                             <el-button class="pl-2 pr-2" type="success" @click="$refs.ViewTickets.showTickets(scope.row.accesses)">
                                                 <font-awesome-icon :icon="['fas', 'eye']" />
@@ -268,10 +268,11 @@ export default {
             this.payments             = response.data.payments;
             this.pagination.totalRows = response.data.count;
         },
-        async resendEmail(payment_id, email) {
+        async resendEmail(payment_id, email, status) {
+            const msj = status === 'payed' ? 'Los boletos serán enviados' : 'La ficha de pago será enviada';
             Swal.fire({
                 icon: 'warning',
-                html: 'Los boletos serán enviados al siguiente correo:<br><b>Nota: </b>si el correo es incorrecto ingrese el nuevo.',
+                html: `${msj} al siguiente correo:<br><b>Nota: </b>si el correo es incorrecto ingrese el nuevo.`,
                 input: 'email',
                 inputAttributes: {
                     autocapitalize: 'off'
