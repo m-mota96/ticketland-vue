@@ -356,7 +356,8 @@
                         clearable
                         @change="verifyPaymentMethod"
                         >
-                        <el-option label="Pago en Oxxo (México)" value="oxxo" :disabled="disabledPaymentMethod" v-if="!disabledPaymentMethod" />
+                        <!-- <el-option label="Pago en Oxxo (México)" value="oxxo" :disabled="disabledPaymentMethod" v-if="!disabledPaymentMethod" /> -->
+                        <el-option label="Pago en Oxxo (México)" value="oxxo" />
                         <el-option label="Tarjeta de Débito/Crédito (México)" value="card" />
                         <el-option label="PayPal (Internacional)" value="paypal" />
                     </el-select>
