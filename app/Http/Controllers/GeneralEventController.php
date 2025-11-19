@@ -58,9 +58,9 @@ class GeneralEventController extends Controller {
             $initialDateEvent = new \DateTime($event->eventDates[0]->date);
             $initialDateEvent->modify('-3 days');
             $initialDateEvent = $initialDateEvent->format('Y-m-d');
-            if ((date('Y-m-d') >= $initialDateEvent) && $request->order['payment_method'] == 'oxxo') {
-                return ResponseTrait::response('Ya no es posible realizar compras con Pago en Oxxo.', ['type' => 'event'], true, 409);
-            }
+            // if ((date('Y-m-d') >= $initialDateEvent) && $request->order['payment_method'] == 'oxxo') {
+            //     return ResponseTrait::response('Ya no es posible realizar compras con Pago en Oxxo.', ['type' => 'event'], true, 409);
+            // }
 
             DB::beginTransaction();
 
@@ -150,6 +150,9 @@ class GeneralEventController extends Controller {
             DB::commit();
             return ResponseTrait::response($txt);
         } catch (\Throwable $th) {
+            $logFile = fopen("logs/log_general.txt", 'a') or die("Error creando archivo");
+            fwrite($logFile, date("d/m/Y H:i:s")." Error general: ".$th->getMessage()."\n") or die("Error escribiendo en el archivo");
+            fclose($logFile);
             if (sizeof($files) > 0) {
                 ManageFilesTrait::deleteFiles($event->id, $files);
             }
