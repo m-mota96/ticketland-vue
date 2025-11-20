@@ -83,7 +83,8 @@ export default {
     methods: {
         onDetect(detectedCodes) {
             // console.log(detectedCodes)
-            this.result = JSON.stringify(detectedCodes.map((code) => code.rawValue));
+            // this.result = JSON.stringify(detectedCodes.map((code) => code.rawValue));
+            this.result = detectedCodes[0].rawValue;
             this.validateAccess(this.result);
         },
         onInit(promise) {
