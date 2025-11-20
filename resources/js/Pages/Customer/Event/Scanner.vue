@@ -29,7 +29,8 @@
                             <p class="subtitle is-4 has-text-black mb-2">Fecha de compra: <b>{{ purchaseDate }}</b></p>
                             <p class="subtitle is-4 has-text-black mb-2">Acceso: <b class="has-text-success">{{ access }}</b></p>
                         </div>
-                        <el-button class="mt-4" type="primary" v-if="resetScan" @click="resetScanner"><font-awesome-icon :icon="['fas', 'arrows-rotate']" />&nbsp;&nbsp;&nbsp;Recargar escáner</el-button>
+                        <el-button class="mt-4" type="success" v-if="customerName" @click="reprintTicket"><font-awesome-icon :icon="['fas', 'print']" />&nbsp;&nbsp;&nbsp;Reimprimir etiqueta</el-button>
+                        <el-button class="mt-2" type="primary" v-if="resetScan" @click="resetScanner"><font-awesome-icon :icon="['fas', 'arrows-rotate']" />&nbsp;&nbsp;&nbsp;Recargar escáner</el-button>
                     </el-col>
                 </el-row>
             </el-card>
@@ -69,6 +70,7 @@ export default {
             access: '',
             resetScan: false,
             code: [],
+            customerName: ''
         }
     },
     mounted() {
@@ -96,8 +98,9 @@ export default {
             this.isValid = '';
         },
         async validateAccess(access) {
-            this.paused    = true;
-            const response = await apiClient('customer/validateAccess', 'POST', {event_id: this.event.id, access});
+            this.paused       = true;
+            this.customerName = '';
+            const response    = await apiClient('customer/validateAccess', 'POST', {event_id: this.event.id, access});
             if (response.error) {
                 this.paused = false;
                 if (!response.data.type) {
@@ -122,8 +125,9 @@ export default {
             this.name         = response.data.name;
             this.purchaseDate = dateEs(response.data.created_at, 1, '/');
             this.access       = 'Correcto';
-            this.ptintTicket(response.data.name);
-            // this.ptintTicket('Federico Sebastián Fernández de la Torre');
+            this.customerName = response.data.name;
+            this.printTicket(response.data.name);
+            // this.printTicket('Federico Sebastián Fernández de la Torre');
         },
         resetScanner() {
             this.txtScan      = 'Validando código de acceso...';
@@ -134,6 +138,7 @@ export default {
             this.purchaseDate = '';
             this.access       = '';
             this.code         = [];
+            this.customerName = '';
         },
         checkKey(tecla) {
             if (tecla.key === 'Enter' && !this.resetScan) {
@@ -144,7 +149,7 @@ export default {
                 this.code.push(tecla.key);
             }
         },
-        async ptintTicket(name) {
+        async printTicket(name) {
             const top = name.length > 35 ? 70 : 95; 
             const zpl = `
                 ^XA
@@ -158,6 +163,9 @@ export default {
             const print = await printZPL(zpl);
             console.log(print);
         },
+        reprintTicket() {
+            this.printTicket(this.customerName);
+        }
     },
     computed: {
         validationPending() {

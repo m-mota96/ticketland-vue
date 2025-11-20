@@ -41,7 +41,7 @@ export async function printZPL(labelZPL) {
 
                     device.send(
                         labelZPL,
-                        () => resolve("Etiqueta impresa correctamente."),
+                        () => resolve("Etiqueta impresa correctamente v2."),
                         (err) => reject("Error al imprimir: " + err)
                     );
                 },
