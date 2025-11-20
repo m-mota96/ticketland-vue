@@ -22,11 +22,11 @@ class ScannerController extends Controller {
     public function validateAccess(Request $request) {
         try {
             $currentDate = date('Y-m-d');
-            $currentDate = '2025-11-08';
-            $dateEvent   = EventDate::where('date', $currentDate)->where('event_id', $request->event_id)->first();
-            if (!$dateEvent) {
-                return ResponseTrait::response('No es posible escanear los códigos fuera de las fechas del evento.', null, true, 409);
-            }
+            // $currentDate = '2025-11-08';
+            // $dateEvent   = EventDate::where('date', $currentDate)->where('event_id', $request->event_id)->first();
+            // if (!$dateEvent) {
+            //     return ResponseTrait::response('No es posible escanear los códigos fuera de las fechas del evento.', null, true, 409);
+            // }
 
             $folio = Crypt::decrypt($request->access);
             // dd($folio);
