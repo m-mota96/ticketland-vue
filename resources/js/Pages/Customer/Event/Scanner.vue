@@ -30,7 +30,8 @@
                             <p class="subtitle is-4 has-text-black mb-2">Acceso: <b class="has-text-success">{{ access }}</b></p>
                         </div>
                         <el-button class="mt-4" type="success" v-if="customerName" @click="reprintTicket"><font-awesome-icon :icon="['fas', 'print']" />&nbsp;&nbsp;&nbsp;Reimprimir etiqueta</el-button>
-                        <el-button class="mt-2" type="primary" v-if="resetScan" @click="resetScanner"><font-awesome-icon :icon="['fas', 'arrows-rotate']" />&nbsp;&nbsp;&nbsp;Recargar escáner</el-button>
+                        <br>
+                        <el-button class="mt-3" type="primary" v-if="resetScan" @click="resetScanner"><font-awesome-icon :icon="['fas', 'arrows-rotate']" />&nbsp;&nbsp;&nbsp;Recargar escáner</el-button>
                     </el-col>
                 </el-row>
             </el-card>
