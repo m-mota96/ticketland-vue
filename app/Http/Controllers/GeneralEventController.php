@@ -157,7 +157,7 @@ class GeneralEventController extends Controller {
                 ManageFilesTrait::deleteFiles($event->id, $files);
             }
             DB::rollBack();
-            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte al organizador del evento.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>No se realizaron cargos.<br>'.$th->getMessage(), 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
     }
 
