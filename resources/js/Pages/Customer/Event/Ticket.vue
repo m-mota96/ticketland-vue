@@ -8,18 +8,29 @@
                     <el-row class="text-center pt-5" v-if="!tickets.length">
                         <h3 class="subtitle is-3 has-text-grey w-100">Crea tu primer boleto para comenzar.</h3>
                     </el-row>
+                    <draggable 
+                        v-model="tickets"
+                        tag="transition-group"
+                        :component-data="{
+                            tag: 'div',
+                            type: 'transition',
+                            name: 'fade'
+                        }"
+                        :animation="1000"
+                        @change="handleChange"
+                    >
                     <el-card class="p-0 mb-5" v-for="(t, index) in tickets" :key="index">
                         <el-row>
                             <el-col :span="18">
                                 <h4 class="title is-4 has-text-black mb-2">{{ t.name }}</h4>
                                 <h4 class="title is-5 has-text-grey mb-1">{{ formatCurrency(t.price) }} MXN</h4>
-                                <h6
+                                <span
                                     class="subtitle is-6 mb-2 mt-2 has-text-link bold pointer"
                                     @click="copyUrl(t.name)"
                                     title="Haz click para copiar URL"
                                 >
                                     <font-awesome-icon :icon="['fas', 'link']" /> {{ appUrl+'/evento/'+event.url+'/'+t.name }}
-                                </h6>
+                                </span>
                                 <h6 v-if="t.promotion" class="has-text-warning bold">{{ t.promotion }}% de descuento hasta el {{ formatDate(t.date_promotion) }}</h6>
                                 <div class="mt-5">
                                     <span class="pointer mt-5 mr-5" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
@@ -57,9 +68,41 @@
                                     <span v-if="t.status == 1" class="has-text-success">Activo</span>
                                     <span v-if="t.status == 0" class="has-text-danger">Inactivo</span>
                                 </p>
+                                <p class="mt-4 pr-5">
+                                    <el-tooltip
+                                        class="box-item"
+                                        effect="dark"
+                                        content="Arrastra para cambiar el orden"
+                                        placement="right"
+                                    >
+                                        <h6 class="subtitle is-5 has-text-black pointer">
+                                            <font-awesome-icon :icon="['fas', 'arrows-alt-v']" />
+                                        </h6>
+                                    </el-tooltip>
+                                </p>
                             </el-col>
                         </el-row>
                     </el-card>
+                    </draggable>
+                    <!-- <draggable 
+                        v-model="prueba"
+                        tag="transition-group"
+                        :component-data="{
+                            tag: 'div',
+                            type: 'transition',
+                            name: 'fade'
+                        }"
+                        :animation="500"
+                        @change="handleChange"
+                    > -->
+                        <!-- <div 
+                        v-for="item in prueba"
+                        :key="item.id"
+                        class=""
+                        >
+                        {{ item.text }}
+                        </div> -->
+                    <!-- </draggable> -->
                 </el-col>
                 <el-col :span="7">
                     <el-card class="text-center pb-4">
@@ -111,19 +154,25 @@ import Footer from '../Footer.vue';
 import { EditTicket } from './Modals';
 import Swal from 'sweetalert2';
 import { dateEs } from '@/dateEs';
+import { VueDraggableNext as draggable } from 'vue-draggable-next';
 
 export default {
     components: {
         MenuEvent,
         Submenu,
         Footer,
-        EditTicket
+        EditTicket,
+        draggable
     },
     data() {
         return {
             appUrl: window.location.origin,
             event: this.$page.props.event,
             tickets: [],
+            prueba: [
+                { id: 1, text: 'Smooth transition' },
+                { id: 2, text: 'On drag and drop' }
+            ]
         }
     },
     beforeMount() {
@@ -204,6 +253,16 @@ export default {
                 document.body.removeChild(input);
                 showNotification(null, 'URL copiada al portapapeles.', 'success');
             }
+        },
+        handleChange(e) {
+            let orderTickets = [];
+            this.tickets.forEach((t, i) => {
+                orderTickets.push({
+                    id: t.id,
+                    order: i + 1
+                });
+            });
+            apiClient('customer/ticket', 'PUT', {type: 'order', event_id: this.event.id, orderTickets});
         }
     }
 }

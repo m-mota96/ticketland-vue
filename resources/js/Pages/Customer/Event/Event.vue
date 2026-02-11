@@ -82,6 +82,23 @@
                             </div>
                             <hr>
                             <div>
+                                <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['far', 'credit-card']" /> MÉTODOS DE PAGO</span>
+                                <div class="mt-2 mb-0">
+                                    <div v-for="(pm, index) in event.payment_methods" :key="pm.id">
+                                        <el-checkbox
+                                            v-model="pm.pivot.active"
+                                            class="bold has-text-black"
+                                            :label="pm.name"
+                                            size="large"
+                                            :true-value="1"
+                                            :false-value="0"
+                                            @change="changePaymentMethods(index)"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['fas', 'circle-dollar-to-slot']" /> TIPO DE EVENTO</span>
                                 <div class="mt-2 mb-0">
                                     <span>{{ event.cost_type == 'paid' ? 'DE CONSUMO' : 'DE REGISTRO' }}</span>
@@ -168,6 +185,25 @@ export default {
         },
         formatTime(_time) {
             return time(_time);
+        },
+        async changePaymentMethods(index) {
+            let valid = false;
+            this.event.payment_methods.forEach(pm => {
+                if (pm.pivot.active) {
+                    valid = true;
+                }
+            });
+            if (!valid) {
+                this.event.payment_methods[index].pivot.active = 1;
+                showNotification('¡Atención!', 'No puedes desactivar todos los método de pago.', 'warning');
+                return false;
+            }
+            const response = await apiClient('customer/paymentMethods', 'PUT', {event_id: this.event.id, payment_methods: this.event.payment_methods});
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error');
+                return false;
+            }
+            showNotification('¡Correcto!', response.msj, 'success');
         }
     }
 }
@@ -264,5 +300,11 @@ export default {
     }
     .multiline-text {
         white-space: pre-line;
+    }
+    .el-checkbox.el-checkbox--large {
+        height: 30px;
+    }
+    :deep(.el-checkbox.is-checked .el-checkbox__label) {
+        color: black;
     }
 </style>

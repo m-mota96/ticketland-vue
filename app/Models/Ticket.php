@@ -7,7 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 class Ticket extends Model
 {
     protected $fillable = [
-        'event_id', 'name', 'description', 'price', 'quantity', 'sales', 'reserved', 'valid', 'use_turns', 'promotion', 'date_promotion', 'start_sale', 'stop_sale', 'min_reservation', 'max_reservation', 'status', 
+        'event_id',
+        'name',
+        'description',
+        'price',
+        'quantity',
+        'sales',
+        'reserved',
+        'valid',
+        'use_turns',
+        'promotion',
+        'date_promotion',
+        'start_sale',
+        'stop_sale',
+        'min_reservation',
+        'max_reservation',
+        'order',
+        'status'
     ];
 
     public $timestamps = false;

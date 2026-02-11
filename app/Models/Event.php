@@ -32,7 +32,7 @@ class Event extends Model
     }
 
     public function tickets() {
-        return $this->hasMany(Ticket::class)->orderBy('name', 'ASC')->where('status', 1);
+        return $this->hasMany(Ticket::class)->orderBy('order', 'ASC')->where('status', 1);
     }
 
     public function payments() {
@@ -53,5 +53,9 @@ class Event extends Model
 
     public function codes() {
         return $this->hasMany(Code::class);
+    }
+
+    public function paymentMethods() {
+        return $this->belongsToMany(PaymentMethod::class)->withPivot('active')->orderBy('name');
     }
 }

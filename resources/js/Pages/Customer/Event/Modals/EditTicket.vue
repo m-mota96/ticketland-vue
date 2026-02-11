@@ -241,6 +241,7 @@ export default {
             eventType: 'paid',
             title: '',
             ticket: {
+                type: 'info',
                 ticket_id: null,
                 event_id: this.eventId,
                 name: '',

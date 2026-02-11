@@ -81,6 +81,9 @@ trait PaypalTrait {
                 'order_id' => $order->getId()
             ]);
         } else {
+            $logFile = fopen("logs/log_createOrderPaypal.txt", 'a') or die("Error creando archivo");
+            fwrite($logFile, date("d/m/Y H:i:s")." Error al crear la orden: ".$apiResponse->getResult()."\n") or die("Error escribiendo en el archivo");
+            fclose($logFile);
             $errors = $apiResponse->getResult();
             return response()->json([
                 'success' => false,
@@ -113,6 +116,9 @@ trait PaypalTrait {
             //     'msj'     => 'Tu pago no pudo ser procesado.<br>Por favor intenta con otra tarjeta o método de pago.'
             // ];
         } else {
+            $logFile = fopen("logs/log_caputeOrderPaypal.txt", 'a') or die("Error creando archivo");
+            fwrite($logFile, date("d/m/Y H:i:s")." Error al capturar la orden: ".$apiResponse->getResult()."\n") or die("Error escribiendo en el archivo");
+            fclose($logFile);
             $errors = $apiResponse->getResult();
             $responseBody = json_decode(json_encode($apiResponse->getResult()), true);
             $description = $responseBody['details'][0]['description'] ?? $responseBody['message'] ?? 'Tu pago no pudo ser procesado.<br>Por favor intenta con otra tarjeta o método de pago.';

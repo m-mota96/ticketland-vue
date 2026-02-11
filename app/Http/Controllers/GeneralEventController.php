@@ -15,17 +15,24 @@ use App\Http\Traits\SendMailTrait;
 use App\Http\Traits\ValidateCodesTrait;
 use App\Http\Traits\ValidateStockTrait;
 use App\Models\Event;
+use App\Models\PaymentMethod;
 use App\Models\Ticket;
 
 class GeneralEventController extends Controller {
 
     public function event($url, $ticket = null) {
-        $event = Event::with(['tickets' => function($query) {
-            $query->select('*', DB::raw('quantity - (sales + reserved) available'), DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))
-            ->where('start_sale', '<=', date('Y-m-d'))
-            ->where('stop_sale', '>=', date('Y-m-d'))
-            ->whereRaw('quantity > (sales + reserved)');
-        }, 'eventDates', 'profile', 'logo', 'location'])->whereRaw(DB::raw('BINARY url = "'.$url.'"'))->first();
+        $event = Event::with([
+            'tickets' => function($query) {
+                $query->select('*', DB::raw('quantity - (sales + reserved) available'), DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))
+                ->where('start_sale', '<=', date('Y-m-d'))
+                ->where('stop_sale', '>=', date('Y-m-d'))
+                ->whereRaw('quantity > (sales + reserved)');
+            },
+            'paymentMethods' => function($query) {
+                $query->where('active', true);
+            },
+            'eventDates', 'profile', 'logo', 'location'
+        ])->whereRaw(DB::raw('BINARY url = "'.$url.'"'))->first();
         // dd($event->tickets);
         if (!$event) {
             return redirect('/');
@@ -51,13 +58,19 @@ class GeneralEventController extends Controller {
                 return ResponseTrait::response('No es posible comprar boletos para el evento seleccionado.', ['type' => 'event'], true, 404);
             }
 
-            if (!in_array($request->order['payment_method'], ['card', 'oxxo', 'paypal'])) {
+            $arrayPm        = [];
+            $paymentMethods = PaymentMethod::select('sku')->orderBy('name')->get();
+            foreach ($paymentMethods as $key => $pm) {
+                $arrayPm[] = $pm->sku;
+            }
+
+            if (!in_array($request->order['payment_method'], $arrayPm)) {
                 return ResponseTrait::response('Método de pago no reconocido.', ['type' => 'event'], true, 404);
             }
 
-            $initialDateEvent = new \DateTime($event->eventDates[0]->date);
-            $initialDateEvent->modify('-3 days');
-            $initialDateEvent = $initialDateEvent->format('Y-m-d');
+            // $initialDateEvent = new \DateTime($event->eventDates[0]->date);
+            // $initialDateEvent->modify('-3 days');
+            // $initialDateEvent = $initialDateEvent->format('Y-m-d');
             // if ((date('Y-m-d') >= $initialDateEvent) && $request->order['payment_method'] == 'oxxo') {
             //     return ResponseTrait::response('Ya no es posible realizar compras con Pago en Oxxo.', ['type' => 'event'], true, 409);
             // }

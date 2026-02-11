@@ -13,6 +13,7 @@ use App\Models\EventDate;
 use App\Models\GalleryEvent;
 use App\Models\LocationEvent;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Ticket;
 use App\Models\User;
 
@@ -106,6 +107,17 @@ class EventController extends Controller {
                 'cost_type'   => $request->type
             ]);
 
+            $arrayPm        = [];
+            $paymentMethods = PaymentMethod::orderBy('name')->get();
+            foreach ($paymentMethods as $key => $pm) {
+                $arrayPm[] = [
+                    'payment_method_id' => $pm->id,
+                    'active'            => 1
+                ];
+            }
+
+            $event->paymentMethods()->sync($arrayPm);
+
             foreach ($request->allDates as $key => $d) {
                 $dates[] = [
                     'event_id'     => $event->id,
@@ -120,10 +132,11 @@ class EventController extends Controller {
                 'event_id'   => $event->id,
                 'name'       => 'Boleto 1',
                 'price'      => ($request->type == 'paid') ? 100 : 0,
-                'quantity'   => 50,
+                'quantity'   => 100,
                 'valid'      => $request->days,
                 'start_sale' => date('Y-m-d'),
                 'stop_sale'  => $request->allDates[sizeof($request->allDates) - 1],
+                'order'      => 1
             ]);
 
             DB::commit();
@@ -151,7 +164,7 @@ class EventController extends Controller {
     }
 
     public function event($event_id) {
-        $event      = Event::with(['profile', 'logo', 'eventDates', 'location', 'category'])->where('id', $event_id)->first();
+        $event      = Event::with(['profile', 'logo', 'eventDates', 'location', 'category', 'paymentMethods'])->where('id', $event_id)->first();
         $categories = Category::orderBy('name')->get();
         return Inertia::render('Customer/Event/Event', [
             'event'      => $event,
@@ -315,6 +328,24 @@ class EventController extends Controller {
         try {
             $events = Event::with(['profile:id,event_id,name', 'eventDates', 'location:id,event_id,name'])->whereHas('profile')->where('status', 1)->get();
             return ResponseTrait::response(null, $events);
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function paymentMethods(Request $request) {
+        try {
+            // dd($request->all());
+            $arrayPm = [];
+            foreach ($request->payment_methods as $key => $pm) {
+                $arrayPm[] = [
+                    'payment_method_id' => $pm['id'],
+                    'active'            => $pm['pivot']['active']
+                ];
+            }
+            $event = Event::find($request->event_id);
+            $event->paymentMethods()->sync($arrayPm);
+            return ResponseTrait::response('Métodos de pago actualizados correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

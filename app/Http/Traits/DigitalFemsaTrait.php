@@ -59,6 +59,9 @@ trait DigitalFemsaTrait {
                 'totalToPay' => $totalToPay
             ];
         } catch (\Exception $e) {
+            $logFile = fopen("logs/log_femsa.txt", 'a') or die("Error creando archivo");
+            fwrite($logFile, date("d/m/Y H:i:s")." Error al crear referencia de pago: ".$e->getMessage()."\n") or die("Error escribiendo en el archivo");
+            fclose($logFile);
             return  ['success' => false, 'msj' => $e->getMessage()];
         }
     }
