@@ -37,8 +37,12 @@ createInertiaApp({
         ),
     setup({ el, App, props, plugin }) {
         window.addEventListener('popstate', () => {
-            document.body.style.display = 'none';
-            window.location.href = '/login';
+            const hadSession = sessionStorage.getItem('hadSession');
+
+            if (hadSession) {
+                document.body.style.display = 'none';
+                window.location.href = '/login';
+            }
         });
 
         const appInstance = createApp({ render: () => h(App, props) });

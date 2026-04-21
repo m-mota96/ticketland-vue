@@ -200,7 +200,7 @@ const handleResize = () => {
             <h2 class="title is-2 has-text-black has-text-centered mt-6">Próximos eventos</h2>
             <el-row :gutter="20" class="mb-6">
                 <el-col :xs="24" :sm="24" :md="12" :lg="6" :xl="6" v-for="(item, i) in events" :key="i">
-                    <div class="card card-my-events">
+                    <div class="card card-my-events mb-5">
                         <div class="card-image">
                             <Link :href="`/evento/${item.url}`">
                                 <img :src="`events/images/${item.profile.name}`" :alt="item.name" class="w-100  image-card">
@@ -289,14 +289,14 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     text-align: center;
 }
 .image-card {
-    height: 30vh;
+    height: 20vh;
     object-fit: cover;
     object-position: center;
 }
 .card-my-events .card-content {
-    height: 235px !important;
+    height: 235px;
 }
-@media only screen and (max-width: 1024px) and (min-width: 501px) {
+@media only screen and (max-width: 1024px) and (min-width: 769px) {
     .logo-maxwell {
         width: 50% !important;
     }
@@ -313,6 +313,31 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     }
     .login-small {
         display: unset !important;
+    }
+    .image-card {
+        height: 15vh;
+    }
+}
+@media only screen and (max-width: 768px) and (min-width: 501px) {
+    .logo-maxwell {
+        width: 50% !important;
+    }
+    .caption {
+        bottom: 5px;
+        padding: 6px 4px !important;
+        width: 50%;
+    }
+    .login-large {
+        display: none !important;
+    }
+    .navbar-menu {
+        border-radius: 5px !important;
+    }
+    .login-small {
+        display: unset !important;
+    }
+    .image-card {
+        height: 25vh;
     }
 }
 @media only screen and (max-width: 500px) and (min-width: 200px) {
@@ -351,6 +376,9 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     }
     .login-small {
         display: unset !important;
+    }
+    .card-my-events .card-content {
+        height: 335px;
     }
 }
 </style>
