@@ -233,7 +233,7 @@
                                                 <p v-if="t.promotion && !t.code_id">
                                                     Precio
                                                     <span class="subtitle is-6 has-text-gray mb-0"><del>{{ formatCurrency(t.price) }}</del></span>
-                                                    <span class="subtitle is-5 !text-orange-500 bold ml-2">{{ formatCurrency(t.price - (t.price * (t.promotion / 100))) }}</span>
+                                                    <span class="subtitle is-5 !text-orange-500 bold ml-2">{{ formatCurrency(t.price - Math.round(t.price * (t.promotion / 100))) }}</span>
                                                 </p>
                                                 <p v-if="!t.promotion && !t.code_id">
                                                     Precio
