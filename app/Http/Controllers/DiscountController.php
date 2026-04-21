@@ -123,6 +123,7 @@ class DiscountController extends Controller {
             if ($code->used > 0 || $code->reserved > 0) {
                 return ResponseTrait::response('No se puede eliminar el cupón porque ya ha sido utilizado.', null, true, 409);
             }
+            $code->tickets()->detach(); // Se elimina la relación del código con los tickets
             $code->delete();
             return ResponseTrait::response('El cupón se eliminó correctamente.');
         } catch (\Throwable $th) {
