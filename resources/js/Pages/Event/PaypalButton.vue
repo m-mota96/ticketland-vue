@@ -10,7 +10,7 @@ import axios from "axios";
 export default {
     props: {
         amount: {
-            type: String,
+            type: Number,
             required: true,
         },
         handleMakePayment: {
@@ -24,16 +24,20 @@ export default {
         }
     },
     mounted() {
-        if (typeof window.paypal === "undefined") {
-            const script  = document.createElement("script");
-            script.src    = `https://www.paypal.com/sdk/js?client-id=${this.clientId}&currency=MXN&locale=es_MX`;
-            script.onload = this.renderPaypalButton;
-            document.body.appendChild(script);
-        } else {
-            this.renderPaypalButton();
-        }
+        
     },
     methods: {
+        loadSdk() {
+            if (typeof window.paypal === "undefined") {
+                const script  = document.createElement("script");
+                script.id     = "paypal-sdk";
+                script.src    = `https://www.paypal.com/sdk/js?client-id=${this.clientId}&currency=MXN&locale=es_MX`;
+                script.onload = this.renderPaypalButton;
+                document.body.appendChild(script);
+            } else {
+                this.renderPaypalButton();
+            }
+        },
         renderPaypalButton() {
             window.paypal.Buttons({
                 createOrder: async () => {

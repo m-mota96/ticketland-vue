@@ -12,16 +12,14 @@
         <el-col :span="24">
             <el-card class="w-100 pt-5 pb-5">
                 <el-row :gutter="20">
-                    <el-col :span="3">
+                    <el-col :span="6">
                         <br>
-                        <a :href="route('cliente.downloadReservations', event.id)">
-                            <el-button class="w-100" type="success">
-                                <font-awesome-icon class="mr-2" :icon="['fas', 'file-excel']" />
-                                Generar Excel
-                            </el-button>
-                        </a>
+                        <el-button  type="success" @click="downloadReservations" :loading="loadingFile">
+                            <font-awesome-icon class="mr-2" :icon="['fas', 'file-excel']" />
+                            Generar reporte de reservaciones
+                        </el-button>
                     </el-col>
-                    <el-col class="mb-5" :span="4" :offset="12">
+                    <el-col class="mb-5" :span="4" :offset="9">
                         <label for="order">Ordernar por</label>
                         <el-select v-model="order.orderBy" @change="getPayments" id="order">
                             <el-option :key="0" label="Id" value="id" />
@@ -53,7 +51,7 @@
                         </el-tooltip>
                     </el-col>
                     <el-col :span="24">
-                        <el-table class="w-100" :data="payments" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
+                        <el-table class="w-100" v-loading="loadingTable" :data="payments" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
                             <!-- <el-table-column prop="date" label="Date">
                                 <template #header>
         
@@ -100,7 +98,7 @@
                             </el-table-column>
                             <el-table-column label="Subtotal" width="130" align="center">
                                 <template #default="scope">
-                                    {{ formatCurrency(scope.row.amount) }}
+                                    {{ formatCurrency(scope.row.total_order) }}
                                 </template>
                             </el-table-column>
                             <el-table-column label="% de C/Descuento" width="130" align="center">
@@ -110,7 +108,7 @@
                             </el-table-column>
                             <el-table-column label="Total" width="130" align="center">
                                 <template #default="scope">
-                                    {{ formatCurrency(scope.row.amount - Math.round(scope.row.amount * scope.row.discount / 100)) }}
+                                    {{ formatCurrency(scope.row.amount) }}
                                 </template>
                             </el-table-column>
                             <el-table-column align="center" width="180">
@@ -128,7 +126,7 @@
                                     <span class="bold" :class="{
                                         'has-text-danger': scope.row.status === 'expired',
                                         'has-text-success': scope.row.status === 'payed',
-                                        'has-text-warning': scope.row.status === 'pending'
+                                        'text-orange-500': scope.row.status === 'pending'
                                     }">
                                         {{ verifyStatus(scope.row.status) }}
                                     </span>
@@ -222,6 +220,8 @@ export default {
             event: this.$page.props.event,
             payments: [],
             loading: false,
+            loadingTable: false,
+            loadingFile: false,
             search: {
                 name: '',
                 email: '',
@@ -264,7 +264,9 @@ export default {
     },
     methods: {
         async getPayments() {
+            this.loadingTable         = true;
             const response            = await apiClient('customer/reservations', 'POST', {event_id: this.event.id, search: this.search, pagination: this.pagination, order: this.order});
+            this.loadingTable         = false;
             this.payments             = response.data.payments;
             this.pagination.totalRows = response.data.count;
         },
@@ -306,10 +308,17 @@ export default {
             }
             location.href = this.appUrl+'/'+response.data.fileName;
         },
-        // downloadReservations() {
-        //     console.log('entre');
-        //     location.ref = this.appUrl+`/customer/downloadReservations/${this.event.id}`;
-        // },
+        async downloadReservations() {
+            this.loadingFile =  true;
+            const response   = await apiClient('customer/downloadReservations', 'GET', {event_id: this.event.id});
+            this.loadingFile = false;
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error', 6000);
+                return false;
+            }
+            showNotification('¡Correcto!', response.msj, 'success');
+            location.href = response.data;
+        },
         handleSizeChange(val) {
             // console.log(`${val} items per page`)
             this.getPayments();

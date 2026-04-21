@@ -1,6 +1,7 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { Link } from '@inertiajs/vue3';
 
 const appUrl = ref(window.location.origin);
 const passwordVisible = ref(false);
@@ -44,9 +45,9 @@ const togglePasswordConfirm = () => {
         <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 5, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6 text-center">
             <el-card class="p-5">
                 <el-col :span="24">
-                    <a :href="appUrl" class="is-justify-content-center is-flex">
+                    <Link :href="appUrl" class="is-justify-content-center is-flex">
                         <img src="../../../../public/general/ticketland.png" alt="Ticketland" class="w-25 mb-3">
-                    </a>
+                    </Link>
                 </el-col>
                 <form class="text-left">
                     <el-row>

@@ -53,7 +53,7 @@
                     </el-col>
                     <el-col :span="24" class="mb-6">
                         <el-table class="w-100" :data="amounts" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
-                            <el-table-column prop="type" label="MÉTODO DE PAGO" />
+                            <el-table-column prop="payment_method.name" label="MÉTODO DE PAGO" />
                             <el-table-column label="VENTAS TOTALES">
                                 <template #default="scope">
                                     {{ formatCurrency(scope.row.total) }} MXN
@@ -177,7 +177,7 @@ export default {
                     }
                 },
                 tooltip: {
-                    headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                    headerFormat: `<span style="font-size:15px">{point.key}/${this.months[this.currentMonth - 1].label}/${this.currentYear}</span><table>`,
                     pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
                         '<td style="padding:0"><b>{point.y} </b></td></tr>',
                     footerFormat: '</table>',
@@ -217,10 +217,11 @@ export default {
             const totalDays = new Date(year, month, 0).getDate(); // día 0 del siguiente mes
 
             for (let day = 1; day <= totalDays; day++) {
-                const dd   = String(day).padStart(2, '0');
-                const mm   = String(month).padStart(2, '0');
-                const yyyy = String(year);
-                days.push(`${dd}/${mm}/${yyyy}`);
+                // const dd   = String(day).padStart(2, '0');
+                // const mm   = String(month).padStart(2, '0');
+                // const yyyy = String(year);
+                // days.push(`${dd}/${mm}/${yyyy}`);
+                days.push(parseInt(day));
             }
 
             return days;

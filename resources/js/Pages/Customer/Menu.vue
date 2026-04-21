@@ -7,8 +7,8 @@
         text-color="white"
     >
         <el-menu-item index="0"></el-menu-item>
-        <el-menu-item index="1" v-if="viewDashboard"><a :href="route('cliente.mis_eventos')">Mis eventos</a></el-menu-item>
-        <el-menu-item index="2" v-if="!viewDashboard" :class="{ zoom: animation }" @animationend="$emit('activate-animation')"><a :href="route('cliente.mi_perfil')">Mi perfil</a></el-menu-item>
+        <el-menu-item index="1" v-if="viewDashboard"><Link :href="route('cliente.mis_eventos')">Mis eventos</Link></el-menu-item>
+        <el-menu-item index="2" v-if="!viewDashboard" :class="{ zoom: animation }" @animationend="$emit('activate-animation')"><Link :href="route('cliente.mi_perfil')">Mi perfil</Link></el-menu-item>
         <el-sub-menu index="3" class="me-10">
             <template #title>{{ $page.props.auth.user.name }}</template>
             <el-menu-item index="2-1">
@@ -16,7 +16,7 @@
                     :href="route('logout')"
                     method="post"
                     as="button"
-                    class="is-justify-content-center is-flex"
+                    class="is-justify-content-center is-flex !text-white"
                 >
                     Cerrar sesión
                 </ResponsiveNavLink>
@@ -29,6 +29,7 @@
 //import Api from '@/store/modules/Api' // Clase Api donde se declara Axios y la ruta al servidor
 //import ModalTipoPermisos from './components/ModalTipoPermisos'
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import { Link } from '@inertiajs/vue3';
   
 export default {
     props: {
@@ -45,7 +46,8 @@ export default {
     },
     components: {
         //Aqui se agregan los componentes, en dado caso que quiereas usar, para separar código, yo separo los modales y aqui los agrego
-        ResponsiveNavLink
+        ResponsiveNavLink,
+        Link
     },
     data() {
         return {

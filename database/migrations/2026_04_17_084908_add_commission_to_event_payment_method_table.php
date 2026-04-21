@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('location_events', function (Blueprint $table) {
-            $table->text('address')->nullable()->change();
-            $table->double('latitude')->nullable()->change();
-            $table->double('longitude')->nullable()->change();
-            $table->longText('iframe')->nullable();
+        Schema::table('event_payment_method', function (Blueprint $table) {
+            $table->decimal('commission', 8, 2)->nullable()->after('payment_method_id');
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('event_payment_method', function (Blueprint $table) {
+            $table->fropColumn('commission');
+        });
     }
 };

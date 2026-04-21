@@ -56,6 +56,6 @@ class Event extends Model
     }
 
     public function paymentMethods() {
-        return $this->belongsToMany(PaymentMethod::class)->withPivot('active')->orderBy('name');
+        return $this->belongsToMany(PaymentMethod::class)->withPivot('commission', 'active')->orderBy('name');
     }
 }

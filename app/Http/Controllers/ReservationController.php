@@ -8,6 +8,7 @@ use App\Exports\ReservationsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Traits\ResponseTrait;
 use App\Http\Traits\SendMailTrait;
+use App\Models\Access;
 use App\Models\Event;
 use App\Models\Payment;
 use ZipArchive;
@@ -27,8 +28,12 @@ class ReservationController extends Controller {
             $limit      = $pagination['pageSize']; // Tamaño de la página
             $offset     = ($page - 1) * $limit; // Calcular el offset
             $search     = $request->search;
-            $query      = Payment::with(['accesses.ticket'])->where('event_id', $request->event_id);
-            $count      = Payment::where('event_id', $request->event_id);
+            $query      = Payment::with(['accesses.ticket', 'accesses.code'])->where('event_id', $request->event_id)
+            ->addSelect(['total_order' => Access::selectRaw('SUM(price)')
+                ->whereColumn('payment_id', 'payments.id')
+                ->groupBy('payment_id')
+            ]);
+            $count = Payment::where('event_id', $request->event_id);
 
             if ($search['name']) {
                 $query->whereRaw('name LIKE "%'.$search['name'].'%"');
@@ -117,11 +122,16 @@ class ReservationController extends Controller {
         }
     }
 
-    public function downloadReservations($event_id) {
+    public function downloadReservations(Request $request) {
         try {
-            return Excel::download(new ReservationsExport($event_id), 'Reservaciones.xlsx');
+            $count = Payment::where('event_id', $request->event_id)->count();
+            if (!$count) {
+                return ResponseTrait::response('No hay información que exportar.', null, true, 409);
+            }
+            Excel::store(new ReservationsExport($request->event_id), '/excel/'.$request->event_id.'/Reservaciones.xlsx', 'public');
+            return ResponseTrait::response('Archivo generado correctamente.<br>Revisa tus descargas.', asset('storage/excel/'.$request->event_id.'/Reservaciones.xlsx?v='.uniqid()));
         } catch (\Throwable $th) {
-            return redirect(route('cliente.reservaciones', $event_id));
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
     }
 }

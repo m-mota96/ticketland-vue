@@ -7,20 +7,20 @@ use App\Models\Payment;
 use App\Models\Ticket;
 
 trait OrderTrait {
-    public static function registerPayment($event_id, $order, $order_id, $totalToPay, $type, $status, $discount, $reference) {
+    public static function registerPayment($event_id, $order, $order_id, $totalToPay, $status, $discount, $reference) {
         $payment = Payment::create([
-            'event_id'  => $event_id,
-            'order_id'  => $order_id,
-            'code_id'   => $discount['code_id'],
-            'name'      => $order['name'],
-            'email'     => $order['email'],
-            'phone'     => $order['phone'],
-            'type'      => $type,
-            'reference' => $reference,
-            'amount'    => $totalToPay,
-            'code'      => $discount['code'],
-            'discount'  => $discount['discountInt'],
-            'status'    => $status
+            'event_id'          => $event_id,
+            'payment_method_id' => $order['payment_method_id'],
+            'order_id'          => $order_id,
+            'name'              => $order['name'],
+            'email'             => $order['email'],
+            'phone'             => $order['phone'],
+            'type'              => $order['payment_method'],
+            'reference'         => $reference,
+            'amount'            => $totalToPay,
+            'code'              => $discount['code'],
+            'discount'          => $discount['discountInt'],
+            'status'            => $status
         ]);
         return [
             'success'    => true,
@@ -28,33 +28,24 @@ trait OrderTrait {
         ];
     }
 
-    public static function registerAccess($payment_id, $tickets, $folios, $code) {
-        $insert = [];
+    public static function registerAccess($payment_id, $tickets, $folios) {
         for ($i = 0; $i < sizeof($tickets); $i++) {
-            $ticket = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'), 'valid')->find($tickets[$i]['id']);
-            if ($ticket->promotion && !$code) {
-                $price     = $ticket->price - round($ticket->price * ($ticket->promotion / 100));
-                $promotion = $ticket->promotion;
-            } else {
-                $price     = $ticket->price;
-                $promotion = null;
-            }
-            $insert[] = [
-                'payment_id' => $payment_id,
-                'ticket_id'  => $ticket->id,
-                // 'code_id' => (isset($code->id)) ? $code->id : null,
-                'folio'      => $folios[$i],
-                'quantity'   => $ticket->valid,
-                'name'       => $tickets[$i]['customer_name'],
-                'email'      => $tickets[$i]['email'],
-                'phone'      => $tickets[$i]['phone'],
-                'price'      => $price,
-                'promotion'  => $promotion,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ];
+            $ticket = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'), 'valid')->find($tickets[$i]['id']);
+            $access = Access::create([
+                'payment_id'    => $payment_id,
+                'ticket_id'     => $ticket->id,
+                'code_id'       => $tickets[$i]['code_id'] ? $tickets[$i]['code_id'] : null,
+                'folio'         => $folios[$i],
+                'quantity'      => $ticket->valid,
+                'name'          => $tickets[$i]['customer_name'],
+                'email'         => $tickets[$i]['email'],
+                'phone'         => $tickets[$i]['phone'],
+                'code_name'     => $tickets[$i]['code_id'] ? $tickets[$i]['code'] : null,
+                'code_discount' => $tickets[$i]['code_id'] ? $tickets[$i]['code_discount'] : null,
+                'price'         => $ticket->price,
+                'promotion'     => !$tickets[$i]['code_id'] ? $ticket->promotion : null
+            ]);
         }
-        Access::insert($insert);
         return ['success' => true];
     }
 }

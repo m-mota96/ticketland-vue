@@ -4,35 +4,64 @@ namespace App\Http\Traits;
 use App\Models\Code;
 
 trait ValidateCodesTrait {
-    public static function validateCodes($request, $save = true) { // Verifica el código de descuento
-        $code = Code::where('code', $request['code'])->where('event_id', $request['event_id'])->where('status', 1)->first();
+    public static function validateCodes($request, $save = true, $tickets = []) { // Verifica el cupón de descuento
+        $code = Code::with(['tickets:id'])->where('code', $request['code'])->where('event_id', $request['event_id'])->where('status', 1)->first();
         if (!$code) {
-            return ['success' => false, 'msj' => 'El código '.$request['code'].' no existe.'];
+            return ['success' => false, 'msj' => 'El cupón '.$request['code'].' no existe.'];
+        }
+
+        $codeTickets = [];
+        if ($code->tickets) {
+            $codeTickets = $code->tickets->pluck('id')->toArray(); // Obtiene los boletos para los que aplica el cupón ingresado
         }
 
         $used = $code->used + $code->reserved;
         if (($code->quantity - $used) === 0) {
-            return ['success' => false, 'msj' => 'El código '.$code->code.' se ha agotado.'];
+            return ['success' => false, 'msj' => 'El cupón '.$code->code.' se ha agotado.'];
         }
 
         if ($code->expiration) {
             if ($code->expiration < date('Y-m-d')) {
-                return ['success' => false, 'msj' => 'El código '.$code->code.' ha expirado.'];
+                return ['success' => false, 'msj' => 'El cupón '.$code->code.' ha expirado.'];
             }
         }
 
-        if ($save) {
+        $success = true;
+        $error   = '';
+        // Valida que el cupón ingresado aplique para los boletos comprados
+        for ($i = 0; $i < sizeof($tickets); $i++) {
+            if (!in_array($tickets[$i]['id'], $codeTickets) && $tickets[$i]['code_id']) {
+                $success = false;
+                $error   .= 'El cupón <b>'.$request['code'].'</b> no es aplicable para el boleto <b>'.$tickets[$i]['name'].'</b><br>';
+            }
+        }
+
+        /* Cuando la variable $save es true indica que ya estan comprando los boletos,
+        de lo contrario el cliente apenas esta llenando la información de su pedido y se valida el cupón */
+        if ($save && $success) {
             switch ($request['payment_method']) {
                 case 'card':
+                case 'paypal':
+                    // Cuando el método de pago es tarjeta o paypal se le suma uno a las veces que se ha usado el cupón
                     $code->used = $code->used + 1;
                     break;
                 case 'oxxo':
+                    // Cuando el pago es en oxxo se suma uno a reservado (en el webhook que marca el pago como payed se suma uno a used y se resta uno a reserved)
                     $code->reserved = $code->reserved + 1;
                     break;
             }
             $code->save();
         }
-        return ['success' => true, 'data'=> ['discount' => $code->discount, 'code_id' => $code->id]];
+        return [
+            'success' => $success,
+            'msj'     => $error,
+            'data'    => [
+                'code_id'  => $code->id,
+                'code'     => $code->code,
+                'discount' => $code->discount,
+                'tickets'  => $codeTickets,
+            ]
+        ];
     }
 
     public static function validateCodesOld($tickets, $save = true) { // Verifica si estan usando códigos de descuento

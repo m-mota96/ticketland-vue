@@ -146,8 +146,9 @@
                         :class="{'error-phone': errors.phone}"
                         style="color: #606266; height: 32px;"
                         :auto-format="true"
-                        :input-options="{ placeholder: 'Ingresa tu número de teléfono' }"
+                        :input-options="{ placeholder: 'Ingresa tu número de teléfono', name: 'phone', id: 'phone', autocomplete: 'phone' }"
                         @input="onPhoneChange"
+                        defaultCountry="MX"
                     />
                     <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
                     <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span>
@@ -185,6 +186,26 @@
                 <el-col :span="24">
                     <i class="has-text-dark"><font-awesome-icon :icon="['fas', 'circle-info']" /> Debes de tener acceso al correo ya que a esta dirección se enviarán los boletos.</i>
                 </el-col>
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3 mt-4" :inline="true">
+                    <el-row :gutter="5">
+                        <el-col :xs="17" :sm="17" :md="18" :lg="16" :xl="18">
+                            <label class="bold has-text-dark">¿Tienes un cupón de descuento?</label>
+                            <el-input
+                                class="el-form-item mb-0"
+                                :class="{'is-error': false}"
+                                v-model="data.order.code"
+                                placeholder="Ingresa tu cupón"
+                                @input="formatInput"
+                                :disabled="disabledDiscount"
+                            />
+                        </el-col>
+                        <el-col :xs="7" :sm="7" :md="6" :lg="8" :xl="6">
+                            <br>
+                            <el-button class="w-100" type="success" @click="verifyCodes" v-if="!data.discount">Validar cupón</el-button>
+                            <el-button class="w-100" type="danger" @click="verifyCodes('delete')" v-if="data.discount">Borrar cupón</el-button>
+                        </el-col>
+                    </el-row>
+                </el-col>
             </el-row>
             <el-row :gutter="gutterValue" class="mb-6">
                 <el-col :span="24" class="mb-3">
@@ -200,7 +221,7 @@
                         </el-col>
                     </el-row>
                 </el-col>
-                <el-col :span="24">
+                <el-col :span="24" v-loading="loadingTickets">
                     <el-row>
                         <el-card class="w-100 mb-5 my-card" v-for="(t, index) in data.ticketsReserved" :key="index">
                             <template #header>
@@ -209,6 +230,27 @@
                                         <el-row :gutter="gutterValue">
                                             <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
                                                 <span>Boleto {{ (index + 1) }} - <b class="has-text-primary">{{ t.name }}</b></span>
+                                                <p v-if="t.promotion && !t.code_id">
+                                                    Precio
+                                                    <span class="subtitle is-6 has-text-gray mb-0"><del>{{ formatCurrency(t.price) }}</del></span>
+                                                    <span class="subtitle is-5 !text-orange-500 bold ml-2">{{ formatCurrency(t.price - (t.price * (t.promotion / 100))) }}</span>
+                                                </p>
+                                                <p v-if="!t.promotion && !t.code_id">
+                                                    Precio
+                                                    <span class="subtitle is-5 !text-orange-500 bold">{{ formatCurrency(t.price) }}</span>
+                                                </p>
+                                                <p v-if="t.code_id">
+                                                    Precio
+                                                    <span class="subtitle is-6 has-text-gray mb-0"><del>{{ formatCurrency(t.price) }}</del></span>
+                                                    <span class="subtitle is-5 !text-orange-500 bold ml-2">{{ formatCurrency(t.price - Math.round(t.price * (t.code_discount / 100))) }}</span>
+                                                </p>
+                                                <p class="mb-0" v-if="t.code_id">
+                                                    Cupón de descuento aplicado
+                                                    <span class="text-blue-500 ml-2">
+                                                        <font-awesome-icon :icon="['fas', 'tags']" />
+                                                        {{ t.code }} ({{ t.code_discount }}%)
+                                                    </span>
+                                                </p>
                                             </el-col>
                                             <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="has-text-right">
                                                 <el-checkbox class="bold" :class="{'w-100': gutterValue == 0}" v-model="t.checked" label="Autocompletar este boleto con los datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
@@ -260,9 +302,19 @@
                                         :auto-format="true"
                                         :input-options="{ placeholder: 'Número de teléfono' }"
                                         @input="(val) => onPhoneChangeTickets(val, index)"
+                                        defaultCountry="MX"
                                     />
                                 </el-col>
                             </el-row>
+                            <!-- <template #footer v-if="t.name === 'Entrada general 2 días'">
+                                <div class="has-text-centered bg-green-100 p-2">
+                                    Cupón de descuento aplicado
+                                    <span class="text-blue-500 ml-2">
+                                        <font-awesome-icon :icon="['fas', 'tags']" />
+                                        BUENFIN (10%)
+                                    </span>
+                                </div>
+                            </template> -->
                         </el-card>
                     </el-row>
                 </el-col>
@@ -283,9 +335,9 @@
                 </el-col>
                 <el-col :span="24">
                     <el-table class="w-100 mb-3" :data="filteredTickets" stripe header-cell-class-name="has-text-dark" empty-text="Ningún dato disponible en esta tabla">
-                        <el-table-column label="Producto" width="150">
+                        <el-table-column label="Producto" width="180">
                             <template #default="scope">
-                                <span style="font-size: 1.1rem;">{{ scope.row.name }}</span>
+                                <span>{{ scope.row.name }}</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="Cantidad" align="center">
@@ -295,9 +347,14 @@
                         </el-table-column>
                         <el-table-column label="Precio unitario">
                             <template #default="scope">
-                                <span v-if="!scope.row.promotion" class="has-text-success">{{ scope.row.priceUnit }}</span>
-                                <del v-if="scope.row.promotion && !data.discount" class="has-text-danger">{{ scope.row.priceUnit }}</del>
-                                <span v-if="scope.row.promotion && data.discount" class="has-text-success">{{ scope.row.priceUnit }}</span>
+                                <span v-if="!scope.row.priceWithDiscount">
+                                    <span v-if="!scope.row.promotion" class="has-text-success">{{ scope.row.priceUnit }}</span>
+                                    <del v-if="scope.row.promotion && !data.discount" class="has-text-danger">{{ scope.row.priceUnit }}</del>
+                                    <span v-if="scope.row.promotion && data.discount" class="has-text-success">{{ scope.row.priceUnit }}</span>
+                                </span>
+                                <span v-if="scope.row.priceWithDiscount" class="has-text-success">
+                                    {{ formatCurrency(scope.row.priceWithDiscount) }} MXN
+                                </span>
                             </template>
                         </el-table-column>
                         <el-table-column label="Precio c/descuento">
@@ -323,27 +380,7 @@
                             </template>
                         </el-table-column> -->
                     </el-table>
-                    <i class="has-text-link"><font-awesome-icon :icon="['fas', 'circle-info']" /> Si aplicas un código de descuento no se tomará en cuenta el precio con descuento.</i>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6" :inline="true">
-                    <el-row :gutter="5">
-                        <el-col :xs="17" :sm="17" :md="18" :lg="16" :xl="18">
-                            <label class="bold has-text-dark">¿Tienes un código de descuento?</label>
-                            <el-input
-                                class="el-form-item mb-0"
-                                :class="{'is-error': false}"
-                                v-model="data.order.code"
-                                placeholder="Ingresa tu código"
-                                @input="formatInput"
-                                :disabled="disabledDiscount"
-                            />
-                        </el-col>
-                        <el-col :xs="7" :sm="7" :md="6" :lg="8" :xl="6">
-                            <br>
-                            <el-button class="w-100" type="success" @click="verifyCodes" v-if="!data.discount">Validar cupón</el-button>
-                            <el-button class="w-100" type="danger" @click="verifyCodes('delete')" v-if="data.discount">Borrar cupón</el-button>
-                        </el-col>
-                    </el-row>
+                    <i class="has-text-link"><font-awesome-icon :icon="['fas', 'circle-info']" /> Si aplicas un cupón de descuento no se tomará en cuenta el precio con descuento del boleto.</i>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6">
                     <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
@@ -354,7 +391,7 @@
                         placeholder="Selecciona una opción"
                         id="payment_method"
                         clearable
-                        @change="verifyPaymentMethod"
+                        @change="(val) => verifyPaymentMethod(val)"
                         >
                             <!-- <el-option label="Pago en Oxxo (México)" value="oxxo" :disabled="disabledPaymentMethod" v-if="!disabledPaymentMethod" /> -->
                             <el-option v-for="pm in event.payment_methods" :key="pm.id" :label="pm.name" :value="pm.sku" />
@@ -363,19 +400,19 @@
                 </el-col>
                 <el-col :span="24" class="has-text-left mt-6">
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Subtotal: <b>{{ formatCurrency(data.total) }} MXN</b>
+                        Subtotal: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
+                    </h6>
+                    <!-- <h6 class="subtitle is-5 has-text-black mb-2">
+                        Código de descuento: <b>{{ data.discount == 0 ? 'N/A' : formatCurrency(data.discountAmount)+' MXN' }}</b>
+                    </h6> -->
+                    <!-- <h6 class="subtitle is-5 has-text-black mb-2">
+                        Total: <b>{{ formatCurrency(data.total) }} MXN</b>
+                    </h6> -->
+                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="event.model_payment == 'separated'">
+                        Cargo por servicio: <b>{{ formatCurrency(data.commission) }} MXN</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Código de descuento: <b>{{ data.discount == 0 ? 'N/A' : formatCurrency(data.discount)+' MXN' }}</b>
-                    </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2">
-                        Total: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
-                    </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="event.model_payment == 'separated'">
-                        Cargo por servicio: <b>{{ formatCurrency(Math.round(data.subtotal * .12)) }} MXN</b>
-                    </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="event.model_payment == 'separated'">
-                        Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + (Math.round(data.subtotal * .12))) }} MXN</b>
+                        Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + data.commission) }} MXN</b>
                     </h6>
                 </el-col>
                 <el-col :span="24" class="pt-5 pb-5">
@@ -441,7 +478,8 @@
                         </el-col>
                         <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-if="data.order.payment_method == 'paypal'" class="text-center justify-content-center">
                             <PaypalButton
-                                :amount="data.subtotal + (Math.round(data.subtotal * .12))"
+                                ref="PaypalButton"
+                                :amount="event.model_payment === 'separated' ? (data.subtotal + data.commission) : data.subtotal"
                                 @update-orderId="data.order.paypal_order_id = $event"
                                 :handleMakePayment="payment"
                             />
@@ -492,6 +530,7 @@
 
 <script>
 import apiClient from '@/apiClient';
+import apiClientPayments from '@/apiClientPayments';
 import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
 import Errors from './Modals/Errors.vue';
@@ -522,13 +561,16 @@ export default {
                 selected: 0,
                 subtotal: 0,
                 discount: 0,
+                discountAmount: 0,
                 total: 0,
+                commission: 0,
                 order: {
                     event_id: this.$page.props.event.id,
                     name: '',
                     email: '',
                     confirm_email: '',
                     phone: '',
+                    payment_method_id: '',
                     payment_method: '',
                     token_id: '',
                     card: '',
@@ -581,6 +623,8 @@ export default {
             disabledPaymentMethod: false,
             disabledDiscount: false,
             publicKey: import.meta.env.VITE_CONEKTA_PUBLIC_KEY,
+            loadingTickets: false,
+            commissionTicketland: 0,
         }
     },
     beforeMount() {
@@ -634,15 +678,22 @@ export default {
                     this.scrollCenterY();
                     this.loading = true;
                     if (this.data.order.payment_method == 'card') {
-                        Conekta.setPublicKey(this.publicKey);
-                        Conekta.setLanguage('es');
-                        Conekta.Token.create(this.data.paymentData,
-                            (token) => this.makePayment(token),
-                            (error) => {
-                                this.loading = false;
-                                console.log('Error al crear token:', error);
-                            }
-                        );
+                        const script  = document.createElement("script");
+                        script.type   = "text/javascript";
+                        script.src    = `https://cdn.conekta.io/js/latest/conekta.js`;
+                        script.id     = "conekta-sdk";
+                        script.onload = () => {
+                            Conekta.setPublicKey(this.publicKey);
+                            Conekta.setLanguage('es');
+                            Conekta.Token.create(this.data.paymentData,
+                                (token) => this.makePayment(token),
+                                (error) => {
+                                    this.loading = false;
+                                    console.log('Error al crear token:', error);
+                                }
+                            );
+                        }
+                        document.head.appendChild(script);
                     } else {
                         this.makePayment();
                     }
@@ -656,7 +707,7 @@ export default {
                 this.data.order.token_id = token.id;
                 this.data.order.card     = this.data.paymentData.card.number.slice(-4);
             }
-            const response = await apiClient('makePayment', 'POST', {
+            const response = await apiClientPayments('makePayment', 'POST', {
                 selected: this.data.selected,
                 order: this.data.order,
                 tickets: this.filterTickets(),
@@ -665,6 +716,10 @@ export default {
             this.loading = false;
             // console.log(response);
             if (response.error) {
+                const existingScript = document.getElementById("conekta-sdk");
+                if (existingScript) {
+                    existingScript.remove();
+                }
                 if (!response.data.type) {
                     showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
@@ -676,11 +731,12 @@ export default {
                     case 'codes':
                         this.verifyCodes('delete');
                         this.totals();
-                        showNotification('¡Error!', response.msj, 'error', 0);
+                        showNotification('¡Error!', response.msj, 'error', 15000);
                         break;
                     case 'event':
                     case 'createCustomer':
                     case 'payment':
+                    case 'general':
                         showNotification('¡Error!', response.msj, 'error', 0);
                         break;
                 }
@@ -700,27 +756,62 @@ export default {
             return false;
         },
         async verifyCodes(action = null) {
+            this.data.ticketsReserved.forEach(t => {
+                t.code_id       = null;
+                t.code          = '';
+                t.code_discount = '';
+            });
+
+            this.data.tickets.forEach(t => {
+                t.code_id       = null;
+                t.code          = '';
+                t.code_discount = '';
+            });
             if (action == 'delete') {
                 this.data.order.code  = '';
                 this.disabledDiscount = false;
             }
-            this.data.discount = 0;
+            this.data.discount       = 0;
+            this.data.discountAmount = 0;
             this.totals();
-            this.data.subtotal = this.data.total;
             if (this.data.order.code) {
+                this.loadingTickets = true;
                 const response = await apiClient('verifyCodes', 'POST', {event_id: this.event.id, code: this.data.order.code});
+                this.loadingTickets = false;
                 if (response.error) {
                     this.data.order.code = '';
                     showNotification('¡Error!', response.msj, 'error', 7000);
                     return false;
                 }
                 this.disabledDiscount = true;
-                showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
-                this.totals(true);
-                this.data.discount = this.data.total * (response.data.discount / 100);
-                this.data.discount = Math.round(this.data.discount);
-                this.data.subtotal = this.data.total;
-                this.data.subtotal = this.data.total - this.data.discount;
+                this.data.discount    = response.data.discount;
+                const idsSet          = new Set(response.data.tickets);
+
+                let isApplicable = false;
+                this.data.ticketsReserved.forEach(t => {
+                    if (idsSet.has(t.id)) {
+                        isApplicable    = true;
+                        t.code_id       = response.data.code_id;
+                        t.code          = response.data.code;
+                        t.code_discount = response.data.discount;
+                    }
+                });
+
+                this.data.tickets.forEach(t => {
+                    if (idsSet.has(t.id)) {
+                        t.code_id       = response.data.code_id;
+                        t.code          = response.data.code;
+                        t.code_discount = response.data.discount;
+                    }
+                });
+                if (isApplicable) {
+                    this.totals();
+                    showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
+                } else {
+                    showNotification('¡Atención!', 'Tu cupón es válido.<br>Pero no aplica para ningún boleto seleccionado (no se aplicaron descuentos).', 'warning', 15000);
+                    this.verifyCodes('delete');
+                }
+
             }
         },
         loadInfo() {
@@ -746,7 +837,7 @@ export default {
                 return false;
             }
             this.data.selected = this.data.selected + (val - oldVal);
-            this.totals(false, true);
+            this.totals(true);
         },
         totalTickets() {
             let total = 0;
@@ -755,27 +846,53 @@ export default {
             });
             return total;
         },
-        totals(code = false, save = false) {
-            this.data.subtotal        = 0;
-            this.data.total           = 0;
+        totals(save = false) {
+            this.data.subtotal = 0;
+            this.data.total    = 0;
             if (save) {
                 this.data.ticketsReserved = [];
                 this.errors.names         = [];
             }
+            // console.log(this.data.discount);
             this.data.tickets.forEach((t, i) => {
-                let price          = t.promotion && !code ? t.priceDiscount : t.price;
-                this.data.subtotal = this.data.subtotal + (t.quantity * price);
-                this.data.total    = this.data.total + (t.quantity * price);
-                t.subtotal         = this.formatCurrency(t.quantity * price) + ' MXN';
+                const price = t.promotion && !t.code_id
+                    ? t.priceDiscount
+                    : (!t.code_id ? t.price : (t.price - Math.round(t.price * (t.code_discount / 100))));
+                this.data.subtotal  = this.data.subtotal + (t.quantity * price);
+                t.subtotal          = this.formatCurrency(t.quantity * price) + ' MXN';
+                t.priceWithDiscount = t.code_id ? price : 0;
                 if (t.quantity > 0 && save) {
                     for (let j = 0; j < t.quantity; j++) {
                         this.errors.names.push(false);
                         this.data.ticketsReserved.push({
-                            id: t.id, name: t.name, customer_name: '', email: '', phone: '', code: '', checked: false
+                            id: t.id,
+                            name: t.name,
+                            customer_name: '',
+                            price: t.price,
+                            promotion: t.promotion,
+                            date_promotion: t.date_promotion,
+                            email: '',
+                            phone: '',
+                            code_id: null,
+                            code: '',
+                            code_discount: '',
+                            checked: false,
                         });
                     }
                 }
             });
+            this.data.discountAmount = this.data.discount
+            ? Math.round(this.data.subtotal * (this.data.discount / 100))
+            : 0;
+            this.data.total = this.data.discount
+            ? this.data.subtotal - this.data.discountAmount
+            : this.data.subtotal;
+            // this.data.commission = this.event.model_payment === 'separated' ? Math.round(this.data.subtotal * commissionTicketland) : 0;
+            // console.log('SUBTOTAL ', this.data.subtotal);
+            // console.log('CUPON ', this.data.discountAmount);
+            // console.log('TOTAL ', this.data.total);
+            // console.log('COMISION ', this.data.commission);
+            // console.log('TOTAL A PAGAR ', (this.data.total + this.data.commission));
         },
         autoComplete(checked, index) {
             this.data.ticketsReserved[index].customer_name = '';
@@ -954,6 +1071,13 @@ export default {
             this.errors.cvc                    = false;
         },
         verifyPaymentMethod(value) {
+            this.data.commission = 0;
+            if (value) {
+                const paymentMethod               = this.event.payment_methods.find(pm => pm.sku === value);
+                this.data.order.payment_method_id = paymentMethod.id;
+                this.commissionTicketland         = parseFloat(paymentMethod.pivot.commission);
+                this.data.commission              = this.event.model_payment === 'separated' ? Math.round(this.data.subtotal * this.commissionTicketland) : 0;
+            }
             if(value !== 'card') {
                 this.errors.cardName               = false;
                 this.errors.cardNumber             = false;
@@ -966,6 +1090,12 @@ export default {
                 if (!this.validate()) {
                     this.data.order.payment_method = '';
                     this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    this.$nextTick(() => {
+                        if (this.$refs.PaypalButton) {
+                            this.$refs.PaypalButton.loadSdk();
+                        }
+                    });
                 }
             }
         },
@@ -979,23 +1109,33 @@ export default {
                     name: t.name,
                     description: t.description,
                     price: t.price,
+                    priceWithDiscount: 0,
                     priceDiscount: !t.promotion ? 0 : (t.price - Math.round(t.price * (t.promotion / 100))),
                     priceUnit: this.formatCurrency(t.price) + ' MXN',
                     subtotal: '',
                     quantity: 0,
                     discount: 0,
                     available: t.available,
-                    promotion: t.promotion
-                })
+                    promotion: t.promotion,
+                    code_id: null,
+                    code: '',
+                    code_discount: ''
+                });
             });
         },
         resetInfo() {
+            const existingScript = document.getElementById("conekta-sdk");
+            if (existingScript) {
+                existingScript.remove();
+            }
             this.data.tickets                    = [];
             this.data.ticketsReserved            = [];
             this.data.selected                   = 0;
             this.data.subtotal                   = 0;
             this.data.discount                   = 0;
+            this.data.discountAmount             = 0;
             this.data.total                      = 0;
+            this.data.commission                 = 0;
             this.data.order.name                 = '';
             this.data.order.email                = '';
             this.data.order.confirm_email        = '';

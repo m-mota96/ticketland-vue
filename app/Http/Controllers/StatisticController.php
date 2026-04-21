@@ -35,28 +35,30 @@ class StatisticController extends Controller {
                     return $query2->where('user_id', auth()->user()->id);
                 });
             })->count();
-            $array_sales[$date->format('Y-m-d')] = $payed;
+            $array_sales[intval($date->format('d'))] = $payed;
             $pending = Access::whereDate('created_at', '=', $date->format('Y-m-d'))->whereHas('payment', function($query) use($event_id) {
                 return $query->where('status', 'pending')->where('event_id', $event_id)->whereHas('event', function($query2) {
                     return $query2->where('user_id', auth()->user()->id);
                 });
             })->count();
-            $array_pending[$date->format('Y-m-d')] = $pending;
+            $array_pending[intval($date->format('d'))] = $pending;
             $expired = Access::whereDate('created_at', '=', $date->format('Y-m-d'))->whereHas('payment', function($query) use($event_id) {
                 return $query->where('status', 'expired')->where('event_id', $event_id)->whereHas('event', function($query2) {
                     return $query2->where('user_id', auth()->user()->id);
                 });
             })->count();
-            $array_expired[$date->format('Y-m-d')] = $expired;
+            $array_expired[intval($date->format('d'))] = $expired;
         }
 
         $ticketsDiscount = Access::wherehas('payment', function($query) use($event_id) {
-            $query->whereNotNull('code')->where('status', 'payed')->where('event_id', $event_id);
+            $query->where('status', 'payed')->where('event_id', $event_id);
+        })->where(function ($query) {
+            $query->whereNotNull('code_discount')->orWhereNotNull('promotion');
         })->count();
 
         $ticketsNotDiscount = Access::wherehas('payment', function($query) use($event_id) {
-            $query->whereNull('code')->where('status', 'payed')->where('event_id', $event_id);
-        })->count();
+            $query->where('status', 'payed')->where('event_id', $event_id);
+        })->whereNull('code_discount')->whereNull('promotion')->count();
 
         $ticketsPending = Access::wherehas('payment', function($query) use($event_id) {
             $query->where('status', 'pending')->where('event_id', $event_id);
@@ -66,15 +68,19 @@ class StatisticController extends Controller {
             $query->where('status', 'expired')->where('event_id', $event_id);
         })->count();
 
-        $sales = Payment::selectRaw("
-            CASE type
-                WHEN 'card' THEN 'Tarjeta de Débito/Crédito'
-                WHEN 'oxxo' THEN 'Pago en Oxxo'
-                WHEN 'paypal' THEN 'Paypal'
-            END type
-        ")->selectRaw("
-            SUM(IF(`code` IS NULL, amount, (amount - (amount * (discount / 100))))) total
-        ")->where('status', 'payed')->where('event_id', $event_id)->groupBy('type')->get();
+        // $sales = Payment::selectRaw("
+        //     CASE type
+        //         WHEN 'card' THEN 'Tarjeta de Débito/Crédito'
+        //         WHEN 'oxxo' THEN 'Pago en Oxxo'
+        //         WHEN 'paypal' THEN 'Paypal'
+        //     END type
+        // ")->selectRaw("
+        //     SUM(IF(`code` IS NULL, amount, (amount - (amount * (discount / 100))))) total
+        // ")->where('status', 'payed')->where('event_id', $event_id)->groupBy('type')->get();
+        $sales = Payment::with(['paymentMethod:id,name'])
+        ->select('payment_method_id')
+        ->selectRaw("SUM(amount) AS total")
+        ->where('status', 'payed')->where('event_id', $event_id)->groupBy('payment_method_id')->get();
 
         return ResponseTrait::response('', [
             'sales'              => $array_sales,

@@ -26,7 +26,6 @@ Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'verified', 'rol
     Route::get('reservaciones/{event_id}', [ReservationController::class, 'reservations'])->name('reservaciones');
     Route::get('estadisticas/{event_id}', [StatisticController::class, 'statistics'])->name('estadisticas');
     Route::get('escaner/{event_id}', [ScannerController::class, 'scanner'])->name('escaner');
-    Route::get('downloadReservations/{event_id}', [ReservationController::class, 'downloadReservations'])->name('downloadReservations');
 });
 
 
@@ -47,6 +46,7 @@ Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group
     Route::put('editLocation', [EventController::class, 'editLocation']);
     Route::put('editContact', [EventController::class, 'editContact']);
     Route::get('tickets', [TicketController::class, 'getTickets']);
+    Route::get('allTickets', [TicketController::class, 'getAllTickets']);
     Route::post('ticket', [TicketController::class, 'createTicket']);
     Route::put('ticket', [TicketController::class, 'editTicket']);
     Route::put('ticketStatus', [TicketController::class, 'ticketStatus']);
@@ -63,4 +63,6 @@ Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group
     Route::post('validateAccess', [ScannerController::class, 'validateAccess']);
     Route::get('downloadTickets', [ReservationController::class, 'downloadTickets']);
     Route::put('paymentMethods', [EventController::class, 'paymentMethods']);
+    Route::get('downloadReservations', [ReservationController::class, 'downloadReservations']);
+    Route::get('downloadCodes', [DiscountController::class, 'downloadCodes']);
 });

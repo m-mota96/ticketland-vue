@@ -1,0 +1,21 @@
+14/04/2026 16:49:48 Error general: Method Illuminate\Database\Eloquent\Collection::pluk does not exist.
+14/04/2026 16:51:19 Error general: Call to undefined method Illuminate\Database\Eloquent\Builder::pluk()
+14/04/2026 16:52:27 Error general: Call to undefined method App\Models\PaymentMethod::pluk()
+14/04/2026 16:55:28 Error general: in_array(): Argument #2 ($haystack) must be of type array, Illuminate\Support\Collection given
+14/04/2026 17:23:08 Error general: syntax error, unexpected token "}"
+15/04/2026 11:20:53 Error general: Undefined array key "msj"
+15/04/2026 11:21:51 Error general: Undefined array key "msj"
+15/04/2026 11:23:01 Error general: Undefined array key "msj"
+15/04/2026 11:23:32 Error general: Undefined array key "msj"
+15/04/2026 12:29:04 Error general: Undefined array key "code_discount"
+15/04/2026 13:04:37 Error general: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'code_id' in 'field list' (Connection: mysql, SQL: insert into `payments` (`event_id`, `order_id`, `code_id`, `name`, `email`, `phone`, `type`, `reference`, `amount`, `code`, `discount`, `status`, `updated_at`, `created_at`) values (2, ?, 1, Miguel Angel Mota Murillo, miguel.mota.murillo@gmail.com, +524371041976, oxxo, 98002020306097, 554, BUENFIN, 30, pending, 2026-04-15 13:04:37, 2026-04-15 13:04:37))
+15/04/2026 13:07:11 Error general: SQLSTATE[HY000]: General error: 1364 Field 'code_name' doesn't have a default value (Connection: mysql, SQL: insert into `access_code` (`access_id`, `code_id`) values (1, 1))
+15/04/2026 14:39:08 Error general: Object of class stdClass could not be converted to string
+16/04/2026 10:35:56 Error general: Undefined array key "msj"
+16/04/2026 10:36:35 Error general: Undefined array key "msj"
+16/04/2026 10:55:15 Error general: Undefined array key "error"
+16/04/2026 10:55:58 Error general: Undefined array key "error"
+16/04/2026 12:16:58 Error general: Call to undefined method App\Models\Access::codes()
+17/04/2026 17:05:01 Error general: Indirect modification of overloaded property Illuminate\Http\Request::$order has no effect
+17/04/2026 17:05:13 Error general: Indirect modification of overloaded property Illuminate\Http\Request::$order has no effect
+17/04/2026 17:06:30 Error general: Indirect modification of overloaded property Illuminate\Http\Request::$order has no effect

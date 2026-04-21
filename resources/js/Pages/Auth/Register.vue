@@ -1,12 +1,14 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { Link } from '@inertiajs/vue3';
 
 const appUrl = ref(window.location.origin);
 const passwordVisible = ref(false);
 const passwordConfirmVisible = ref(false);
 
-const form = useForm({
+const loading = ref(false);
+const form    = useForm({
     name: '',
     email: '',
     phone: '',
@@ -20,8 +22,12 @@ const errors = ref({
 
 const submit = () => {
     if (validate()) {
+        loading.value = true;
         form.post(route('register'), {
-            onFinish: () => form.reset('password', 'password_confirmation'),
+            onFinish: () => {
+                loading.value = false;
+                form.reset('password', 'password_confirmation')
+            },
         });
     }
 };
@@ -60,12 +66,12 @@ const isNumber = (evt) => {
         <el-col :xs="{span: 20, offset: 2}" :sm="{span: 20, offset: 2}" :md="{span: 12, offset: 6}" :lg="{span: 6, offset: 9}" :xl="{span: 6, offset: 9}" class="mt-6 text-center">
             <el-card class="p-5">
                 <el-col :span="24">
-                    <a :href="appUrl" class="is-justify-content-center is-flex">
+                    <Link :href="appUrl" class="is-justify-content-center is-flex">
                         <img src="../../../../public/general/ticketland.png" alt="Ticketland" class="w-25 mb-3">
-                    </a>
+                    </Link>
                 </el-col>
                 <h3 class="title is-3 has-text-dark mb-5">Registro</h3>
-                <form class="text-left mb-5">
+                <form @submit.prevent="submit" class="text-left mb-5">
                     <el-col :span="24" class="mb-3">
                         <label for="name" class="has-text-grey">Nombre <span class="has-text-danger">*</span></label>
                         <el-input
@@ -146,10 +152,10 @@ const isNumber = (evt) => {
                         <span class="text-error" v-if="form.errors.password_confirmation">{{ form.errors.password_confirmation }}</span>
                     </el-col>
                     <el-col :span="24" class="mb-5 mt-5 text-right">
-                        <el-button type="primary" class="w-100" @click="submit">Registrarme</el-button>
+                        <el-button native-type="submit" type="primary" class="w-100" :loading="loading">Registrarme</el-button>
                     </el-col>
                     <el-col :span="24" class="mb-5 text-center">
-                        <a :href="route('login')" class="has-text-link mr-3">¿Ya estas registrado?</a>
+                        <Link :href="route('login')" class="has-text-link mr-3">¿Ya estas registrado?</Link>
                     </el-col>
                 </form>
             </el-card>

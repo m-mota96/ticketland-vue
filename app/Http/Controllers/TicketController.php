@@ -30,6 +30,15 @@ class TicketController extends Controller {
         } 
     }
 
+    public function getAllTickets(Request $request) {
+        try {
+            $tickets = Ticket::where('event_id', $request->event_id)->where('status', 1)->orderBy('name')->get();
+            return ResponseTrait::response(null, $tickets);
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        } 
+    }
+
     public function createTicket(Request $request) {
         try {
             $order = Ticket::selectRaw('IF(MAX(`order`) IS NULL , 0, MAX(`order`)) AS `order`')->where('event_id', $request->event_id)->first();

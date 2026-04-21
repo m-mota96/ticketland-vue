@@ -2,19 +2,29 @@
 
 namespace App\Exports;
 
+use App\Models\Access;
 use App\Models\Payment;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidths, WithStyles {
+class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidths, WithStyles, WithMapping, WithTitle, WithColumnFormatting {
     public $event_id;
 
     public function __construct($event_id) {
         $this->event_id = $event_id;
+    }
+
+    public function title(): string {
+        return 'Hoja 1';
     }
 
     public function headings(): array {
@@ -43,41 +53,54 @@ class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidt
             'F' => 15,
             'G' => 15,
             'H' => 15,
-            'I' => 20,
+            'I' => 45,
             'J' => 20,
             'K' => 20
         ];
     }
 
     public function collection() {
-        return Payment::where('event_id', $this->event_id)
+        return Payment::with(['paymentMethod:id,name'])->where('event_id', $this->event_id)
         ->select(
-            'id',
-            'name',
-            'email',
-            'phone',
-            DB::raw('IF(code IS NULL, "N/A", code) code'),
-            'amount',
-            DB::raw('CONCAT(discount, "%") discount'),
-            DB::raw('amount - ROUND(amount * (discount / 100)) total'),
-            DB::raw('CASE 
-                WHEN type = "card" THEN "Tarjeta" 
-                WHEN type = "oxxo" THEN "Efectivo" 
-                WHEN type = "paypal" THEN "Paypal" 
-            END type'),
+            '*',
             DB::raw('CASE 
                 WHEN status = "expired" THEN "Expirado" 
                 WHEN status = "payed" THEN "Pagado" 
                 WHEN status = "pending" THEN "Pendiente" 
             END status'),
-            DB::raw('DATE_FORMAT(created_at, "%d/%m/%Y %H:%i")')
+            DB::raw('DATE_FORMAT(created_at, "%d/%m/%Y %H:%i") AS date')
         )
+        ->addSelect(['total' => Access::selectRaw('SUM(price)')
+            ->whereColumn('payment_id', 'payments.id')
+            ->groupBy('payment_id')
+        ])
         ->orderBy('id', 'DESC')
         ->get();
         // return Payment::all();
     }
 
+    public function map($reservation): array {
+        return [
+            $reservation->id,
+            $reservation->name,
+            $reservation->email,
+            "'".$reservation->phone,
+            $reservation->code ?? 'N/A',
+            $reservation->total,
+            $reservation->discount.'%',
+            $reservation->amount,
+            $reservation->paymentMethod->name,
+            $reservation->status,
+            $reservation->date
+        ];
+    }
+
     public function styles(Worksheet $sheet) {
+        $sheet->getStyle('A1:Z1000')->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
+            ],
+        ]);
         // Estilos para la fila 1
         $sheet->getStyle('A1:K1')->applyFromArray([
             'font' => [
@@ -93,5 +116,13 @@ class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidt
         ]);
 
         return [];
+    }
+
+    public function columnFormats(): array {
+        return [
+            'D' => NumberFormat::FORMAT_TEXT,
+            'F' => '"$"#,##0.00',
+            'H' => '"$"#,##0.00',
+        ];
     }
 }

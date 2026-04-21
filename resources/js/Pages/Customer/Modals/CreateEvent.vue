@@ -86,10 +86,13 @@
                 />
                 <span class="text-error" v-if="errors.dates">Las fechas son obligatorias.</span>
             </el-col>
+            <el-col :span="24" class="mb-1">
+                <label class="bold">Horarios <span class="has-text-danger">*</span></label>
+            </el-col>
             <el-col :span="8" class="mb-3">
                 <div v-for="(item, index) in dates" :key="item.id">
                     <el-input
-                    size="large"
+                    size="default"
                     class="mb-3"
                     v-model="item.date" readonly
                     >
@@ -100,28 +103,50 @@
             </el-col>
             <el-col :span="8">
                 <el-row class="mb-3" :gutter="0" v-for="(item, index) in dates" :key="item.id">
-                    <el-time-picker
+                    <!-- <el-time-picker
                         class="el-form-item mb-0 w-100"
                         :class="{'is-error': errors.startHour}"
                         v-model="event.startHour[index]"
                         placeholder="Hora inicial"
-                        size="large"
+                        size="normal"
                         :format="'HH:mm'"
                         :value-format="'HH:mm'"
+                    /> -->
+                    <el-time-select
+                        v-model="event.startHour[index]"
+                        class="el-form-item mb-0 w-100"
+                        :class="{'is-error': errors.startHour}"
+                        start="00:00"
+                        step="00:15"
+                        end="23:45"
+                        placeholder="Hora inicial"
+                        format="hh:mm A"
+                        clearable
                     />
                     <span class="text-error" v-if="errors.startHour">Es necesario completar todos los horarios.</span>
                 </el-row>
             </el-col>
             <el-col :span="8">
                 <el-row class="mb-3" :gutter="0" v-for="(item, index) in dates" :key="item.id">
-                    <el-time-picker
+                    <!-- <el-time-picker
                         class="el-form-item mb-0 w-100"
                         :class="{'is-error': errors.endHour}"
                         v-model="event.endHour[index]"
                         placeholder="Hora final"
-                        size="large"
+                        size="default"
                         :format="'HH:mm'"
                         :value-format="'HH:mm'"
+                    /> -->
+                    <el-time-select
+                        v-model="event.endHour[index]"
+                        class="el-form-item mb-0 w-100"
+                        :class="{'is-error': errors.endHour}"
+                        :start="to24HourFormat(event.startHour[index])"
+                        step="00:15"
+                        end="23:45"
+                        placeholder="Hora final"
+                        format="hh:mm A"
+                        clearable
                     />
                     <span class="text-error" v-if="errors.endHour">Es necesario completar todos los horarios.</span>
                 </el-row>
@@ -348,6 +373,29 @@ export default {
                 }
             }
             return result;
+        },
+        to24HourFormat(horary) {
+            if (horary) {
+                const [time, modifier] = horary.split(' ');
+                let [hours, minutes]   = time.split(':').map(Number);
+
+                if (modifier === 'PM' && hours < 12) hours += 12;
+                if (modifier === 'AM' && hours === 12) hours = 0;
+
+                const time12Hrs = this.addMinutes(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`, 15);
+
+                return time12Hrs;
+            }
+            return '00:00';
+        },
+        addMinutes(hourStr, minsAdd) {
+            let [h, m] = hourStr.split(':').map(Number);
+            let date = new Date(0, 0, 0, h, m + minsAdd);
+            
+            return date.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
         }
     }
 }

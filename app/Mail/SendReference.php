@@ -54,7 +54,7 @@ class SendReference extends Mailable
      */
     public function attachments(): array
     {
-        return [Attachment::fromPath('events/pdf/'.$this->payment->event->id.'/reference'.$this->payment->id.'.pdf')
+        return [Attachment::fromPath('events/pdf/'.$this->payment->event->id.'/reference'.$this->payment->order_id.'.pdf')
         ->as('Ficha de pago.pdf')
         ->withMime('application/pdf')];
     }

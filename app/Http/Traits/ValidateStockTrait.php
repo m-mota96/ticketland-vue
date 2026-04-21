@@ -9,6 +9,7 @@ trait ValidateStockTrait {
         $success    = true;
         $errors     = [];
         $totalToPay = 0;
+        // dd($tickets, $discount);
         foreach ($tickets as $key => $t) {
             $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'reserved', 'price', DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))
             ->where('id', $t['id'])
@@ -36,18 +37,22 @@ trait ValidateStockTrait {
                             break;
                     }
                     $ticket->save();
-                    if ($ticket->promotion && !$discount['code']) {
-                        $totalToPay = $totalToPay + ($t['quantity'] * ($ticket->price - round($ticket->price * ($ticket->promotion / 100))));
-                    } else {
-                        $totalToPay = $totalToPay + ($t['quantity'] * $ticket->price);
-                    }
+                    $priceDiscount = $ticket->promotion
+                    ? ($ticket->price - round($ticket->price * ($ticket->promotion / 100))) // Si hay una promoción activa se calcula el precio con descuento.
+                    : 0; // Si no la hay lo dejamos en 0.
+                    $price = $ticket->promotion && !$t['code_id']
+                    ? $priceDiscount // Si hay una promoción activa y NO ingresaron cupón de descuento se toma el precio con descuento.
+                    : (!$t['code_id']
+                        ? $ticket->price // Si no hay promoción activa y NO hay cupón de descuento se toma el precio normal del boleto.
+                        : ($ticket->price - round($ticket->price * ($t['code_discount'] / 100)))); // Si no hay promoción activa y SI hay un cupón, se calcula el precio menos el descuento del cupón.
+                    $totalToPay = $totalToPay + ($price * $t['quantity']);
                 }
             }
         }
         return [
             'success'    => $success,
             'error'      => $errors,
-            'totalToPay' => $totalToPay
+            'totalToPay' => intval($totalToPay)
         ];
     }
 }

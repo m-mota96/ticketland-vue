@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('location_events', function (Blueprint $table) {
-            $table->text('address')->nullable()->change();
-            $table->double('latitude')->nullable()->change();
-            $table->double('longitude')->nullable()->change();
-            $table->longText('iframe')->nullable();
+        Schema::table('codes', function (Blueprint $table) {
+            $table->date('expiration')->nullable()->change();
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('codes', function (Blueprint $table) {
+            $table->date('expiration')->change();
+        });
     }
 };

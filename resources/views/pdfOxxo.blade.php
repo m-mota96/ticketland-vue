@@ -21,7 +21,11 @@
             </div>
             <div class="opps-reference">
                 <h3>Referencia</h3>
-                <h1>{{ $reference }}</h1>
+                <h1>
+                    <img src="{{$bar_code}}" alt="Ticketland" style="width: 60%;">
+                    <br>
+                    {{ $reference }}
+                </h1>
             </div>
             <div>
                 <br><h3>Fecha de expiración</h3>
@@ -29,7 +33,7 @@
             </div>
             <div>
                 <br><h3>Hora de expiración</h3>
-                <h1>Antes de las {{$expirationHour}} hrs.<br>(Hora del centro de México)</h1>
+                <h1>A las {{$expirationHour}} hrs.<br>(Hora del centro de México)</h1>
             </div>
         </div>
         <div class="opps-instructions">

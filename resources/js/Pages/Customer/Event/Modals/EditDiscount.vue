@@ -1,15 +1,15 @@
 <template>
     <el-dialog
         v-model="activeEditDiscount"
-        title="Agrega un código de descuento"
-        width="500"
+        title="Agrega un cupón de descuento"
+        width="700"
         align-center
         style="margin-top: 2% !important;"
         :lock-scroll="false"
     >
         <el-row :gutter="20" class="mb-4">
             <el-col :span="12" class="mb-3">
-                <label class="bold" for="code">Ingrese el código <span class="has-text-danger">*</span></label>
+                <label class="bold" for="code">Ingrese el cupón <span class="has-text-danger">*</span></label>
                 <el-input
                     class="el-form-item mb-0 mt-1"
                     :class="{'is-error': errors.code}"
@@ -18,8 +18,9 @@
                     v-model="code.code"
                     placeholder="p.ej: BUENFIN, BLACKFRIDAY"
                     @input="formatInput"
+                    maxlength="15"
                 />
-                <span class="text-error" v-if="errors.code">El código es obligatorio.</span>
+                <span class="text-error" v-if="errors.code">El cupón es obligatorio.</span>
             </el-col>
             <el-col :span="12" class="mb-3">
                 <label class="bold" for="discount">Porcentaje de descuento <span class="has-text-danger">*</span></label>
@@ -46,9 +47,8 @@
                 />
                 <span class="text-error" v-if="errors.quantity">La cantidad es obligatoria.</span>
             </el-col>
-
-            <!-- <el-col :span="12" class="mb-5">
-                <label class="bold" for="tickets">Asignar código a <span class="has-text-danger">*</span></label>
+            <el-col :span="12" class="mb-3">
+                <label class="bold" for="tickets">Asignar cupón a <span class="has-text-danger">*</span></label>
                 <el-select
                     class="el-form-item mb-0 mt-1"
                     :class="{'is-error': errors.tickets}"
@@ -73,14 +73,14 @@
                     </el-checkbox>
                     </template>
                     <el-option
-                    v-for="t in tickets"
-                    :key="t.id"
-                    :label="t.name"
-                    :value="t.id"
+                        v-for="t in tickets"
+                        :key="t.id"
+                        :label="t.name"
+                        :value="t.id"
                     />
                 </el-select>
                 <span class="text-error" v-if="errors.tickets">Debe elegir al menos un boleto.</span>
-            </el-col> -->
+            </el-col>
             <el-col :span="12">
                 <label class="bold" for="expiration">Fecha de expiración</label>
                 <el-date-picker
@@ -138,13 +138,13 @@ export default {
     props: {
         eventId: Number,
         getDiscounts: Function,
-        tickets: Array
     },
     data() {
         return {
             activeEditDiscount: false,
             isDisabled: false,
             indeterminate: false,
+            tickets: [],
             ticketsCheck: [],
             code: {
                 id: null,
@@ -173,18 +173,18 @@ export default {
         }
     },
     mounted() {
-        // console.log(this.tickets);
+        this.getTickets();
     },
     watch: {
         ticketsCheck(val) {
             if (val.length === 0) {
-                this.checkAll = false;
+                this.code.checkAll = false;
                 this.indeterminate = false;
             } else if (val.length === this.tickets.length) {
-                this.checkAll = true;
+                this.code.checkAll = true;
                 this.indeterminate = false;
             } else {
-                this.checkAll = false;
+                // this.checkAll = false;
                 this.indeterminate = true;
             }
         }
@@ -194,7 +194,7 @@ export default {
             if (this.validate()) {
                 let response      = '';
                 this.isDisabled   = true;
-                // this.code.tickets = this.ticketsCheck;
+                this.code.tickets = this.ticketsCheck;
                 if (!this.code.id) {
                     response = await apiClient('customer/discount', 'POST', this.code);
                 } else {
@@ -209,6 +209,15 @@ export default {
                 showNotification('¡Correcto!', response.msj, 'success');
                 this.activeEditDiscount = false;
             }
+        },
+        async getTickets() {
+            const response = await apiClient('customer/allTickets', 'GET', {event_id: this.eventId});
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error', 7000);
+                return false;
+            }
+            this.tickets = response.data;
+
         },
         handleCheckAll(val) {
             this.indeterminate = false;
@@ -249,10 +258,10 @@ export default {
                     valid                          = false;
                 }
             }
-            // if (this.ticketsCheck.length === 0) {
-            //     this.errors.tickets = true;
-            //     valid               = false;
-            // }
+            if (this.ticketsCheck.length === 0) {
+                this.errors.tickets = true;
+                valid               = false;
+            }
             return valid;
         },
         showModal(_code = null) {
@@ -271,7 +280,6 @@ export default {
             this.code.password         = '';
             this.code.password_confirm = '';
             if (_code) {
-                // console.log(_code.tickets.length, this.tickets.length);
                 this.code.id               = _code.id;
                 this.code.code             = _code.code;
                 this.code.discount         = _code.discount;
@@ -281,13 +289,13 @@ export default {
                 this.code.email            = _code.email;
                 this.code.password         = _code.password;
                 this.code.password_confirm = _code.password_confirm;
-                // if (_code.tickets.length === this.tickets.length) {
-                //     this.code.checkAll = true;
-                //     this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
-                // } else if(_code.tickets.length > 0) {
-                //     this.indeterminate = true;
-                //     this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
-                // }
+                if (_code.tickets.length === this.tickets.length) {
+                    this.code.checkAll = true;
+                    this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
+                } else if(_code.tickets.length > 0) {
+                    this.indeterminate = true;
+                    this.ticketsCheck  = _code.tickets.map(ticket => ticket.id);
+                }
             }
             this.activeEditDiscount = true;
         },

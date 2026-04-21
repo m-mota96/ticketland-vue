@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentMethod extends Model
 {
     protected $fillable = [
-        'name', 'sku'
+        'name', 'sku', 'commission'
     ];
 
     public function events() {

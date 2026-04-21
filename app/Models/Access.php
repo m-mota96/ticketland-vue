@@ -8,7 +8,7 @@ use DateTimeInterface;
 class Access extends Model
 {
     protected $fillable = [
-        'payment_id', 'ticket_id', 'code_id', 'folio', 'name', 'email', 'phone', 'price', 'promotion', 'status', 'quantity', 'date_validation', 
+        'payment_id', 'ticket_id', 'code_id', 'folio', 'name', 'email', 'phone', 'code_name', 'code_discount', 'price', 'promotion', 'status', 'quantity', 'date_validation', 
     ];
 
     public function ticket() {
@@ -22,13 +22,9 @@ class Access extends Model
     public function turns() {
         return $this->belongsToMany(Turn::class);
     }
-    
+
     public function code() {
         return $this->belongsTo(Code::class);
-    }
-
-    public function codes() {
-        return $this->belongsToMany(Code::class)->withPivot('ticket_price', 'discount');
     }
 
     protected function serializeDate(DateTimeInterface $date) {

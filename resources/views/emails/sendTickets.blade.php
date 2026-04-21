@@ -48,8 +48,8 @@
                                         <thead>
                                             <tr style="padding-top: 5px; padding-bottom: 5px;">
                                                 <td style="color: black; font-weight: bold; text-align: left; font-size: 0.9rem;">Producto</td>
-                                                <td style="color: black; font-weight: bold; text-align: center; font-size: 0.9rem;">Cantidad</td>
                                                 <td style="color: black; font-weight: bold; text-align: left; font-size: 0.9rem;">Precio unitario</td>
+                                                <td style="color: black; font-weight: bold; text-align: center; font-size: 0.9rem;">Cantidad</td>
                                                 <td style="color: black; font-weight: bold; text-align: left; font-size: 0.9rem;">Subtotal</td>
                                             </tr>
                                         </thead>
@@ -57,8 +57,8 @@
                                             @for($i = 0; $i < sizeof($tickets); $i++)
                                                 <tr style="padding-top: 5px; padding-bottom: 5px;">
                                                     <td style="color: black; text-align: left; font-size: 0.9rem;">{{$tickets[$i]['ticket']}}</td>
-                                                    <td style="color: black; text-align: center; font-size: 0.9rem;">{{$tickets[$i]['quantity']}}</td>
                                                     <td style="color: black; text-align: left; font-size: 0.9rem;">${{number_format($tickets[$i]['price'], 2)}} MXN</td>
+                                                    <td style="color: black; text-align: center; font-size: 0.9rem;">{{$tickets[$i]['quantity']}}</td>
                                                     <td style="color: black; text-align: left; font-size: 0.9rem;">${{number_format(($tickets[$i]['price'] * $tickets[$i]['quantity']), 2)}} MXN</td>
                                                 </tr>
                                             @endfor
@@ -71,7 +71,7 @@
                                                     <b>${{number_format($totals['subtotal'], 2)}} MXN</b>
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            {{-- <tr>
                                                 <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
                                                     Descuento: 
                                                     @if($totals['discount'] != 'N/A')
@@ -80,13 +80,7 @@
                                                         <b>N/A</b>
                                                     @endif
                                                 </td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
-                                                    Total: 
-                                                    <b>${{number_format($totals['total'], 2)}} MXN</b>
-                                                </td>
-                                            </tr>
+                                            </tr> --}}
                                             @if ($event->model_payment == 'separated')
                                             <tr>
                                                 <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
@@ -95,14 +89,20 @@
                                                 </td>
                                             </tr>
                                             @endif
-                                            @if ($event->model_payment == 'separated')
+                                            <tr>
+                                                <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
+                                                    Total: 
+                                                    <b>${{number_format($totals['total'], 2)}} MXN</b>
+                                                </td>
+                                            </tr>
+                                            {{-- @if ($event->model_payment == 'separated')
                                             <tr>
                                                 <td colspan="4" style="color: black; text-align: left; font-size: 1.1rem;">
                                                     @if($payment->type == 'card')Total pagado: @else Total a pagar: @endif
                                                     <b>${{number_format($totals['totalToPay'], 2)}} MXN</b>
                                                 </td>
                                             </tr>
-                                            @endif
+                                            @endif --}}
                                         </tbody>
                                     </table>
                                 </div>

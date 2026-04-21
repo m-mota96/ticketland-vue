@@ -4,7 +4,7 @@
     <el-row class="wrapper">
         <el-col :span="18" :offset="3" class="pt-6">
             <el-row :gutter="50">
-                <el-col :span="17">
+                <el-col :span="17" v-loading="loading">
                     <el-row class="text-center pt-5" v-if="!tickets.length">
                         <h3 class="subtitle is-3 has-text-grey w-100">Crea tu primer boleto para comenzar.</h3>
                     </el-row>
@@ -31,7 +31,7 @@
                                 >
                                     <font-awesome-icon :icon="['fas', 'link']" /> {{ appUrl+'/evento/'+event.url+'/'+t.name }}
                                 </span>
-                                <h6 v-if="t.promotion" class="has-text-warning bold">{{ t.promotion }}% de descuento hasta el {{ formatDate(t.date_promotion) }}</h6>
+                                <h6 v-if="t.promotion" class="text-orange-500 bold">{{ t.promotion }}% de descuento hasta el {{ formatDate(t.date_promotion) }}</h6>
                                 <div class="mt-5">
                                     <span class="pointer mt-5 mr-5" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
                                     <el-popconfirm
@@ -84,25 +84,6 @@
                         </el-row>
                     </el-card>
                     </draggable>
-                    <!-- <draggable 
-                        v-model="prueba"
-                        tag="transition-group"
-                        :component-data="{
-                            tag: 'div',
-                            type: 'transition',
-                            name: 'fade'
-                        }"
-                        :animation="500"
-                        @change="handleChange"
-                    > -->
-                        <!-- <div 
-                        v-for="item in prueba"
-                        :key="item.id"
-                        class=""
-                        >
-                        {{ item.text }}
-                        </div> -->
-                    <!-- </draggable> -->
                 </el-col>
                 <el-col :span="7">
                     <el-card class="text-center pb-4">
@@ -169,10 +150,7 @@ export default {
             appUrl: window.location.origin,
             event: this.$page.props.event,
             tickets: [],
-            prueba: [
-                { id: 1, text: 'Smooth transition' },
-                { id: 2, text: 'On drag and drop' }
-            ]
+            loading: false,
         }
     },
     beforeMount() {
@@ -186,7 +164,9 @@ export default {
     },
     methods: {
         async getTickets() {
+            this.loading   = true;
             const response = await apiClient('customer/tickets', 'GET', {event_id: this.event.id});
+            this.loading   = false;
             this.tickets   = response.data;
         },
         async updateStatus(id, status) {

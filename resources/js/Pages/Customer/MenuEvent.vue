@@ -11,7 +11,7 @@
             <span class="has-text-success mt-1" v-if="$page.props.auth.user.contract == 'active'"><font-awesome-icon :icon="['fas', 'file']" /> Con contrato</span>
             <span class="has-text-danger mt-1" v-if="$page.props.auth.user.contract == 'inactive'"><font-awesome-icon :icon="['fas', 'file']" /> Sin contrato</span>
         </el-menu-item>
-        <el-menu-item index="2"><font-awesome-icon :icon="['fas', 'house-chimney']" /><a class="ml-1 mt-1" :href="route('cliente.mis_eventos')">Dashboard</a></el-menu-item>
+        <el-menu-item index="2"><font-awesome-icon :icon="['fas', 'house-chimney']" /><Link class="ml-1 mt-1" :href="route('cliente.mis_eventos')">Dashboard</Link></el-menu-item>
         <el-sub-menu index="3" class="me-10 mt-1">
             <template #title>{{ $page.props.auth.user.name }}</template>
             <el-menu-item index="2-1">
@@ -19,7 +19,7 @@
                     :href="route('logout')"
                     method="post"
                     as="button"
-                    class="is-justify-content-center is-flex"
+                    class="is-justify-content-center is-flex !text-white"
                 >
                     Cerrar sesión
                 </ResponsiveNavLink>
@@ -29,11 +29,13 @@
 </template>
 <script>
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import { Link } from '@inertiajs/vue3';
   
 export default {
     components: {
         //Aqui se agregan los componentes, en dado caso que quiereas usar, para separar código, yo separo los modales y aqui los agrego
-        ResponsiveNavLink
+        ResponsiveNavLink,
+        Link
     },
     data() {
         return {

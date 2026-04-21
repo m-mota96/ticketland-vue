@@ -1,4 +1,4 @@
-const apiClient = async (url, method = 'GET', data = null) => {
+const apiClientPayments = async (url, method = 'GET', data = null) => {
     try {
         let options = {};
         if (method != 'GET') {
@@ -22,12 +22,15 @@ const apiClient = async (url, method = 'GET', data = null) => {
         const response = await axios(`${window.location.origin}/${url}`, options);
         return (response.data) ? response.data : response;
     } catch (error) {
+        const defaultMsg = 'Lo sentimos ocurrió un error.<br>No es posible realizar tu pedido.';
+        const extraMsg   = error.message ? `<br>${error.message}` : '';
+
         return {
             error: true,
-            msj: error.response.data.msj || 'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.',
+            msj: error.response.data.msj || (defaultMsg + extraMsg),
             data: error.response.data.data || 'Error fatal'
         }
     }
 }
 
-export default apiClient;
+export default apiClientPayments;

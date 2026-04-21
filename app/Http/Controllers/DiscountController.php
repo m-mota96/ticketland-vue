@@ -4,32 +4,28 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Exports\CodesExport;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Traits\ResponseTrait;
 use App\Models\Code;
 use App\Models\Event;
-use App\Models\Ticket;
 use GuzzleHttp\Client;
 
 class DiscountController extends Controller {
     public function discounts($event_id) {
         $event   = Event::with(['eventDates'])->find($event_id);
-        $tickets = Ticket::orderBy('name')->get();
         return Inertia::render('Customer/Event/Discount', [
-            'event'   => $event,
-            'tickets' => $tickets
+            'event'   => $event
         ]);
     }
 
     public function getDiscounts(Request $request) {
         try {
-            $codes = Code::with(['payments' => function($query) {
-                $query->where('status', 'payed');
-            }, 'payments.accesses'])->where('event_id', $request->event_id)->orderBy('code')->get();
-            // foreach ($codes as $key => $c) {
-            //     foreach ($c->tickets as $key2 => $t) {
-            //         $c->used = $c->used + $t->pivot->used;
-            //     }
-            // }
+            $codes = Code::with(['tickets:id,name', 'accesses' => function($q) {
+                $q->whereHas('payment', function($q2) {
+                    $q2->where('status', 'payed');
+                });
+            }])->where('event_id', $request->event_id)->orderBy('code')->get();
             return ResponseTrait::response(null, $codes);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
@@ -42,12 +38,12 @@ class DiscountController extends Controller {
                 if ($request->password !== $request->password_confirm) {
                     return ResponseTrait::response('Las contraseñas no coinciden.', null, true, 409);
                 }
-                $client = new \GuzzleHttp\Client();
+                $client   = new \GuzzleHttp\Client();
                 $response = $client->request('POST', 'https://influencer.ticketland.mx/api/registro', [
                     'form_params' => [ 'name' => trim($request->influencer), 'email' => trim($request->email), 'password' => $request->password ]
                 ]);
                 // Obtener el cuerpo de la respuesta
-                $body = $response->getBody();
+                $body    = $response->getBody();
                 $content = $body->getContents();
                 
                 // Si la respuesta es JSON, decodificarla
@@ -66,8 +62,8 @@ class DiscountController extends Controller {
                 'quantity'      => $request->quantity,
                 'expiration'    => $request->expiration
             ]);
-            // $code->tickets()->sync($request->tickets);
-            return ResponseTrait::response('El código se creó correctamente.');
+            $code->tickets()->sync($request->tickets);
+            return ResponseTrait::response('El cupón se creó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
@@ -79,7 +75,7 @@ class DiscountController extends Controller {
                 if ($request->password !== $request->password_confirm) {
                     return ResponseTrait::response('Las contraseñas no coinciden.', null, true, 409);
                 }
-                $client = new \GuzzleHttp\Client();
+                $client   = new \GuzzleHttp\Client();
                 $response = $client->request('POST', 'https://influencer.ticketland.mx/api/registro', [
                     'form_params' => [ 'name' => trim($request->influencer), 'email' => trim($request->email), 'password' => $request->password ]
                 ]);
@@ -102,8 +98,8 @@ class DiscountController extends Controller {
             $code->quantity      = $request->quantity;
             $code->expiration    = $request->expiration;
             $code->save();
-            // $code->tickets()->sync($request->tickets);
-            return ResponseTrait::response('El código se modificó correctamente.');
+            $code->tickets()->sync($request->tickets);
+            return ResponseTrait::response('El cupón se modificó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
@@ -115,7 +111,7 @@ class DiscountController extends Controller {
             $code         = Code::find($request->id);
             $code->status = $request->status;
             $code->save();
-            return ResponseTrait::response('El código se '.$txt.' correctamente.');
+            return ResponseTrait::response('El cupón se '.$txt.' correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }
@@ -124,17 +120,25 @@ class DiscountController extends Controller {
     public function deleteDiscount(Request $request) {
         try {
             $code = Code::with(['tickets'])->find($request->id);
-            // foreach ($code->tickets as $key => $t) {
-            //     if ($t->pivot->used > 0 || $t->pivot->reserved > 0) {
-            //         return ResponseTrait::response('No se puede eliminar el código porque ya ha sido utilizado.', null, true, 409);
-            //     }
-            // }
-            // $code->tickets()->detach();
             if ($code->used > 0 || $code->reserved > 0) {
-                return ResponseTrait::response('No se puede eliminar el código porque ya ha sido utilizado.', null, true, 409);
+                return ResponseTrait::response('No se puede eliminar el cupón porque ya ha sido utilizado.', null, true, 409);
             }
             $code->delete();
-            return ResponseTrait::response('El código se eliminó correctamente.');
+            return ResponseTrait::response('El cupón se eliminó correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function downloadCodes(Request $request) {
+        try {
+            $count = Code::where('event_id', $request->event_id)->whereNotNull('customer_name')->whereNotNull('email')->count();
+            if (!$count) {
+                return ResponseTrait::response('No hay información que exportar.', null, true, 409);
+            }
+            $fileName = 'Reporte de ganancias de influencers.xlsx';
+            Excel::store(new CodesExport($request->event_id), '/excel/'.$request->event_id.'/'.$fileName, 'public');
+            return ResponseTrait::response('Archivo generado correctamente.<br>Revisa tus descargas.', asset('storage/excel/'.$request->event_id.'/'.$fileName.'?v='.uniqid()));
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

@@ -1,22 +1,54 @@
 <template>
     <el-dialog
         v-model="activeTickets"
-        title="Boletos"
-        width="1500"
+        title="Información de los boletos"
+        width="90%"
         align-center
-        style="margin-top: 5% !important;"
+        style="margin-top: 3% !important;"
         :lock-scroll="false"
     >
         <el-table class="w-100 mb-6" :data="tickets" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
             <el-table-column prop="ticket.name" label="Tipo de boleto" />
-            <el-table-column label="Descuento del boleto">
+            <el-table-column label="Precio" align="center">
                 <template #default="scope">
-                    {{ scope.row.promotion ? `-${scope.row.promotion}%` : 'Sin descuento' }}
+                    {{ formatCurrency(scope.row.price) }}
                 </template>
             </el-table-column>
-            <el-table-column label="Precio">
+            <el-table-column align="center">
+                <template #header>
+                    Descuento<br>del boleto
+                </template>
                 <template #default="scope">
-                    {{ !scope.row.promotion ? formatCurrency(scope.row.ticket.price) : formatCurrency(scope.row.ticket.price - Math.round(scope.row.ticket.price * (scope.row.promotion / 100))) }}
+                    {{ scope.row.promotion ? scope.row.promotion+'%' : 'N/A' }}
+                </template>
+            </el-table-column>
+            <el-table-column align="center">
+                <template #header>
+                    Cupón de<br>descuento
+                </template>
+                <template #default="scope">
+                    {{ scope.row.code_name ? scope.row.code_name : 'N/A' }}
+                </template>
+            </el-table-column>
+            <el-table-column align="center">
+                <template #header>
+                    Descuento<br>del cupón
+                </template>
+                <template #default="scope">
+                    {{ scope.row.code_discount ? scope.row.code_discount+'%' : '0%' }}
+                </template>
+            </el-table-column>
+            <el-table-column label="Total pagado" align="center">
+                <template #default="{row}">
+                    <span v-if="row.promotion && !row.code_name">
+                        {{ formatCurrency(row.price - Math.round(row.price * (row.promotion / 100))) }}
+                    </span>
+                    <span v-if="row.code_id">
+                        {{ formatCurrency(row.price - Math.round(row.price * (row.code_discount / 100))) }}
+                    </span>
+                    <span v-if="!row.promotion && !row.code_id">
+                        {{ formatCurrency(row.price) }}
+                    </span>
                 </template>
             </el-table-column>
             <el-table-column prop="name" label="Nombre" />
@@ -56,6 +88,7 @@
         methods: {
             showTickets(_tickets) {
                 this.tickets       = _tickets;
+                console.log(this.tickets);
                 this.activeTickets = true;
             },
             async disableAccess(event_id, access_id) {

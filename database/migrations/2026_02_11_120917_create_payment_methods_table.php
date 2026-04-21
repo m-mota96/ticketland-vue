@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('sku');
+            $table->decimal('commission', 8, 2);
             $table->timestamps();
         });
     }

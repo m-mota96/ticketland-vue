@@ -1,6 +1,7 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { Link } from '@inertiajs/vue3';
 
 const passwordVisible = ref(false);
 const appUrl = ref(window.location.origin);
@@ -31,7 +32,7 @@ const togglePassword = () => {
                     </a>
                 </el-col>
                 <h3 class="title is-3 has-text-dark mb-5">Iniciar sesión</h3>
-                <form class="text-left mb-3">
+                <form @submit.prevent="submit" class="text-left mb-3">
                     <label for="email" class="has-text-grey">Correo electrónico</label>
                     <el-input
                         class="el-form-item mb-0"
@@ -64,20 +65,20 @@ const togglePassword = () => {
                     </el-col>
                     <el-checkbox v-model="form.remember" label="Recuérdame" size="large" class="mb-3" />
                     <el-button
+                        native-type="submit"
                         type="primary"
                         class="w-100 mt-1"
                         :class="{ 'opacity-25': form.processing }"
                         :disabled="form.processing"
-                        @click="submit"
                     >
                         Iniciar sesión
                     </el-button>
                 </form>
                 <el-col class="mb-5 mt-5">
-                    <a class="has-text-link" :href="route('register')">¿No tienes una cuenta?</a>
+                    <Link class="has-text-link" :href="route('register')">¿No tienes una cuenta?</Link>
                 </el-col>
                 <el-col>
-                    <a class="has-text-link" :href="route('password.request')">¿Olvidaste tu contraseña?</a>
+                    <Link class="has-text-link" :href="route('password.request')">¿Olvidaste tu contraseña?</Link>
                 </el-col>
             </el-card>
         </el-col>

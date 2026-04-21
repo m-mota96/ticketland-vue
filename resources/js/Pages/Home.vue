@@ -1,6 +1,7 @@
 <script setup>
 import apiClient from '@/apiClient';
 import { ref, onMounted, onUnmounted, onBeforeMount } from 'vue';
+import { Link } from '@inertiajs/vue3';
 
 const appUrl = ref(window.location.origin);
 const events = ref([]);
@@ -147,7 +148,7 @@ const handleResize = () => {
             </div>
         </div>
     </nav>
-    <el-carousel :height="heightCarousel">
+    <el-carousel :height="heightCarousel" :interval="15000">
         <el-carousel-item v-for="(item, i) in events" :key="i" :interval="4000">
             <div class="carousel-item">
                 <img
@@ -158,7 +159,7 @@ const handleResize = () => {
                     <p class="title is-3 mb-1">{{ item.name }}</p>
                     <p class="mb-1 subtitle is-6 has-text-white location" v-if="item.location">{{ item.location.name }}</p>
                     <p class="mb-1 subtitle is-6 has-text-white dates">{{ viewDates(item.event_dates) }}</p>
-                    <a class="button is-outlined is-white mt-3" :href="`/evento/${item.url}`">Comprar boletos</a>
+                    <Link class="button is-outlined is-white mt-3" :href="`/evento/${item.url}`">Comprar boletos</Link>
                 </div>
             </div>
         </el-carousel-item>
@@ -199,21 +200,25 @@ const handleResize = () => {
             <h2 class="title is-2 has-text-black has-text-centered mt-6">Próximos eventos</h2>
             <el-row :gutter="20" class="mb-6">
                 <el-col :xs="24" :sm="24" :md="12" :lg="6" :xl="6" v-for="(item, i) in events" :key="i">
-                    <div class="card">
+                    <div class="card card-my-events">
                         <div class="card-image">
-                            <a :href="`/evento/${item.url}`">
+                            <Link :href="`/evento/${item.url}`">
                                 <img :src="`events/images/${item.profile.name}`" :alt="item.name" class="w-100  image-card">
-                            </a>
+                            </Link>
                         </div>
                         <div class="card-content has-background-white">
                             <div class="media">
                                 <div class="media-content">
-                                    <a class="title is-4 has-text-dark" :href="`/evento/${item.url}`">{{ item.name }}</a><br>
-                                    <a class="subtitle is-6 has-text-link" :href="`/evento/${item.url}`">{{ appUrl }}/evento/{{ item.url }}</a>
+                                    <Link class="title is-5 has-text-dark" :href="`/evento/${item.url}`">{{ item.name }}</Link><br>
+                                    <Link class="subtitle is-6 has-text-link" :href="`/evento/${item.url}`">{{ appUrl }}/evento/{{ item.url }}</Link>
                                 </div>
                             </div>
-                            <div class="content">
-                                {{ item.description.length > 200 ? item.description.substring(0, 200)+'...' : item.description }}
+                            <div class="content text-justify">
+                                <span v-if="item.description">{{ item.description.length > 200 ? item.description.substring(0, 200)+'...' : item.description }}</span>
+                                <span v-if="!item.description">
+                                    ¡No te quedes fuera! Únete a este gran evento y asegura tu lugar ahora mismo. 
+                                    Haz clic en el enlace de arriba para conocer todos los detalles y comprar tus boletos.
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -287,6 +292,9 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, .navbar-li
     height: 30vh;
     object-fit: cover;
     object-position: center;
+}
+.card-my-events .card-content {
+    height: 235px !important;
 }
 @media only screen and (max-width: 1024px) and (min-width: 501px) {
     .logo-maxwell {

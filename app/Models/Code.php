@@ -15,11 +15,11 @@ class Code extends Model
     }
 
     public function tickets() {
-        return $this->belongsToMany(Ticket::class)->withPivot('used', 'reserved')->orderBy('name');
+        return $this->belongsToMany(Ticket::class)->orderBy('name');
     }
 
     public function accesses() {
-        return $this->belongsToMany(Access::class)->withPivot('ticket_price', 'discount');
+        return $this->hasMany(Access::class);
     }
 
     public function accesses_payed() {

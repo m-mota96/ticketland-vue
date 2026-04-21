@@ -12,8 +12,8 @@
                 <h5 class="title is-5 has-text-white mb-2">Categoría: {{ event.category.name }}</h5>
                 <h5 class="title is-5 has-text-white"><a class="text-white" :href="appUrl+'/evento/'+event.url" target="_blank">Ver sitio web</a></h5>
                 <div class="content-logo" :style="{ 'background-image': imageLogo == '' ? 'unset': `url(${imageLogo})` }">
-                    <div class="text-center pt-1 container-logo" v-if="imageLogo == ''" @click="$refs.UploadImages.showUploadImages('logo')">
-                        <h5 class="subtitle is-5 mt-4 text-logo">Agregar logo</h5>
+                    <div class="text-center pt-3 container-logo" v-if="imageLogo == ''" @click="$refs.UploadImages.showUploadImages('logo')">
+                        <h5 class="subtitle is-5 mt-5 text-logo">Agregar logo</h5>
                     </div>
                     <span class="p-1 edit-logo pointer" v-if="imageLogo != ''" @click="$refs.UploadImages.showUploadImages('logo')">
                         <font-awesome-icon class="mr-2" :icon="['fas', 'pencil']" />
@@ -83,11 +83,11 @@
                             <hr>
                             <div>
                                 <span class="subtitle is-6 has-text-dark bold"><font-awesome-icon :icon="['far', 'credit-card']" /> MÉTODOS DE PAGO</span>
-                                <div class="mt-2 mb-0">
+                                <el-col class="mt-2 mb-0 pl-0 pr-0" v-loading="loading">
                                     <div v-for="(pm, index) in event.payment_methods" :key="pm.id">
                                         <el-checkbox
                                             v-model="pm.pivot.active"
-                                            class="bold has-text-black"
+                                            class="bold has-text-black w-100"
                                             :label="pm.name"
                                             size="large"
                                             :true-value="1"
@@ -95,7 +95,7 @@
                                             @change="changePaymentMethods(index)"
                                         />
                                     </div>
-                                </div>
+                                </el-col>
                             </div>
                             <hr>
                             <div>
@@ -152,7 +152,8 @@ export default {
             appUrl: window.location.origin,
             event: this.$page.props.event,
             imageProfile: `${window.location.origin}/general/not_image.png`,
-            imageLogo: ''
+            imageLogo: '',
+            loading: false,
         }
     },
     beforeMount() {
@@ -198,7 +199,9 @@ export default {
                 showNotification('¡Atención!', 'No puedes desactivar todos los método de pago.', 'warning');
                 return false;
             }
+            this.loading   = true;
             const response = await apiClient('customer/paymentMethods', 'PUT', {event_id: this.event.id, payment_methods: this.event.payment_methods});
+            this.loading   = false;
             if (response.error) {
                 showNotification('¡Error!', response.msj, 'error');
                 return false;

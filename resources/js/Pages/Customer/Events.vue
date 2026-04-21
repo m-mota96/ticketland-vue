@@ -32,19 +32,19 @@
                     <el-col class="mb-5" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
                         <span class="subtitle is-6 has-text-success pointer" :class="{'active': paramsGetEvents.status == null}" @click="changeStatus()"><b>TODOS ({{ count.all }})</b></span>
                     </el-col>
-                    <el-col :span="24">
+                    <el-col :span="24" v-loading="loadingData">
                         <h2 class="title is-4 has-text-grey mt-5 text-center w-100" v-if="!events.length">Lo sentimos, no hay eventos con este filtro.</h2>
                         <el-card class="mb-5 p-0" v-for="(e, index) in events" :key="index" body-class="p-0">
                             <div>
                                 <el-row :gutter="5">
                                     <el-col :xs="24" :sm="24" :md="7" :lg="7" :xl="7">
-                                        <a :href="route('cliente.evento', e.id)">
+                                        <Link :href="route('cliente.evento', e.id)">
                                             <img v-if="!e.profile" class="w-100" src="/general/not_image.png" alt="Ticketland">
                                             <img v-if="e.profile" class="w-100 image-profile" :src="`/events/images/${e.profile.name}`" :alt="e.name">
-                                        </a>
+                                        </Link>
                                     </el-col>
                                     <el-col class="pt-5 pl-5 mb-4" :xs="24" :sm="24" :md="10" :lg="11" :xl="13">
-                                        <a class="title is-4 has-text-dark mb-0 active" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></a><br>
+                                        <Link class="title is-4 has-text-dark mb-0 active" :href="route('cliente.evento', e.id)"><b>{{ e.name }}</b></Link><br>
                                         <span class="has-text-dark mt-0">
                                             {{ 
                                                 parseDate(e.event_dates[0].date, 1, ' ')
@@ -57,7 +57,7 @@
                                             }}
                                         </span>
                                         <div class="w-100 mt-3">
-                                            <a class="has-text-grey" :href="route('cliente.evento', e.id)">EDITAR</a>
+                                            <Link class="has-text-grey" :href="route('cliente.evento', e.id)">EDITAR</Link>
                                             <span class="has-text-grey ml-6" v-if="e.sales == 0">ELIMINAR</span>
                                             <el-switch
                                                 v-if="e.status == 1 || e.status == 0"
@@ -124,12 +124,14 @@ import CreateEvent from './Modals/CreateEvent.vue';
 import apiClient from '@/apiClient';
 import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
+import { Link } from '@inertiajs/vue3';
   
 export default {
     components: {
         //Aqui se agregan los componentes, en dado caso que quiereas usar, para separar código, yo separo los modales y aqui los agrego
         Menu,
-        CreateEvent
+        CreateEvent,
+        Link
     },
     data() {
         return {
@@ -145,7 +147,8 @@ export default {
             parseDate: dateEs,
             parseTime: time,
             loading: false,
-            animation: false
+            animation: false,
+            loadingData: false
         }
     },
     beforeMount() {
@@ -162,9 +165,11 @@ export default {
     methods: {
         // Aqui van los métodos
         async getEvents() {
-            const response = await apiClient('customer/events', 'GET', this.paramsGetEvents);
-            this.events = response.data.events;
-            this.count  = response.data.count;
+            this.loadingData = true;
+            const response   = await apiClient('customer/events', 'GET', this.paramsGetEvents);
+            this.loadingData = false;
+            this.events      = response.data.events;
+            this.count       = response.data.count;
         },
         handleCurrentChange(val) {
             this.paramsGetEvents.currentPage = val;

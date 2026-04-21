@@ -112,6 +112,7 @@ class EventController extends Controller {
             foreach ($paymentMethods as $key => $pm) {
                 $arrayPm[] = [
                     'payment_method_id' => $pm->id,
+                    'commission'        => $pm->commission,
                     'active'            => 1
                 ];
             }
@@ -122,8 +123,8 @@ class EventController extends Controller {
                 $dates[] = [
                     'event_id'     => $event->id,
                     'date'         => $d,
-                    'initial_time' => $request->startHour[$key],
-                    'final_time'   => $request->endHour[$key],
+                    'initial_time' => date("H:i", strtotime($request->startHour[$key])),
+                    'final_time'   => date("H:i", strtotime($request->endHour[$key])),
                 ];
             }
             EventDate::insert($dates);
@@ -340,6 +341,7 @@ class EventController extends Controller {
             foreach ($request->payment_methods as $key => $pm) {
                 $arrayPm[] = [
                     'payment_method_id' => $pm['id'],
+                    'commission'        => $pm['commission'],
                     'active'            => $pm['pivot']['active']
                 ];
             }

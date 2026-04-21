@@ -4,16 +4,17 @@
     <el-row class="wrapper">
         <el-col :span="18" :offset="3" class="pt-6">
             <el-row :gutter="50">
-                <el-col :span="17">
+                <el-col :span="17" v-loading="loading">
                     <el-row class="text-center pt-5" v-if="!discounts.length">
-                        <h3 class="subtitle is-3 has-text-grey w-100">Ningún código de descuento disponible.</h3>
+                        <h3 class="subtitle is-3 has-text-grey w-100">Ningún cupón de descuento disponible.</h3>
                     </el-row>
                     <el-card class="p-0 mb-5" v-for="(d, index) in discounts" :key="index">
                         <el-row>
                             <el-col :span="18">
                                 <h4 class="title is-4 has-text-black mb-2">{{ d.code }}</h4>
-                                <h4 class="title is-5 has-text-grey mb-2">Descuento: {{ d.discount }}%</h4>
-                                <h6 class="subtitle is-6 has-text-link mb-5">Boletos vendidos: {{ d.totalTickets }}</h6>
+                                <h5 class="title is-5 has-text-grey mb-2">Descuento: {{ d.discount }}%</h5>
+                                <h6 class="subtitle is-6 !text-orange-500 mb-2">[{{ ticketsForDiscount[index] }}]</h6>
+                                <h6 class="subtitle is-6 has-text-link mb-5">Boletos vendidos: {{ d.accesses.length }}</h6>
                                 <!-- <p class="mb-5 has-text-link">
                                     [<span v-for="(t, index) in d.tickets" :key="index">
                                         <span v-if="index == 0">{{ t.name }} ({{ t.pivot.used }})</span><span v-if="index != 0">, {{ t.name }} ({{ t.pivot.used }})</span>
@@ -61,7 +62,12 @@
                     <el-card class="text-center pb-4">
                         <h5 class="subtitle is-5 has-text-dark mb-5">OPCIONES</h5>
                         <el-button class="bold w-100" type="warning" size="large" @click="$refs.EditDiscount.showModal()">
-                            <font-awesome-icon class="mr-1 bold" :icon="['fas', 'plus']" /> Nuevo código
+                            <font-awesome-icon class="mr-1 bold" :icon="['fas', 'plus']" /> Nuevo cupón
+                        </el-button>
+                        <br>
+                        <el-button class="!bg-green-500 mt-4 w-100 !text-white bold" size="large" @click="downloadCodes" :loading="loadingFile">
+                            <font-awesome-icon class="mr-2 bold" :icon="['fas', 'file-excel']" />
+                            Ganancias de influencers
                         </el-button>
                     </el-card>
                 </el-col>
@@ -69,7 +75,7 @@
         </el-col>
     </el-row>
     <Footer></Footer>
-    <EditDiscount ref="EditDiscount" :eventId="event.id" :getDiscounts="getDiscounts" :tickets="tickets"></EditDiscount>
+    <EditDiscount ref="EditDiscount" :eventId="event.id" :getDiscounts="getDiscounts"></EditDiscount>
 </template>
 
 <script>
@@ -91,8 +97,10 @@ export default {
         return {
             appUrl: window.location.origin,
             event: this.$page.props.event,
-            tickets: this.$page.props.tickets,
             discounts: [],
+            ticketsForDiscount: [],
+            loading: false,
+            loadingFile: false,
         }
     },
     beforeMount() {
@@ -106,12 +114,16 @@ export default {
     },
     methods: {
         async getDiscounts() {
-            const response = await apiClient('customer/discounts', 'GET', {event_id: this.event.id});
+            this.loading            = true;
+            const response          = await apiClient('customer/discounts', 'GET', {event_id: this.event.id});
+            this.loading            = false;
+            this.ticketsForDiscount = [];
             response.data.forEach(r => {
+                this.ticketsForDiscount.push(r.tickets.map(r => r.name).join(', '));
                 let tickets = 0;
-                r.payments.forEach(p => {
-                    tickets = tickets + p.accesses.length;
-                });
+                // r.payments.forEach(p => {
+                //     tickets = tickets + p.accesses.length;
+                // });
                 r.totalTickets = tickets;
             });
             this.discounts = response.data;
@@ -133,6 +145,17 @@ export default {
             }
             this.getDiscounts();
             showNotification('¡Correcto!', response.msj, 'success');
+        },
+        async downloadCodes() {
+            this.loadingFile =  true;
+            const response   = await apiClient('customer/downloadCodes', 'GET', {event_id: this.event.id});
+            this.loadingFile = false;
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error', 6000);
+                return false;
+            }
+            showNotification('¡Correcto!', response.msj, 'success');
+            location.href = response.data;
         },
         formatCurrency(value) {
             return new Intl.NumberFormat('es-MX', {
