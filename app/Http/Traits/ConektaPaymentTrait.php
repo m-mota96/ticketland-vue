@@ -56,7 +56,7 @@ trait ConektaPaymentTrait {
             }
             $msj = !$error ? 'Error al procesar el pago.<br>Por favor verifica la información de tu tarjeta.' : $error['details'][0]['message'];
             $logFile = fopen("logs/log_payment.txt", 'a') or die("Error creando archivo");
-            fwrite($logFile, date("d/m/Y H:i:s")." Error al procesar el pago: ".($error['details'][0]['message'] ?? 'Error inesperado.')."\n") or die("Error escribiendo en el archivo");
+            fwrite($logFile, date("d/m/Y H:i:s")." Error al procesar el pago: ".($error['details'][0]['message'].'. Cliente: '.$order['name'].', Correo: '.$order['email'].', Tarjeta: '.$order['card'].', IP: '.$_SERVER['REMOTE_ADDR'] ?? 'Error inesperado.')."\n") or die("Error escribiendo en el archivo");
             fclose($logFile);
             return  ['success' => false, 'msj' => $msj];
         }
