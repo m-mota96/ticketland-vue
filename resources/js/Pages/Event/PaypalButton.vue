@@ -42,7 +42,9 @@ export default {
             window.paypal.Buttons({
                 createOrder: async () => {
                     const res = await axios.get(`${window.location.origin}/createOrder`, {
-                        amount: this.amount,
+                        params: {
+                            amount: this.amount,
+                        },
                     });
                     // console.log(res.data);
                     return res.data.order_id; // Devuelve el orderID desde Laravel
