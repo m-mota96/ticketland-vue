@@ -40,9 +40,9 @@ trait ValidateStockTrait {
                     $priceDiscount = $ticket->promotion
                     ? ($ticket->price - round($ticket->price * ($ticket->promotion / 100))) // Si hay una promoción activa se calcula el precio con descuento.
                     : 0; // Si no la hay lo dejamos en 0.
-                    $price = $ticket->promotion && !$t['code_id']
+                    $price = $ticket->promotion && empty($t['code_id'])
                     ? $priceDiscount // Si hay una promoción activa y NO ingresaron cupón de descuento se toma el precio con descuento.
-                    : (!$t['code_id']
+                    : (empty($t['code_id'])
                         ? $ticket->price // Si no hay promoción activa y NO hay cupón de descuento se toma el precio normal del boleto.
                         : ($ticket->price - round($ticket->price * ($t['code_discount'] / 100)))); // Si no hay promoción activa y SI hay un cupón, se calcula el precio menos el descuento del cupón.
                     $totalToPay = $totalToPay + ($price * $t['quantity']);

@@ -30,7 +30,7 @@ trait ValidateCodesTrait {
         $error   = '';
         // Valida que el cupón ingresado aplique para los boletos comprados
         for ($i = 0; $i < sizeof($tickets); $i++) {
-            if (!in_array($tickets[$i]['id'], $codeTickets) && $tickets[$i]['code_id']) {
+            if (!in_array($tickets[$i]['id'], $codeTickets) && !empty($tickets[$i]['code_id'])) {
                 $success = false;
                 $error   .= 'El cupón <b>'.$request['code'].'</b> no es aplicable para el boleto <b>'.$tickets[$i]['name'].'</b><br>';
             }

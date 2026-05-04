@@ -34,16 +34,16 @@ trait OrderTrait {
             $access = Access::create([
                 'payment_id'    => $payment_id,
                 'ticket_id'     => $ticket->id,
-                'code_id'       => $tickets[$i]['code_id'] ? $tickets[$i]['code_id'] : null,
+                'code_id'       => !empty($tickets[$i]['code_id']) ? $tickets[$i]['code_id'] : null,
                 'folio'         => $folios[$i],
                 'quantity'      => $ticket->valid,
                 'name'          => $tickets[$i]['customer_name'],
                 'email'         => $tickets[$i]['email'],
                 'phone'         => $tickets[$i]['phone'],
-                'code_name'     => $tickets[$i]['code_id'] ? $tickets[$i]['code'] : null,
-                'code_discount' => $tickets[$i]['code_id'] ? $tickets[$i]['code_discount'] : null,
+                'code_name'     => !empty($tickets[$i]['code_id']) ? $tickets[$i]['code'] : null,
+                'code_discount' => !empty($tickets[$i]['code_id']) ? $tickets[$i]['code_discount'] : null,
                 'price'         => $ticket->price,
-                'promotion'     => !$tickets[$i]['code_id'] ? $ticket->promotion : null
+                'promotion'     => empty($tickets[$i]['code_id']) ? $ticket->promotion : null
             ]);
         }
         return ['success' => true];
