@@ -707,7 +707,7 @@ export default {
                 this.data.order.token_id = token.id;
                 this.data.order.card     = this.data.paymentData.card.number.slice(-4);
             }
-            const response = await apiClientPayments('makePayment', 'POST', {
+            const response = await apiClientPayments('makePayment', 'GET', {
                 selected: this.data.selected,
                 order: this.data.order,
                 tickets: this.filterTickets(),
@@ -776,7 +776,7 @@ export default {
             this.totals();
             if (this.data.order.code) {
                 this.loadingTickets = true;
-                const response = await apiClient('verifyCodes', 'POST', {event_id: this.event.id, code: this.data.order.code});
+                const response = await apiClient('verifyCodes', 'GET', {event_id: this.event.id, code: this.data.order.code});
                 this.loadingTickets = false;
                 if (response.error) {
                     this.data.order.code = '';

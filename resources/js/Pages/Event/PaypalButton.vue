@@ -41,7 +41,7 @@ export default {
         renderPaypalButton() {
             window.paypal.Buttons({
                 createOrder: async () => {
-                    const res = await axios.post(`${window.location.origin}/createOrder`, {
+                    const res = await axios.get(`${window.location.origin}/createOrder`, {
                         amount: this.amount,
                     });
                     // console.log(res.data);
