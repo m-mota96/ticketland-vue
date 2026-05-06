@@ -887,6 +887,9 @@ export default {
             this.data.total = this.data.discount
             ? this.data.subtotal - this.data.discountAmount
             : this.data.subtotal;
+            if (this.data.order.payment_method) {
+                this.verifyPaymentMethod(this.data.order.payment_method);
+            }
             // this.data.commission = this.event.model_payment === 'separated' ? Math.round(this.data.subtotal * commissionTicketland) : 0;
             // console.log('SUBTOTAL ', this.data.subtotal);
             // console.log('CUPON ', this.data.discountAmount);
