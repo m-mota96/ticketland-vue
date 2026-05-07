@@ -108,7 +108,7 @@ class EventController extends Controller {
             ]);
 
             $arrayPm        = [];
-            $paymentMethods = PaymentMethod::orderBy('name')->get();
+            $paymentMethods = PaymentMethod::where('sku', '<>', 'free')->orderBy('name')->get();
             foreach ($paymentMethods as $key => $pm) {
                 $arrayPm[] = [
                     'payment_method_id' => $pm->id,

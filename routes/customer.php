@@ -65,4 +65,5 @@ Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group
     Route::put('paymentMethods', [EventController::class, 'paymentMethods']);
     Route::get('downloadReservations', [ReservationController::class, 'downloadReservations']);
     Route::get('downloadCodes', [DiscountController::class, 'downloadCodes']);
+    Route::post('issueCompTickets', [TicketController::class, 'issueCompTickets']);
 });

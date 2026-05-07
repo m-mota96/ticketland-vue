@@ -54,6 +54,9 @@ class ReservationController extends Controller {
             if ($search['status'] !== 'all') {
                 $query->where('status', $search['status']);
                 $count->where('status', $search['status']);
+            } else {
+                $query->where('status', '<>', 'pay_free');
+                $count->where('status', '<>', 'pay_free');
             }
 
             $payments = $query->orderBy($request->order['orderBy'], $request->order['order'])
@@ -124,7 +127,7 @@ class ReservationController extends Controller {
 
     public function downloadReservations(Request $request) {
         try {
-            $count = Payment::where('event_id', $request->event_id)->count();
+            $count = Payment::where('event_id', $request->event_id)->where('payment_method_id', '<>', 4)->count();
             if (!$count) {
                 return ResponseTrait::response('No hay información que exportar.', null, true, 409);
             }

@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Crypt;
 use App\Http\Traits\ResponseTrait;
+use App\Models\Access;
 use App\Models\Event;
+use App\Models\Payment;
 use App\Models\Ticket;
+use ZipArchive;
 
 class TicketController extends Controller {
     public function tickets($event_id) {
@@ -117,6 +122,63 @@ class TicketController extends Controller {
             }
             $ticket->delete();
             return ResponseTrait::response('El boleto se eliminó correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function issueCompTickets(Request $request) {
+        try {
+            if (!file_exists('events/zips/'.$request->event_id)) {
+                mkdir('events/zips/'.$request->event_id, 0777, true);
+            }
+
+            $files = glob('events/zips/'.$request->event_id.'/*.zip');
+            array_map('unlink', $files);
+
+            $payment = Payment::where('email', 'cortesias@ticketland.mx')->where('event_id', $request->event_id)->first();
+            $ticket  = Ticket::find($request->ticket_id);
+            if (!$payment) {
+                $payment = Payment::create([
+                    'event_id'          => $request->event_id,
+                    'payment_method_id' => 4,
+                    'name'              => 'Cortesías',
+                    'email'             => 'cortesias@ticketland.mx',
+                    'phone'             => '0123456789',
+                    'type'              => 'free',
+                    'reference'         => 'N/A',
+                    'amount'            => 0,
+                    'discount'          => 0,
+                    'status'            => 'pay_free'
+                ]);
+            }
+            $zip      = new ZipArchive();
+            $filename = 'events/zips/'.$request->event_id.'/Cortesías '.$ticket->name.' '.date('Y_m_d_H_i_s').'.zip';
+            if (file_exists($filename)) {
+                unlink($filename);
+            }
+
+            if(!$zip->open($filename, ZIPARCHIVE::CREATE)) {
+                return ResponseTrait::response('Error al crear archivo zip.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+            }
+            for ($i = 0; $i < $request->quantity; $i++) {
+                $folio      = strtoupper(uniqid());
+                $folioCrypt = Crypt::encrypt($folio);
+                $qr_code    = QrCode::backgroundColor(255, 125, 0, 0.5)->size(500)->format('svg')->generate($folioCrypt);
+                Access::create([
+                    'payment_id'    => $payment->id,
+                    'ticket_id'     => $ticket->id,
+                    'folio'         => $folio,
+                    'quantity'      => $ticket->valid,
+                    'price'         => 0,
+                ]);
+                $zip->addFromString(
+                    ($i + 1) . ' Cortesia ' . $ticket->name . '.svg',
+                    $qr_code
+                );
+            }
+            $zip->close();
+            return ResponseTrait::response('Las cortesías se crearon correctamente<br>Revise sus descargas.', $filename);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

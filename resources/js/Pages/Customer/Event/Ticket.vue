@@ -1,7 +1,14 @@
 <template>
     <MenuEvent></MenuEvent>
     <Submenu :dadEvent="event"></Submenu>
-    <el-row class="wrapper">
+    <el-row
+        class="wrapper"
+        element-loading-text="¡Generando cortesías, por favor espera!"
+        v-loading="loadingFull"
+        :element-loading-svg="svg"
+        element-loading-svg-view-box="-10, -10, 50, 50"
+        element-loading-background="rgba(0, 0, 0, 0.9)"
+    >
         <el-col :span="18" :offset="3" class="pt-6">
             <el-row :gutter="50">
                 <el-col :span="17" v-loading="loading">
@@ -53,6 +60,9 @@
                                     </span>
                                     <span v-if="t.status == 0" class="pointer ml-5" @click="updateStatus(t.id, 1)">
                                         <font-awesome-icon :icon="['far', 'circle-check']" /> Activar
+                                    </span>
+                                    <span v-if="t.status == 1" class="pointer ml-5" @click="inputQuantity(t)">
+                                        <font-awesome-icon :icon="['fas', 'tag']" /> Generar cortesías
                                     </span>
                                 </div>
                             </el-col>
@@ -151,6 +161,17 @@ export default {
             event: this.$page.props.event,
             tickets: [],
             loading: false,
+            loadingFull: false,
+            svg: `
+                <path class="path" d="
+                M 30 15
+                L 28 17
+                M 25.61 25.61
+                A 15 15, 0, 0, 1, 15 30
+                A 15 15, 0, 1, 1, 27.99 7.5
+                L 15 15
+                " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
+            `,
         }
     },
     beforeMount() {
@@ -195,6 +216,62 @@ export default {
             }
             this.event.model_payment = model_payment;
             showNotification('¡Correcto!', response.msj, 'success');
+        },
+        inputQuantity(ticket) {
+            Swal.fire({
+                html: `¿Cuántas cortesías de <b>${ticket.name}</b> desea generar?<br>(máximo 50 cada vez)`,
+                input: "number",
+                inputAttributes: {
+                    step: 1,
+                    inputmode: "numeric"
+                },
+                showCancelButton: true,
+                cancelButtonText: "Cancelar",
+                confirmButtonText: "Generar",
+                reverseButtons: true,
+                inputValue: 1,
+                confirmButtonColor: "#3085d6",
+                didOpen: () => {
+                    const input = Swal.getInput();
+                    input.addEventListener('keydown', (e) => {
+                        // Bloqueamos caracteres no válidos
+                        if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                        }
+                    });
+                },
+                preConfirm: (quantity) => {
+                    const value = Number(quantity);
+                    if (!quantity || quantity.trim() === '') {
+                        Swal.showValidationMessage('Ingresa un número');
+                        return false;
+                    }
+                    if (!Number.isInteger(value)) {
+                        Swal.showValidationMessage('Solo números enteros');
+                        return false;
+                    }
+                    if (value < 1 || value > 50) {
+                        Swal.showValidationMessage('Debe ser un número entre 1 y 50');
+                        return false;
+                    }
+                    return value;
+                },
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.issueCompTickets(ticket, result.value);
+                }
+            });
+        },
+        async issueCompTickets(ticket, quantity) {
+            this.loadingFull = true;
+            const response   = await apiClient('customer/issueCompTickets', 'POST', {event_id: ticket.event_id, ticket_id: ticket.id, quantity});
+            this.loadingFull = false;
+            if (response.error) {
+                showNotification('¡Error!', response.msj, 'error', 6000);
+                return false;
+            }
+            showNotification('¡Correcto!', response.msj, 'success');
+            location.href = this.appUrl+'/'+response.data;
         },
         info() {
             Swal.fire({

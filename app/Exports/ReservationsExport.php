@@ -61,6 +61,7 @@ class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidt
 
     public function collection() {
         return Payment::with(['paymentMethod:id,name'])->where('event_id', $this->event_id)
+        ->where('payment_method_id', '<>', 4)
         ->select(
             '*',
             DB::raw('CASE 
