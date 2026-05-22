@@ -575,7 +575,8 @@ export default {
                     token_id: '',
                     card: '',
                     code: '',
-                    paypal_order_id: ''
+                    paypal_order_id: '',
+                    device_session_id: ''
                 },
                 paymentData: {
                     card: {
@@ -584,7 +585,10 @@ export default {
                         exp_month: '',
                         exp_year: '',
                         cvc: ''
-                    }
+                    },
+                    name: '',
+                    email: '',
+                    phone: ''
                 },
                 cardExpiration: '',
             },
@@ -678,6 +682,9 @@ export default {
                     this.scrollCenterY();
                     this.loading = true;
                     if (this.data.order.payment_method == 'card') {
+                        this.data.paymentData.name  = this.data.paymentData.card.name;
+                        this.data.paymentData.email = this.data.order.email;
+                        this.data.paymentData.phone = this.data.order.phone;
                         const script  = document.createElement("script");
                         script.type   = "text/javascript";
                         script.src    = `https://cdn.conekta.io/js/latest/conekta.js`;
@@ -704,8 +711,9 @@ export default {
         },
         async makePayment(token = null) {
             if (this.data.order.payment_method == 'card') {
-                this.data.order.token_id = token.id;
-                this.data.order.card     = this.data.paymentData.card.number.slice(-4);
+                this.data.order.token_id          = token.id;
+                this.data.order.device_session_id = Math.random().toString(36).substring(2);
+                this.data.order.card              = this.data.paymentData.card.number.slice(-4);
             }
             const response = await apiClientPayments('makePayment', 'GET', {
                 selected: this.data.selected,

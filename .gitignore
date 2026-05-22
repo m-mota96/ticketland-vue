@@ -4,6 +4,7 @@
 /public/hot
 /public/storage
 /public/events
+/public/logs
 /storage/*.key
 /storage/pail
 /vendor
