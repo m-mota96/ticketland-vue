@@ -11,13 +11,14 @@ use App\Http\Traits\SendMailTrait;
 use App\Models\Access;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\Ticket;
 use ZipArchive;
 
 class ReservationController extends Controller {
     public function reservations($event_id) {
         $event = Event::find($event_id);
         return Inertia::render('Customer/Event/Reservation', [
-            'event'   => $event
+            'event' => $event
         ]);
     }
 
@@ -133,6 +134,54 @@ class ReservationController extends Controller {
             }
             Excel::store(new ReservationsExport($request->event_id), '/excel/'.$request->event_id.'/Reservaciones.xlsx', 'public');
             return ResponseTrait::response('Archivo generado correctamente.<br>Revisa tus descargas.', asset('storage/excel/'.$request->event_id.'/Reservaciones.xlsx?v='.uniqid()));
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function buyers($event_id, $ticket_id) {
+        $event  = Event::find($event_id);
+        $ticket = Ticket::select('id', 'name')->where('id', $ticket_id)->first();
+        return Inertia::render('Customer/Event/Buyer', [
+            'event'  => $event,
+            'ticket' => $ticket
+        ]);
+    }
+
+    public function getBuyers(Request $request) {
+        try {
+            $pagination = $request->pagination;
+            $page       = $pagination['currentPage']; // Página actual
+            $limit      = $pagination['pageSize']; // Tamaño de la página
+            $offset     = ($page - 1) * $limit; // Calcular el offset
+            $search     = $request->search;
+
+            $query = Access::select(
+                'id', 'payment_id', 'ticket_id', 'name', 'email', 'phone', 'price', 'code_name', 'code_discount', 'promotion', 'created_at'
+            )
+            ->where('ticket_id', $request->ticket_id)
+            ->whereHas('payment', function($q) use($request) {
+                $q->where('event_id', $request->event_id)->where('status', 'payed');
+            });
+
+            if (!empty($search['name'])) {
+                $query->whereLike('name', '%'.$search['name'].'%');
+            }
+
+            if (!empty($search['email'])) {
+                $query->whereLike('email', '%'.$search['email'].'%');
+            }
+
+            if (!empty($search['phone'])) {
+                $query->whereLike('phone', '%'.$search['phone'].'%');
+            }
+            
+            $allBuyers = $query->count();
+            $buyers    = $query->orderBy($request->order['orderBy'], $request->order['order'])
+            ->offset($offset)->limit($limit)
+            ->get();
+
+            return ResponseTrait::response(null, ['buyers' => $buyers, 'count' => $allBuyers]);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

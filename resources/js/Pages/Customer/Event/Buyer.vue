@@ -1,40 +1,44 @@
 <template>
     <MenuEvent></MenuEvent>
     <Submenu :dadEvent="event"></Submenu>
-    <div
-        :element-loading-text="`¡Reenviando correo, por favor espera!`"
-        v-loading="loading"
-        :element-loading-svg="svg"
-        element-loading-svg-view-box="-10, -10, 50, 50"
-        element-loading-background="rgba(0, 0, 0, 0.9)"
-    >
     <el-row class="wrapper">
         <el-col :span="24">
-            <el-card class="w-100 pt-5 pb-5">
+            <el-card class="w-100 pt-2 pb-5">
                 <el-row :gutter="20">
+                    <el-col :span="24" class="pl-5">
+                        <h3 class="title is-3 !text-blue-500">
+                            <el-tooltip
+                                class="box-item"
+                                effect="dark"
+                                content="Regresar a boletos"
+                                placement="bottom"
+                            >
+                                <Link class="!text-blue-500" :href="route('cliente.boletos', event.id)">
+                                    <font-awesome-icon class="mr-2" :icon="['fas', 'arrow-left']" />
+                                </Link>
+                            </el-tooltip>
+                            {{ ticket.name }}
+                        </h3>
+                    </el-col>
                     <el-col :span="6">
-                        <br>
+                        <!-- <br>
                         <el-button  type="success" @click="downloadReservations" :loading="loadingFile">
                             <font-awesome-icon class="mr-2" :icon="['fas', 'file-excel']" />
                             Generar reporte de reservaciones
-                        </el-button>
+                        </el-button> -->
                     </el-col>
                     <el-col class="mb-5" :span="4" :offset="9">
                         <label for="order">Ordernar por</label>
-                        <el-select v-model="order.orderBy" @change="getPayments" id="order">
-                            <el-option :key="0" label="Id" value="id" />
+                        <el-select v-model="order.orderBy" @change="getBuyers" id="order">
                             <el-option :key="1" label="Cliente" value="name" />
                             <el-option :key="1" label="Correo electrónico" value="email" />
                             <el-option :key="1" label="Teléfono" value="phone" />
-                            <el-option :key="1" label="Método de pago" value="type" />
-                            <el-option :key="1" label="Subtotal" value="amount" />
-                            <el-option :key="1" label="Estatus" value="status" />
-                            <el-option :key="1" label="Fecha" value="created_at" />
+                            <el-option :key="1" label="Fecha de compra" value="created_at" />
                         </el-select>
                     </el-col>
                     <el-col class="mb-5" :span="4">
                         <br>
-                        <el-select v-model="order.order" @change="getPayments">
+                        <el-select v-model="order.order" @change="getBuyers">
                             <el-option :key="0" label="Ascendente" value="ASC" />
                             <el-option :key="1" label="Descendente" value="DESC" />
                         </el-select>
@@ -51,7 +55,7 @@
                         </el-tooltip>
                     </el-col>
                     <el-col :span="24">
-                        <el-table class="w-100" v-loading="loadingTable" :data="payments" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
+                        <el-table class="w-100" v-loading="loadingTable" :data="buyers" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
                             <!-- <el-table-column prop="date" label="Date">
                                 <template #header>
         
@@ -63,73 +67,45 @@
                             <el-table-column prop="id" label="#" width="70" align="center" />
                             <el-table-column prop="name" min-width="200">
                                 <template #header>
-                                    <el-input v-model="search.name" placeholder="Buscar Cliente" @input="getPayments" clearable />
+                                    <el-input v-model="search.name" placeholder="Buscar Cliente" @input="getBuyers" clearable />
                                 </template>
                             </el-table-column>
                             <el-table-column prop="email" min-width="200">
                                 <template #header>
-                                    <el-input v-model="search.email" placeholder="Buscar Correo electrónico" @input="getPayments" clearable />
+                                    <el-input v-model="search.email" placeholder="Buscar Correo electrónico" @input="getBuyers" clearable />
                                 </template>
                             </el-table-column>
                             <el-table-column prop="phone" min-width="150">
                                 <template #header>
-                                    <el-input v-model="search.phone" placeholder="Buscar Teléfono" @input="getPayments" clearable />
+                                    <el-input v-model="search.phone" placeholder="Buscar Teléfono" @input="getBuyers" clearable />
                                 </template>
                             </el-table-column>
-                            <el-table-column width="150">
-                                <template #header>
-                                    <el-select v-model="search.type" placeholder="Método de pago" @change="getPayments">
-                                        <el-option
-                                            v-for="item in payment_methods"
-                                            :key="item.value"
-                                            :label="item.label"
-                                            :value="item.value"
-                                        />
-                                    </el-select>
-                                </template>
+                            <el-table-column label="Precio" width="130" align="center">
                                 <template #default="scope">
-                                    {{ verifyPaymentMethod(scope.row.type) }}
+                                    {{ formatCurrency(scope.row.price) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="Descuento del boleto" width="130" align="center">
+                                <template #default="scope">
+                                    {{ scope.row.promotion ? scope.row.promotion+'%' : 'N/A' }}
                                 </template>
                             </el-table-column>
                             <el-table-column label="Cupón de descuento" width="150" align="center">
                                 <template #default="scope">
-                                    {{ scope.row.code ? scope.row.code : 'N/A' }}
+                                    {{ scope.row.code_name ? scope.row.code_name : 'N/A' }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Subtotal" width="130" align="center">
-                                <template #default="scope">
-                                    {{ formatCurrency(scope.row.total_order) }}
+                            <el-table-column width="130" align="center">
+                                <template #header>
+                                    Descuento<br>del cupón
                                 </template>
-                            </el-table-column>
-                            <el-table-column label="% de C/Descuento" width="130" align="center">
                                 <template #default="scope">
-                                    {{ scope.row.discount }}%
+                                    {{ scope.row.code_discount ? scope.row.code_discount+'%' : '0%' }}
                                 </template>
                             </el-table-column>
                             <el-table-column label="Total" width="130" align="center">
                                 <template #default="scope">
-                                    {{ formatCurrency(scope.row.amount) }}
-                                </template>
-                            </el-table-column>
-                            <el-table-column align="center" width="180">
-                                <template #header>
-                                    <el-select v-model="search.status" placeholder="Estatus" @change="getPayments">
-                                        <el-option
-                                            v-for="item in status"
-                                            :key="item.value"
-                                            :label="item.label"
-                                            :value="item.value"
-                                        />
-                                    </el-select>
-                                </template>
-                                <template #default="scope">
-                                    <span class="bold" :class="{
-                                        'has-text-danger': scope.row.status === 'expired',
-                                        'has-text-success': scope.row.status === 'payed',
-                                        'text-orange-500': scope.row.status === 'pending'
-                                    }">
-                                        {{ verifyStatus(scope.row.status) }}
-                                    </span>
+                                    {{ formatCurrency(calculateTotal(scope.row)) }}
                                 </template>
                             </el-table-column>
                             <el-table-column label="Fecha de compra" align="center" min-width="150">
@@ -137,7 +113,7 @@
                                     {{ formatDate(scope.row.created_at) }}<br>{{ formatTime(scope.row.created_at) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Acciones" width="130" align="center">
+                            <!-- <el-table-column label="Acciones" width="130" align="center">
                                 <template #default="scope">
                                     <el-button-group>
                                         <el-tooltip
@@ -175,7 +151,7 @@
                                         </el-tooltip>
                                     </el-button-group>
                                 </template>
-                            </el-table-column>
+                            </el-table-column> -->
                         </el-table>
                         <el-pagination
                             class="mt-4 w-100 has-text-center"
@@ -193,32 +169,29 @@
         </el-col>
     </el-row>
     <Footer :dataExpand="true"></Footer>
-    </div>
-    <ViewTickets ref="ViewTickets"></ViewTickets>
 </template>
 
 <script>
 import apiClient from '@/apiClient';
-import { showNotification } from '@/notification';
 import MenuEvent from '../MenuEvent.vue';
 import Submenu from '../Submenu.vue';
 import Footer from '../Footer.vue';
 import { dateEs, time } from '@/dateEs';
-import Swal from 'sweetalert2';
-import { ViewTickets } from './Modals';
+import { Link } from '@inertiajs/vue3';
 
 export default {
     components: {
         MenuEvent,
         Submenu,
         Footer,
-        ViewTickets
+        Link
     },
     data() {
         return {
             appUrl: window.location.origin,
             event: this.$page.props.event,
-            payments: [],
+            ticket: this.$page.props.ticket,
+            buyers: [],
             loading: false,
             loadingTable: false,
             loadingFile: false,
@@ -226,9 +199,6 @@ export default {
                 name: '',
                 email: '',
                 phone: '',
-                type: 'all',
-                code: '',
-                status: 'all'
             },
             pagination: {
                 totalRows: 0,
@@ -236,25 +206,13 @@ export default {
                 pageSize: 25,
             },
             order: {
-                orderBy: 'id',
+                orderBy: 'created_at',
                 order: 'DESC'
             },
-            payment_methods: [{value: 'all', label: 'Todos los métodos de pago'},{value: 'oxxo', label: 'Efectivo'},{value: 'paypal', label: 'PayPal'},{value: 'card', label: 'Tarjeta'}],
-            status: [{value: 'all', label: 'Todos los estatus'},{value: 'expired', label: 'Expirado'},{value: 'payed', label: 'Pagado'},{value: 'pending', label: 'Pendiente'}],
-            svg: `
-                <path class="path" d="
-                M 30 15
-                L 28 17
-                M 25.61 25.61
-                A 15 15, 0, 0, 1, 15 30
-                A 15 15, 0, 1, 1, 27.99 7.5
-                L 15 15
-                " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
-            `,
         }
     },
     beforeMount() {
-        this.getPayments();
+        this.getBuyers();
     },
     mounted() {
         
@@ -263,95 +221,37 @@ export default {
         
     },
     methods: {
-        async getPayments() {
+        async getBuyers() {
             this.loadingTable         = true;
-            const response            = await apiClient('customer/reservations', 'POST', {event_id: this.event.id, search: this.search, pagination: this.pagination, order: this.order});
+            const response            = await apiClient('customer/buyers', 'POST', {event_id: this.event.id, ticket_id: this.ticket.id, search: this.search, pagination: this.pagination, order: this.order});
             this.loadingTable         = false;
-            this.payments             = response.data.payments;
+            this.buyers               = response.data.buyers;
             this.pagination.totalRows = response.data.count;
         },
-        async resendEmail(payment_id, email, status) {
-            const msj = status === 'payed' ? 'Los boletos serán enviados' : 'La ficha de pago será enviada';
-            Swal.fire({
-                icon: 'warning',
-                html: `${msj} al siguiente correo:<br><b>Nota: </b>si el correo es incorrecto ingrese el nuevo.`,
-                input: 'email',
-                inputAttributes: {
-                    autocapitalize: 'off'
-                },
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                confirmButtonText: 'Reenviar',
-                cancelButtonText: 'Cancelar',
-                reverseButtons: true,
-                inputValue : email,
-                scrollbarPadding: false
-            }).then(async (result) => {
-                if (result.value) {
-                    this.loading = true;
-                    const response = await apiClient('customer/resendEmail', 'POST', {event_id: this.event.id, payment_id, email: result.value});
-                    this.loading = false;
-                    if (response.error) {
-                        showNotification('¡Error!', response.msj, 'error');
-                        return false;
-                    }
-                    this.getPayments();
-                    showNotification('¡Correcto!', response.msj, 'success');
-                }
-            });
-        },
-        async downloadTickets(payment_id) {
-            const response = await apiClient('customer/downloadTickets', 'GET', {event_id: this.event.id, payment_id});
-            if (response.error) {
-                showNotification('¡Error!', response.msj, 'error');
-                return false;
+        calculateTotal(data) {
+            if (!data.promotion && !data.code_discount) {
+                return data.price;
             }
-            location.href = this.appUrl+'/'+response.data.fileName;
-        },
-        async downloadReservations() {
-            this.loadingFile =  true;
-            const response   = await apiClient('customer/downloadReservations', 'GET', {event_id: this.event.id});
-            this.loadingFile = false;
-            if (response.error) {
-                showNotification('¡Error!', response.msj, 'error', 6000);
-                return false;
+            if (data.promotion) {
+                return data.price - Math.round(data.price * (data.promotion / 100));
             }
-            showNotification('¡Correcto!', response.msj, 'success');
-            location.href = response.data;
+            if (data.code_discount) {
+                return data.price - Math.round(data.price * (data.code_discount / 100));
+            }
         },
         handleSizeChange(val) {
             // console.log(`${val} items per page`)
-            this.getPayments();
+            this.getBuyers();
         },
         handleCurrentChange(val) {
             // console.log(`current page: ${val}`)
-            this.getPayments();
+            this.getBuyers();
         },
         formatCurrency(value) {
             return new Intl.NumberFormat('es-MX', {
                 style: 'currency',
                 currency: 'MXN'
             }).format(value);
-        },
-        verifyStatus(status) {
-            switch (status) {
-                case 'expired':
-                    return 'Expirado';
-                case 'payed':
-                    return 'Pagado';
-                case 'pending':
-                    return 'Pendiente';
-            }
-        },
-        verifyPaymentMethod(payment_method) {
-            switch (payment_method) {
-                case 'card':
-                    return 'Tarjeta';
-                case 'oxxo':
-                    return 'Efectivo';
-                case 'paypal':
-                    return 'Paypal';
-            }
         },
         formatDate(_date) {
             return dateEs(_date, 1, '/');
@@ -363,15 +263,12 @@ export default {
             this.search.name   = '';
             this.search.email  = '';
             this.search.phone  = '';
-            this.search.type   = 'all';
-            this.search.code   = '';
-            this.search.status = 'all';
             this.pagination.totalRows   = 0;
             this.pagination.currentPage = 1;
             this.pagination.pageSize    = 25;
-            this.order.orderBy = 'id';
+            this.order.orderBy = 'created_at';
             this.order.order   = 'DESC';
-            this.getPayments();
+            this.getBuyers();
         }
     }
 }

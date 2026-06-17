@@ -26,6 +26,7 @@ Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'verified', 'rol
     Route::get('reservaciones/{event_id}', [ReservationController::class, 'reservations'])->name('reservaciones');
     Route::get('estadisticas/{event_id}', [StatisticController::class, 'statistics'])->name('estadisticas');
     Route::get('escaner/{event_id}', [ScannerController::class, 'scanner'])->name('escaner');
+    Route::get('compradores/{event_id}/{ticket_id}', [ReservationController::class, 'buyers'])->name('compradores');
 });
 
 
@@ -66,4 +67,5 @@ Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group
     Route::get('downloadReservations', [ReservationController::class, 'downloadReservations']);
     Route::get('downloadCodes', [DiscountController::class, 'downloadCodes']);
     Route::post('issueCompTickets', [TicketController::class, 'issueCompTickets']);
+    Route::post('buyers', [ReservationController::class, 'getBuyers']);
 });

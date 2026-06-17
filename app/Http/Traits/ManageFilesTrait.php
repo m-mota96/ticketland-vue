@@ -31,7 +31,7 @@ trait ManageFilesTrait {
                 $startDate                   = DateFormatTrait::parseDate($event->eventDates[0]->date, '/', 'monthsAbrev');
                 $endDate                     = DateFormatTrait::parseDate($event->eventDates[sizeof($event->eventDates) - 1]->date, '/', 'monthsAbrev');
                 $tickets[$i]['dates']        = $startDate.' al '.$endDate;
-                $tickets[$i]['currentDate']  = DateFormatTrait::parseDate(date('Y-m-d'), '/', 'monthsAbrev');
+                $tickets[$i]['currentDate']  = DateFormatTrait::parseDate(date('Y-m-d'), '/', 'monthsAbrev').' '.date('h:i A');
                 $tickets[$i]['promotion']    = $ticket->promotion;
                 $tickets[$i]['price']        = number_format($price);
                 $folio                       = strtoupper(uniqid());

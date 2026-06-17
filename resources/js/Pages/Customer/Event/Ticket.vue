@@ -40,7 +40,7 @@
                                 </span>
                                 <h6 v-if="t.promotion" class="text-orange-500 bold">{{ t.promotion }}% de descuento hasta el {{ formatDate(t.date_promotion) }}</h6>
                                 <div class="mt-5">
-                                    <span class="pointer mt-5 mr-5" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
+                                    <span class="pointer mt-5 mr-3" @click="$refs.EditTicket.showModal(t)"><font-awesome-icon :icon="['fas', 'pencil']" /> Editar</span>
                                     <el-popconfirm
                                         confirm-button-text="Eliminar"
                                         cancel-button-text="Cancelar"
@@ -55,15 +55,18 @@
                                             <span class="pointer"><font-awesome-icon :icon="['fas', 'trash-can']" /> Eliminar</span>
                                         </template>
                                     </el-popconfirm>
-                                    <span v-if="t.status == 1" class="pointer ml-5" @click="updateStatus(t.id, 0)">
+                                    <span v-if="t.status == 1" class="pointer ml-3" @click="updateStatus(t.id, 0)">
                                         <font-awesome-icon :icon="['far', 'circle-xmark']" /> Desactivar
                                     </span>
-                                    <span v-if="t.status == 0" class="pointer ml-5" @click="updateStatus(t.id, 1)">
+                                    <span v-if="t.status == 0" class="pointer ml-3" @click="updateStatus(t.id, 1)">
                                         <font-awesome-icon :icon="['far', 'circle-check']" /> Activar
                                     </span>
-                                    <span v-if="t.status == 1" class="pointer ml-5" @click="inputQuantity(t)">
+                                    <span v-if="t.status == 1" class="pointer ml-3" @click="inputQuantity(t)">
                                         <font-awesome-icon :icon="['fas', 'tag']" /> Generar cortesías
                                     </span>
+                                    <Link v-if="t.sales > 0" class="pointer ml-3 has-text-dark" :href="route('cliente.compradores', [t.event_id, t.id])">
+                                        <font-awesome-icon :icon="['fas', 'users']" /> Compradores
+                                    </Link>
                                 </div>
                             </el-col>
                             <el-col :span="6" class="text-right">
@@ -146,6 +149,7 @@ import { EditTicket } from './Modals';
 import Swal from 'sweetalert2';
 import { dateEs } from '@/dateEs';
 import { VueDraggableNext as draggable } from 'vue-draggable-next';
+import { Link } from '@inertiajs/vue3';
 
 export default {
     components: {
@@ -153,7 +157,8 @@ export default {
         Submenu,
         Footer,
         EditTicket,
-        draggable
+        draggable,
+        Link
     },
     data() {
         return {
