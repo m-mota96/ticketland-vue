@@ -1,6 +1,3 @@
-
-text/x-generic sendReference.blade.php ( HTML document, UTF-8 Unicode text, with CRLF line terminators )
-
 <!DOCTYPE html>
 <!-- saved from url=(0050)http://bigelephant.mx/_sitios/japy/bienvenido.html -->
 <html lang="en" dir="ltr">
