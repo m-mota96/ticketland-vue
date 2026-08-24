@@ -19,8 +19,8 @@ trait ManageFilesTrait {
             $files = [];
 
             for ($i = 0; $i < sizeof($tickets); $i++) {
-                $ticket                      = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))->find($tickets[$i]['id']);
-                $price                       = $ticket->price;
+                $ticket = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() >= date_promotion, NULL, promotion) promotion'))->find($tickets[$i]['id']);
+                $price  = $ticket->price;
                 if ($ticket->promotion && !$code) {
                     $price = $ticket->price - round($ticket->price * ($ticket->promotion / 100));
                 }
@@ -33,7 +33,7 @@ trait ManageFilesTrait {
                 $tickets[$i]['dates']        = $startDate.' al '.$endDate;
                 $tickets[$i]['currentDate']  = DateFormatTrait::parseDate(date('Y-m-d'), '/', 'monthsAbrev').' '.date('h:i A');
                 $tickets[$i]['promotion']    = $ticket->promotion;
-                $tickets[$i]['price']        = number_format($price);
+                $tickets[$i]['price']        = $price;
                 $folio                       = strtoupper(uniqid());
                 $folioCrypt                  = Crypt::encrypt($folio);
                 $qr_code                     = QrCode::backgroundColor(255, 125, 0, 0.5)->size(800)->format('svg')->generate($folioCrypt);
@@ -53,7 +53,7 @@ trait ManageFilesTrait {
             fclose($logFile);
             return [
                 'success' => false,
-                'msj'     => 'Error al crear los archivos de sus boletos, si el problema persiste contacta al organizador del evento.<br>No se realizaron cargos.'
+                'msj'     => 'Error al crear tus boletos, si el problema persiste contacta al organizador del evento.<br>No se realizaron cargos.'
             ];
         }
     }
