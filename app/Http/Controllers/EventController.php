@@ -245,7 +245,7 @@ class EventController extends Controller {
                 $logo->delete();
                 return ResponseTrait::response('El logo se eliminó correctamente.');
             }
-            return ResponseTrait::response('No es posible eliminar el logo.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+            return ResponseTrait::response('No es posible eliminar el logo.', null, true, 500);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta a soporte.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

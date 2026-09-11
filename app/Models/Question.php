@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Question extends Model
 {
     protected $fillable = [
-        'event_id', 'title', 'information', 'required', 'type', 'options', 
+        'event_id', 'title', 'information', 'required', 'type', 'options', 'active', 
     ];
 
     public function tickets() {

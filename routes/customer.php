@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\FormTicketController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ScannerController;
@@ -27,6 +28,7 @@ Route::prefix('cliente')->name('cliente.')->middleware(['auth', 'verified', 'rol
     Route::get('estadisticas/{event_id}', [StatisticController::class, 'statistics'])->name('estadisticas');
     Route::get('escaner/{event_id}', [ScannerController::class, 'scanner'])->name('escaner');
     Route::get('compradores/{event_id}/{ticket_id}', [ReservationController::class, 'buyers'])->name('compradores');
+    Route::get('forma_por_boleto/{event_id}', [FormTicketController::class, 'index'])->name('forma_por_boleto');
 });
 
 
@@ -68,4 +70,8 @@ Route::prefix('customer')->middleware(['auth', 'validate_event:request'])->group
     Route::get('downloadCodes', [DiscountController::class, 'downloadCodes']);
     Route::post('issueCompTickets', [TicketController::class, 'issueCompTickets']);
     Route::post('buyers', [ReservationController::class, 'getBuyers']);
+    Route::get('questions', [FormTicketController::class, 'getQuestions']);
+    Route::post('question', [FormTicketController::class, 'createQuestion']);
+    Route::put('question', [FormTicketController::class, 'editQuestion']);
+    Route::patch('question/{id}', [FormTicketController::class, 'changeStatusQuestion']);
 });

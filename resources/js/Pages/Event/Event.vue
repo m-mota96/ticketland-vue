@@ -1,3 +1,142 @@
+<script setup lang="js">
+import { ref, onMounted } from 'vue';
+import apiClient from '@/apiClient';
+import { showNotification } from '@/notification';
+import { dateEs, time } from '@/dateEs';
+import Tickets from './Tickets.vue';
+
+const { event_id, name_ticket } = defineProps({
+    event_id: {
+        type: Number,
+        required: true
+    },
+    name_ticket: {
+        type: String,
+        required: false,
+    }
+});
+
+onMounted(() => {
+    getInformationEvent();
+});
+
+const appUrl           = window.location.origin;
+const gutterValue      = window.innerWidth <= 768 ? 0 : 20;
+const gutterValue2     = window.innerWidth < 768 ? 0 : 80;
+const ticketsRef       = ref(null);
+const event            = ref({});
+const tickets          = ref([]);
+const viewFormTickets = ref(false);
+const loading          = false;
+const data             = ref({
+    tickets: [],
+    ticketsReserved: [],
+    selected: 0,
+    subtotal: 0,
+    discount: 0,
+    discountAmount: 0,
+    total: 0,
+    commission: 0,
+});
+
+const getInformationEvent = async () => {
+    const response = await apiClient(`event/${event_id}`, 'GET');
+    if (response.error) {
+        showNotification('¡Error!', response.msj, 'error', 8000);
+        return false;
+    }
+    event.value   = response.data.event;
+    tickets.value = response.data.tickets;
+    tickets.value.forEach(t => {
+        if (t.questions.length) { // Verificamos si ese boletos tiene campos adicionales agregados.
+            t.questions.forEach(q => {
+                if (q.type === 'select') {
+                    // Si el campo es de tipo select convertimos el atring separado por comas a array.
+                    q.options = q.options.split(',');
+                }
+            });
+        }
+    });
+};
+
+// Calcula el total a pagar por el cliente.
+const totals = () => {
+    data.value.subtotal = 0;
+    data.value.total    = 0;
+    tickets.value.forEach(t => {
+        const price = t.promotion
+            ? parseInt(t.priceDiscount) // Si el boleto tiene descuento tomamos el precio con descuento.
+            : parseInt(t.price) // Si no tiene ningún descuento tomamos el precio base.
+        
+        data.value.subtotal = data.value.subtotal + (price * t.quantity_to_purchase);
+    });
+
+    data.value.total = data.value.subtotal;
+};
+
+// Hace el cálculo de los boletos que quieren comprar
+const calculate = (val, oldVal, t) => {
+    const quantity = totalTickets();
+    if (quantity > 10) {
+        // Evitar que compren mas de 10 boletos en total.
+        t.quantity_to_purchase = t.quantity_to_purchase - 1;
+    }
+    if ((data.value.selected + (val - oldVal)) > 10) {
+        // Evitar que elijan mas de 10 veces el boleto.
+        return false;
+    }
+    data.value.selected = data.value.selected + (val - oldVal);
+    totals();
+};
+
+// Calcula el total de boletos que va a comprar el cliente
+const totalTickets = () => {
+    let total = 0;
+    tickets.value.forEach(t => {
+        total = total + t.quantity_to_purchase;
+    });
+    return total;
+};
+
+const loadInfo = () => {
+    if (!data.value.selected) {
+        showNotification('¡Atención!', 'Debes tener seleccionado al menos 1 boleto', 'warning', 6500);
+        return;
+    }
+
+    // Obtenemos solo los boletos que quieren comprar (quantity_to_purchase > 0).
+    const ticketsFiltered = tickets.value.filter(t => t.quantity_to_purchase !== 0);
+    ticketsRef.value?.loadForm(event_id, ticketsFiltered, event.value.payment_methods);
+    // this.verifyCodes();
+    // viewFormTickets.value = true;
+    // this.$nextTick(() => {
+    //     // Espera a que el DOM se actualice
+    //     if (this.$refs.dataOrder) {
+    //         this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
+    //     }
+    // });
+};
+
+const formatDate = (_date) => {
+    return dateEs(_date, 1, ' ');
+};
+const formatTime = (_time) => {
+    return time(_time);
+};
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+    }).format(value);
+};
+const isNumber = (evt) => {
+    const charCode = evt.which ? evt.which : evt.keyCode;
+    if (charCode < 48 || charCode > 57) {
+        evt.preventDefault();
+    }
+};
+</script>
+
 <template>
     <el-row class="container-fluid has-background-white-ter" ref="dataPrincipal">
         <el-col :xs="0" :sm="0" :md="0" :lg="24" :xl="24" class="row content-head p-r">
@@ -33,7 +172,7 @@
             </el-row>
         </el-col>
     </el-row>
-    <el-row class="container-fluid has-background-white pt-6 padding" v-if="!viewInfoCustomer" ref="dataTickets">
+    <el-row class="container-fluid has-background-white pt-6 padding" v-if="!viewFormTickets" ref="dataTickets">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue">
                 <el-col :span="24" class="mb-6">
@@ -41,10 +180,10 @@
                     <h3 class="subtitle is-4 mb-0 has-text-grey">Máximo 10 boletos por orden</h3>
                 </el-col>
                 <el-col :span="24">
-                    <el-row class="mb-6" :gutter="gutterValue2" v-for="(t, index) in data.tickets" :key="index">
+                    <el-row class="mb-6" :gutter="gutterValue2" v-for="(t, index) in tickets" :key="index">
                         <div class="w-100" :ref="t.name" >
                             <el-col :span="24">
-                                <el-row :class="{'card has-background-light p-5': t.name == ticket}">
+                                <el-row :class="{'card has-background-light p-5': t.name == name_ticket}">
                                     <el-col class="mb-3" :sm="24" :md="16" :lg="18" :xl="18">
                                             <h4 class="subtitle is-4 has-text-dark mb-0" v-if="!t.promotion">{{ t.name }}</h4>
                                             <el-badge :value="`${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion">
@@ -58,7 +197,7 @@
                                     <el-col class="mb-6" :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
                                         <el-input-number
                                             class="w-100"
-                                            v-model="t.quantity"
+                                            v-model="t.quantity_to_purchase"
                                             size="large"
                                             :min="0"
                                             :max="10"
@@ -74,7 +213,7 @@
             </el-row>
         </el-col>
     </el-row>
-    <el-row class="has-background-white pb-5 b-t b-b pt-6 pb-5 padding" v-if="!viewInfoCustomer">
+    <el-row class="has-background-white pb-5 b-t b-b pt-6 pb-5 padding" v-if="!viewFormTickets">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue2">
                 <el-col :xs="24" :sm="24" :md="16" :lg="15" :xl="18" class="mb-3">
@@ -90,412 +229,7 @@
             </el-row>
         </el-col>
     </el-row>
-    <el-row
-        ref="dataOrder"
-        class="custom-loading-svg container-fluid has-background-white pt-6 pb-6 padding b-b"
-        v-if="viewInfoCustomer"
-        :element-loading-text="`¡Procesando tu ${txtLoading}. No cierres ni actualices esta página, por favor espera!`"
-        v-loading="loading"
-        :element-loading-svg="svg"
-        element-loading-svg-view-box="-10, -10, 50, 50"
-        element-loading-background="rgba(0, 0, 0, 0.9)"
-    >
-        <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
-            <el-row :gutter="gutterValue" class="mb-6">
-                <el-col :span="24" class="mb-3">
-                    <el-row>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="18" :xl="18">
-                            <h3 class="title is-3 has-text-dark mb-2">Datos de la orden</h3>
-                        </el-col>
-                        <el-col :xs="0" :sm="0" :md="12" :lg="6" :xl="6" class="has-text-right">
-                            <p class="has-text-link pointer" @click="viewTickets"><font-awesome-icon :icon="['fas', 'arrow-left']" /> Regresar a boletos</p>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="0" :lg="0" :xl="0" class="mt-1">
-                            <p class="has-text-link pointer" @click="viewTickets"><font-awesome-icon :icon="['fas', 'arrow-left']" /> Regresar a boletos</p>
-                        </el-col>
-                    </el-row>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
-                    <label class="bold has-text-dark" for="name">Nombre completo <span class="has-text-danger">*</span></label>
-                    <el-input
-                        class="el-form-item mb-0 mt-1"
-                        :class="{'is-error': errors.name}"
-                        name="name"
-                        id="name"
-                        autocomplete="name"
-                        v-model="data.order.name"
-                        placeholder="Nombre completo"
-                    />
-                    <span class="text-error" v-if="errors.name">El nombre es obligatorio.</span>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
-                    <label class="bold has-text-dark" for="phone">Teléfono <span class="has-text-danger">*</span></label>
-                    <!-- <el-input
-                        class="el-form-item mb-0 mt-1"
-                        :class="{'is-error': errors.phone}"
-                        id="phone"
-                        v-model="data.order.phone"
-                        placeholder="Teléfono"
-                        @keypress="isNumber($event)"
-                        maxlength="10"
-                    /> -->
-                    <VueTelInput
-                        v-model="data.order.phone"
-                        mode="international"
-                        class="mt-1"
-                        :class="{'error-phone': errors.phone}"
-                        style="color: #606266; height: 32px;"
-                        :auto-format="true"
-                        :input-options="{ placeholder: 'Ingresa tu número de teléfono', name: 'phone', id: 'phone', autocomplete: 'phone' }"
-                        @input="onPhoneChange"
-                        defaultCountry="MX"
-                    />
-                    <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
-                    <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
-                    <label class="bold has-text-dark" for="email">Correo <span class="has-text-danger">*</span></label>
-                    <el-input
-                        class="el-form-item mb-0 mt-1"
-                        :class="{'is-error': errors.email || errors.confirm_email_invalid2}"
-                        name="email"
-                        id="email"
-                        autocomplete="email"
-                        v-model="data.order.email"
-                        placeholder="Correo electrónico"
-                    />
-                    <span class="text-error" v-if="errors.email">El correo es obligatorio.</span>
-                    <span class="text-error" v-if="errors.email_invalid">Correo inválido.</span>
-                    <span class="text-error" v-if="errors.confirm_email_invalid2">Los correos no coinciden.</span>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
-                    <label class="bold has-text-dark" for="confirm_email">Confirmar correo <span class="has-text-danger">*</span></label>
-                    <el-input
-                        class="el-form-item mb-0 mt-1"
-                        :class="{'is-error': errors.confirm_email || errors.confirm_email_invalid || errors.confirm_email_invalid2}"
-                        name="email"
-                        id="confirm_email"
-                        autocomplete="email"
-                        v-model="data.order.confirm_email"
-                        placeholder="Confirmar correo electrónico"
-                    />
-                    <span class="text-error" v-if="errors.confirm_email">Confirme el correo.</span>
-                    <span class="text-error" v-if="errors.confirm_email_invalid">Correo inválido.</span>
-                    <span class="text-error" v-if="errors.confirm_email_invalid2">Los correos no coinciden.</span>
-                </el-col>
-                <el-col :span="24">
-                    <i class="has-text-dark"><font-awesome-icon :icon="['fas', 'circle-info']" /> Debes de tener acceso al correo ya que a esta dirección se enviarán los boletos.</i>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3 mt-4" :inline="true">
-                    <el-row :gutter="5">
-                        <el-col :xs="17" :sm="17" :md="18" :lg="16" :xl="18">
-                            <label class="bold has-text-dark">¿Tienes un cupón de descuento?</label>
-                            <el-input
-                                class="el-form-item mb-0"
-                                :class="{'is-error': false}"
-                                v-model="data.order.code"
-                                placeholder="Ingresa tu cupón"
-                                @input="formatInput"
-                                :disabled="disabledDiscount"
-                            />
-                        </el-col>
-                        <el-col :xs="7" :sm="7" :md="6" :lg="8" :xl="6">
-                            <br>
-                            <el-button class="w-100" type="success" @click="verifyCodes" v-if="!data.discount">Validar cupón</el-button>
-                            <el-button class="w-100" type="danger" @click="verifyCodes('delete')" v-if="data.discount">Borrar cupón</el-button>
-                        </el-col>
-                    </el-row>
-                </el-col>
-            </el-row>
-            <el-row :gutter="gutterValue" class="mb-6">
-                <el-col :span="24" class="mb-3">
-                    <el-row>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="18" :xl="18">
-                            <h3 class="title is-3 has-text-dark mb-2">Datos de los boletos</h3>
-                        </el-col>
-                        <el-col :xs="0" :sm="0" :md="12" :lg="6" :xl="6" class="has-text-right">
-                            <p class="has-text-link pointer" @click="viewTickets"><font-awesome-icon :icon="['fas', 'arrow-left']" /> Regresar a boletos</p>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="0" :lg="0" :xl="0" class="mt-1">
-                            <p class="has-text-link pointer" @click="viewTickets"><font-awesome-icon :icon="['fas', 'arrow-left']" /> Regresar a boletos</p>
-                        </el-col>
-                    </el-row>
-                </el-col>
-                <el-col :span="24" v-loading="loadingTickets">
-                    <el-row>
-                        <el-card class="w-100 mb-5 my-card" v-for="(t, index) in data.ticketsReserved" :key="index">
-                            <template #header>
-                                <div class="card-header">
-                                    <el-col :span="24">
-                                        <el-row :gutter="gutterValue">
-                                            <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
-                                                <span>Boleto {{ (index + 1) }} - <b class="has-text-primary">{{ t.name }}</b></span>
-                                                <p v-if="t.promotion && !t.code_id">
-                                                    Precio
-                                                    <span class="subtitle is-6 has-text-gray mb-0"><del>{{ formatCurrency(t.price) }}</del></span>
-                                                    <span class="subtitle is-5 !text-orange-500 bold ml-2">{{ formatCurrency(t.price - Math.round(t.price * (t.promotion / 100))) }}</span>
-                                                </p>
-                                                <p v-if="!t.promotion && !t.code_id">
-                                                    Precio
-                                                    <span class="subtitle is-5 !text-orange-500 bold">{{ formatCurrency(t.price) }}</span>
-                                                </p>
-                                                <p v-if="t.code_id">
-                                                    Precio
-                                                    <span class="subtitle is-6 has-text-gray mb-0"><del>{{ formatCurrency(t.price) }}</del></span>
-                                                    <span class="subtitle is-5 !text-orange-500 bold ml-2">{{ formatCurrency(t.price - Math.round(t.price * (t.code_discount / 100))) }}</span>
-                                                </p>
-                                                <p class="mb-0" v-if="t.code_id">
-                                                    Cupón de descuento aplicado
-                                                    <span class="text-blue-500 ml-2">
-                                                        <font-awesome-icon :icon="['fas', 'tags']" />
-                                                        {{ t.code }} ({{ t.code_discount }}%)
-                                                    </span>
-                                                </p>
-                                            </el-col>
-                                            <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="has-text-right">
-                                                <el-checkbox class="bold" :class="{'w-100': gutterValue == 0}" v-model="t.checked" label="Autocompletar este boleto con los datos de la orden." size="large" @change="(val) => autoComplete(val, index)" />
-                                            </el-col>
-                                        </el-row>
-                                    </el-col>
-                                </div>
-                            </template>
-                            <el-row :gutter="gutterValue">
-                                <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
-                                    <label class="bold has-text-dark">Nombre completo <span class="has-text-danger">*</span></label>
-                                    <el-input
-                                        class="el-form-item mb-0 mt-1"
-                                        :class="{'is-error': errors.names[index]}"
-                                        v-model="t.customer_name"
-                                        name="name"
-                                        autocomplete="name"
-                                        placeholder="Nombre completo"
-                                    />
-                                    <span class="text-error" v-if="errors.names[index]">El nombre es obligatorio.</span>
-                                </el-col>
-                                <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
-                                    <label class="bold has-text-dark">Correo</label>
-                                    <el-input
-                                        class="el-form-item mb-0 mt-1"
-                                        :class="{'is-error': false}"
-                                        v-model="t.email"
-                                        name="email"
-                                        autocomplete="email"
-                                        placeholder="Correo electrónico"
-                                    />
-                                </el-col>
-                                <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
-                                    <label class="bold has-text-dark">Teléfono</label>
-                                    <!-- <el-input
-                                        class="el-form-item mb-0 mt-1"
-                                        :class="{'is-error': false}"
-                                        v-model="t.phone"
-                                        placeholder="Teléfono"
-                                        @keypress="isNumber($event)"
-                                        maxlength="10"
-                                    /> -->
-                                    <VueTelInput
-                                        v-model="t.phone"
-                                        :value="t.phone"
-                                        mode="international"
-                                        class="mt-1"
-                                        style="color: #606266; height: 32px;"
-                                        :auto-format="true"
-                                        :input-options="{ placeholder: 'Número de teléfono' }"
-                                        @input="(val) => onPhoneChangeTickets(val, index)"
-                                        defaultCountry="MX"
-                                    />
-                                </el-col>
-                            </el-row>
-                            <!-- <template #footer v-if="t.name === 'Entrada general 2 días'">
-                                <div class="has-text-centered bg-green-100 p-2">
-                                    Cupón de descuento aplicado
-                                    <span class="text-blue-500 ml-2">
-                                        <font-awesome-icon :icon="['fas', 'tags']" />
-                                        BUENFIN (10%)
-                                    </span>
-                                </div>
-                            </template> -->
-                        </el-card>
-                    </el-row>
-                </el-col>
-            </el-row>
-            <el-row :gutter="gutterValue" class="mb-6">
-                <el-col :span="24" class="mb-3">
-                    <el-row>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="18" :xl="18">
-                            <h3 class="title is-3 has-text-dark mb-2">Datos del pago</h3>
-                        </el-col>
-                        <el-col :xs="0" :sm="0" :md="12" :lg="6" :xl="6" class="has-text-right">
-                            <p class="has-text-link pointer" @click="viewTickets"><font-awesome-icon :icon="['fas', 'arrow-left']" /> Regresar a boletos</p>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="0" :lg="0" :xl="0" class="mt-1">
-                            <p class="has-text-link pointer" @click="viewTickets"><font-awesome-icon :icon="['fas', 'arrow-left']" /> Regresar a boletos</p>
-                        </el-col>
-                    </el-row>
-                </el-col>
-                <el-col :span="24">
-                    <el-table class="w-100 mb-3" :data="filteredTickets" stripe header-cell-class-name="has-text-dark" empty-text="Ningún dato disponible en esta tabla">
-                        <el-table-column label="Producto" width="180">
-                            <template #default="scope">
-                                <span>{{ scope.row.name }}</span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="Cantidad" align="center">
-                            <template #default="scope">
-                                {{ scope.row.quantity }}
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="Precio unitario">
-                            <template #default="scope">
-                                <span v-if="!scope.row.priceWithDiscount">
-                                    <span v-if="!scope.row.promotion" class="has-text-success">{{ scope.row.priceUnit }}</span>
-                                    <del v-if="scope.row.promotion && !data.discount" class="has-text-danger">{{ scope.row.priceUnit }}</del>
-                                    <span v-if="scope.row.promotion && data.discount" class="has-text-success">{{ scope.row.priceUnit }}</span>
-                                </span>
-                                <span v-if="scope.row.priceWithDiscount" class="has-text-success">
-                                    {{ formatCurrency(scope.row.priceWithDiscount) }} MXN
-                                </span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="Precio c/descuento">
-                            <template #default="scope">
-                                <span v-if="scope.row.promotion && !data.discount" class="has-text-success">{{ formatCurrency(scope.row.priceDiscount) }} MXN</span>
-                                <del v-if="scope.row.promotion && data.discount" class="has-text-danger">{{ formatCurrency(scope.row.priceDiscount) }} MXN</del>
-                                <span v-if="!scope.row.promotion" class="has-text-danger"><del>N/A</del></span>
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="Subtotal">
-                            <template #default="scope">
-                                {{ scope.row.subtotal }}
-                            </template>
-                        </el-table-column>
-                        <!-- <el-table-column label="Cupones">
-                            <template #default="scope">
-                                {{ formatCurrency(scope.row.discount)+' MXN' }}
-                            </template>
-                        </el-table-column>
-                        <el-table-column label="Total">
-                            <template #default="scope">
-                                {{ formatCurrency((scope.row.quantity * scope.row.price) - scope.row.discount)+' MXN' }}
-                            </template>
-                        </el-table-column> -->
-                    </el-table>
-                    <i class="has-text-link"><font-awesome-icon :icon="['fas', 'circle-info']" /> Si aplicas un cupón de descuento no se tomará en cuenta el precio con descuento del boleto.</i>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6">
-                    <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
-                    <el-select
-                        :class="{'is-error': errors.payment_method}"
-                        class="el-form-item mb-0"
-                        v-model="data.order.payment_method"
-                        placeholder="Selecciona una opción"
-                        id="payment_method"
-                        clearable
-                        @change="(val) => verifyPaymentMethod(val)"
-                        >
-                            <!-- <el-option label="Pago en Oxxo (México)" value="oxxo" :disabled="disabledPaymentMethod" v-if="!disabledPaymentMethod" /> -->
-                            <el-option v-for="pm in event.payment_methods" :key="pm.id" :label="pm.name" :value="pm.sku" />
-                    </el-select>
-                    <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
-                </el-col>
-                <el-col :span="24" class="has-text-left mt-6">
-                    <h6 class="subtitle is-5 has-text-black mb-2">
-                        Subtotal: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
-                    </h6>
-                    <!-- <h6 class="subtitle is-5 has-text-black mb-2">
-                        Código de descuento: <b>{{ data.discount == 0 ? 'N/A' : formatCurrency(data.discountAmount)+' MXN' }}</b>
-                    </h6> -->
-                    <!-- <h6 class="subtitle is-5 has-text-black mb-2">
-                        Total: <b>{{ formatCurrency(data.total) }} MXN</b>
-                    </h6> -->
-                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="event.model_payment == 'separated'">
-                        Cargo por servicio: <b>{{ formatCurrency(data.commission) }} MXN</b>
-                    </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2">
-                        Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + data.commission) }} MXN</b>
-                    </h6>
-                </el-col>
-                <el-col :span="24" class="pt-5 pb-5">
-                    <el-row :gutter="gutterValue">
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="cardName">Nombre en la tarjeta <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.cardName}"
-                                class="el-form-item mb-0"
-                                name="name"
-                                id="cardName"
-                                autocomplete="name"
-                                v-model="data.paymentData.card.name"
-                                placeholder="Nombre del propietario de la tarjeta"
-                                type="text"
-                            />
-                            <span class="text-error" v-if="errors.cardName">El nombre del propietario es obligatorio.</span>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="cardNumber">Número de tarjeta <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.cardNumber || errors.cardInvalid}"
-                                class="el-form-item mb-0"
-                                id="cardNumber"
-                                v-mask="'#### #### #### ####'"
-                                v-model="data.paymentData.card.number"
-                                placeholder="1234 5678 9012 3456"
-                                maxlength="19"
-                                clearable
-                            />
-                            <span class="text-error" v-if="errors.cardNumber">El número de tarjeta es obligatorio.</span>
-                            <span class="text-error" v-if="errors.cardInvalid">El número de tarjeta debe contener 16 dígitos.</span>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="expiration">Fecha de expiración <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.expiration || errors.month_invalid || errors.year_invalid}"
-                                class="el-form-item mb-0"
-                                id="expiration"
-                                v-mask="'##/##'"
-                                v-model="data.cardExpiration"
-                                placeholder="MM/AA"
-                                maxlength="5"
-                                clearable
-                                @keyup="setExpiration"
-                            />
-                            <p class="text-error" v-if="errors.expiration">Completa el mes y el año.</p>
-                            <p class="text-error" v-if="errors.month_invalid">Ingresa un mes válido.</p>
-                            <p class="text-error" v-if="errors.year_invalid">El año debe ser mayor o igual que el actual.</p>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="cvv">CVV <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.cvc}"
-                                class="el-form-item mb-0"
-                                id="cvv"
-                                v-model="data.paymentData.card.cvc"
-                                placeholder="CVV"
-                                maxlength="3"
-                                @keypress="isNumber($event)"
-                            />
-                            <span class="text-error" v-if="errors.cvc">El código de seguridad es obligatorio.</span>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-if="data.order.payment_method == 'paypal'" class="text-center justify-content-center">
-                            <PaypalButton
-                                ref="PaypalButton"
-                                :amount="event.model_payment === 'separated' ? (data.subtotal + data.commission) : data.subtotal"
-                                @update-orderId="data.order.paypal_order_id = $event"
-                                :handleMakePayment="payment"
-                            />
-                        </el-col>
-                    </el-row>
-                </el-col>
-                <el-col :span="24" class="has-text-centered mt-3">
-                    <el-button type="primary" size="large" @click="payment" v-if="event.status == 1 && (data.order.payment_method === 'oxxo' || data.order.payment_method === 'card')">
-                        <font-awesome-icon :icon="['fas', 'dollar-sign']" v-if="data.order.payment_method == 'card'" />
-                        <font-awesome-icon :icon="['fas', 'check']" v-if="data.order.payment_method == 'oxxo'" />
-                        &nbsp;&nbsp;{{ data.order.payment_method == 'card' ? 'Realizar pago' : 'Realizar pedido' }}
-                    </el-button>
-                </el-col>
-            </el-row>
-        </el-col>
-    </el-row>
+    <Tickets ref="ticketsRef" v-model="viewFormTickets" />
     <el-row class="container-fluid has-background-white pb-6 pt-6 padding" ref="moreInfo">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue2">
@@ -524,712 +258,8 @@
     <el-row class="has-background-dark" style="height: 15vh;">
         
     </el-row>
-    <Errors ref="Errors"></Errors>
-    <div></div>
 </template>
 
-<script>
-import apiClient from '@/apiClient';
-import apiClientPayments from '@/apiClientPayments';
-import { dateEs, time } from '@/dateEs';
-import { showNotification } from '@/notification';
-import Errors from './Modals/Errors.vue';
-import { ElMessageBox } from 'element-plus';
-import PaypalButton from './PaypalButton.vue';
-import { nextTick } from 'vue';
-import { VueTelInput } from 'vue3-tel-input'
-import 'vue3-tel-input/dist/vue3-tel-input.css'
-
-export default {
-    components: {
-        Errors,
-        PaypalButton,
-        VueTelInput
-    },
-    data() {
-        return {
-            appUrl: window.location.origin,
-            event: this.$page.props.event,
-            ticket: this.$page.props.ticket,
-            loading: false,
-            gutterValue: window.innerWidth <= 768 ? 0 : 20,
-            gutterValue2: window.innerWidth < 768 ? 0 : 80,
-            txtLoading: 'compra',
-            data: {
-                tickets: [],
-                ticketsReserved: [],
-                selected: 0,
-                subtotal: 0,
-                discount: 0,
-                discountAmount: 0,
-                total: 0,
-                commission: 0,
-                order: {
-                    event_id: this.$page.props.event.id,
-                    name: '',
-                    email: '',
-                    confirm_email: '',
-                    phone: '',
-                    payment_method_id: '',
-                    payment_method: '',
-                    token_id: '',
-                    card: '',
-                    code: '',
-                    paypal_order_id: '',
-                    device_session_id: ''
-                },
-                paymentData: {
-                    card: {
-                        name: '',
-                        number: '',
-                        exp_month: '',
-                        exp_year: '',
-                        cvc: ''
-                    },
-                    name: '',
-                    email: '',
-                    phone: ''
-                },
-                cardExpiration: '',
-            },
-            phone: '',
-            viewInfoCustomer: false,
-            errors: {
-                name: false,
-                email: false,
-                email_invalid: false,
-                confirm_email: false,
-                confirm_email_invalid: false,
-                confirm_email_invalid2: false,
-                phone: false,
-                phone_invalid: false,
-                names: [],
-                payment_method: false,
-                cardName: false,
-                cardNumber: false,
-                cardInvalid: false,
-                expiration: false,
-                month_invalid: false,
-                year_invalid: false,
-                cvc: false
-            },
-            svg: `
-                <path class="path" d="
-                M 30 15
-                L 28 17
-                M 25.61 25.61
-                A 15 15, 0, 0, 1, 15 30
-                A 15 15, 0, 1, 1, 27.99 7.5
-                L 15 15
-                " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
-            `,
-            currentYear: new Date().getFullYear(),
-            disabledPaymentMethod: false,
-            disabledDiscount: false,
-            publicKey: import.meta.env.VITE_CONEKTA_PUBLIC_KEY,
-            loadingTickets: false,
-            commissionTicketland: 0,
-        }
-    },
-    beforeMount() {
-        // console.log(this.event.event_dates);
-        this.loadPaymentMethod();
-        this.setTickets();
-    },
-    mounted() {
-        document.title = `${this.event.name}`;
-        window.addEventListener('resize', this.handleResize);
-        nextTick(() => {
-            if (this.ticket) {
-                setTimeout(() => {
-                    const el = this.$refs[this.ticket];
-                    if (el && el[0]) {
-                        this.scrollToElementWithOffset(el[0], 80);
-                    } else if (el) {
-                        this.scrollToElementWithOffset(el, 80);
-                    }
-                }, 100);
-            }
-        });
-    },
-    beforeDestroy() {
-        window.removeEventListener('resize', this.handleResize);
-    },
-    methods: {
-        payment() {
-            if (this.validate()) {
-                this.scrollCenterY();
-                const txt    = this.data.order.payment_method == 'card' || this.data.order.payment_method == 'paypal' ? 
-                `Tus boletos se enviarán al siguiente correo:<br><b>${this.data.order.email}</b><br>¿El correo esta correcto?<br>` : 
-                `Tu ficha de pago se enviará al siguiente correo:<br><b>${this.data.order.email}</b><br>¿El correo esta correcto?<br>Tendrás 48 horas para realizar tu pago.<br>`;
-                const txtBtn = this.data.order.payment_method == 'card' || this.data.order.payment_method == 'paypal' ? 
-                'Si, proceder al pago' :
-                'Si, realizar registro';
-                ElMessageBox.confirm(
-                    txt,
-                    '¡Atención!',
-                    {
-                        dangerouslyUseHTMLString: true,
-                        confirmButtonText: txtBtn,
-                        cancelButtonText: 'Cancelar',
-                        type: 'warning',
-                        center: true,
-                        lockScroll: false
-                    }
-                )
-                .then(() => {
-                    this.txtLoading = this.data.order.payment_method == 'card' || this.data.order.payment_method == 'paypal' ? 'compra' : 'registro';
-                    this.scrollCenterY();
-                    this.loading = true;
-                    if (this.data.order.payment_method == 'card') {
-                        this.data.paymentData.name  = this.data.paymentData.card.name;
-                        this.data.paymentData.email = this.data.order.email;
-                        this.data.paymentData.phone = this.data.order.phone;
-                        const script  = document.createElement("script");
-                        script.type   = "text/javascript";
-                        script.src    = `https://cdn.conekta.io/js/latest/conekta.js`;
-                        script.id     = "conekta-sdk";
-                        script.onload = () => {
-                            Conekta.setPublicKey(this.publicKey);
-                            Conekta.setLanguage('es');
-                            Conekta.Token.create(this.data.paymentData,
-                                (token) => this.makePayment(token),
-                                (error) => {
-                                    this.loading = false;
-                                    console.log('Error al crear token:', error);
-                                }
-                            );
-                        }
-                        document.head.appendChild(script);
-                    } else {
-                        this.makePayment();
-                    }
-                });
-            } else {
-                this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
-            }
-        },
-        async makePayment(token = null) {
-            if (this.data.order.payment_method == 'card') {
-                this.data.order.token_id          = token.id;
-                this.data.order.device_session_id = Math.random().toString(36).substring(2);
-                this.data.order.card              = this.data.paymentData.card.number.slice(-4);
-            }
-            const response = await apiClientPayments('makePayment', 'GET', {
-                selected: this.data.selected,
-                order: this.data.order,
-                tickets: this.filterTickets(),
-                informationTickets: this.data.ticketsReserved,
-            });
-            this.loading = false;
-            // console.log(response);
-            if (response.error) {
-                const existingScript = document.getElementById("conekta-sdk");
-                if (existingScript) {
-                    existingScript.remove();
-                }
-                if (!response.data.type) {
-                    showNotification('¡Error!', response.msj, 'error', 7000);
-                    return false;
-                }
-                switch (response.data.type) {
-                    case 'stock':
-                        this.$refs.Errors.showErrors(response.data.error);
-                        break;
-                    case 'codes':
-                        this.verifyCodes('delete');
-                        this.totals();
-                        showNotification('¡Error!', response.msj, 'error', 15000);
-                        break;
-                    case 'event':
-                    case 'createCustomer':
-                    case 'payment':
-                    case 'general':
-                        showNotification('¡Error!', response.msj, 'error', 0);
-                        break;
-                }
-                return false;
-            }
-            this.$nextTick(() => {
-                // Espera a que el DOM se actualice
-                if (this.$refs.dataPrincipal) {
-                    this.$refs.dataPrincipal.$el.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-            this.viewInfoCustomer = false;
-            this.resetInfo();
-            this.resetErrors();
-            this.setTickets();
-            showNotification('¡Correcto!', response.msj, 'success', 30000);
-            return false;
-        },
-        async verifyCodes(action = null) {
-            this.data.ticketsReserved.forEach(t => {
-                t.code_id       = null;
-                t.code          = '';
-                t.code_discount = '';
-            });
-
-            this.data.tickets.forEach(t => {
-                t.code_id       = null;
-                t.code          = '';
-                t.code_discount = '';
-            });
-            if (action == 'delete') {
-                this.data.order.code  = '';
-                this.disabledDiscount = false;
-            }
-            this.data.discount       = 0;
-            this.data.discountAmount = 0;
-            this.totals();
-            if (this.data.order.code) {
-                this.loadingTickets = true;
-                const response = await apiClient('verifyCodes', 'GET', {event_id: this.event.id, code: this.data.order.code});
-                this.loadingTickets = false;
-                if (response.error) {
-                    this.data.order.code = '';
-                    showNotification('¡Error!', response.msj, 'error', 7000);
-                    return false;
-                }
-                this.disabledDiscount = true;
-                this.data.discount    = response.data.discount;
-                const idsSet          = new Set(response.data.tickets);
-
-                let isApplicable = false;
-                this.data.ticketsReserved.forEach(t => {
-                    if (idsSet.has(t.id)) {
-                        isApplicable    = true;
-                        t.code_id       = response.data.code_id;
-                        t.code          = response.data.code;
-                        t.code_discount = response.data.discount;
-                    }
-                });
-
-                this.data.tickets.forEach(t => {
-                    if (idsSet.has(t.id)) {
-                        t.code_id       = response.data.code_id;
-                        t.code          = response.data.code;
-                        t.code_discount = response.data.discount;
-                    }
-                });
-                if (isApplicable) {
-                    this.totals();
-                    showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
-                } else {
-                    showNotification('¡Atención!', 'Tu cupón es válido.<br>Pero no aplica para ningún boleto seleccionado (no se aplicaron descuentos).', 'warning', 15000);
-                    this.verifyCodes('delete');
-                }
-
-            }
-        },
-        loadInfo() {
-            if (!this.data.selected) {
-                showNotification('¡Atención!', 'Debes tener seleccionado al menos 1 boleto', 'warning', 6500);
-                return;
-            }
-            this.verifyCodes();
-            this.viewInfoCustomer = true;
-            this.$nextTick(() => {
-                // Espera a que el DOM se actualice
-                if (this.$refs.dataOrder) {
-                    this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        },
-        calculate(val, oldVal, t) {
-            const quantity = this.totalTickets();
-            if (quantity > 10) {
-                t.quantity = t.quantity - 1;
-            }
-            if ((this.data.selected + (val - oldVal)) > 10) {
-                return false;
-            }
-            this.data.selected = this.data.selected + (val - oldVal);
-            this.totals(true);
-        },
-        totalTickets() {
-            let total = 0;
-            this.data.tickets.forEach(t => {
-                total = total + t.quantity;
-            });
-            return total;
-        },
-        totals(save = false) {
-            this.data.subtotal = 0;
-            this.data.total    = 0;
-            if (save) {
-                this.data.ticketsReserved = [];
-                this.errors.names         = [];
-            }
-            // console.log(this.data.discount);
-            this.data.tickets.forEach((t, i) => {
-                const price = t.promotion && !t.code_id
-                    ? t.priceDiscount
-                    : (!t.code_id ? t.price : (t.price - Math.round(t.price * (t.code_discount / 100))));
-                this.data.subtotal  = this.data.subtotal + (t.quantity * price);
-                t.subtotal          = this.formatCurrency(t.quantity * price) + ' MXN';
-                t.priceWithDiscount = t.code_id ? price : 0;
-                if (t.quantity > 0 && save) {
-                    for (let j = 0; j < t.quantity; j++) {
-                        this.errors.names.push(false);
-                        this.data.ticketsReserved.push({
-                            id: t.id,
-                            name: t.name,
-                            customer_name: '',
-                            price: t.price,
-                            promotion: t.promotion,
-                            date_promotion: t.date_promotion,
-                            email: '',
-                            phone: '',
-                            code_id: null,
-                            code: '',
-                            code_discount: '',
-                            checked: false,
-                        });
-                    }
-                }
-            });
-            this.data.discountAmount = this.data.discount
-            ? Math.round(this.data.subtotal * (this.data.discount / 100))
-            : 0;
-            this.data.total = this.data.discount
-            ? this.data.subtotal - this.data.discountAmount
-            : this.data.subtotal;
-            if (this.data.order.payment_method) {
-                this.verifyPaymentMethod(this.data.order.payment_method);
-            }
-            // this.data.commission = this.event.model_payment === 'separated' ? Math.round(this.data.subtotal * commissionTicketland) : 0;
-            // console.log('SUBTOTAL ', this.data.subtotal);
-            // console.log('CUPON ', this.data.discountAmount);
-            // console.log('TOTAL ', this.data.total);
-            // console.log('COMISION ', this.data.commission);
-            // console.log('TOTAL A PAGAR ', (this.data.total + this.data.commission));
-        },
-        autoComplete(checked, index) {
-            this.data.ticketsReserved[index].customer_name = '';
-            this.data.ticketsReserved[index].email         = '';
-            this.data.ticketsReserved[index].phone         = '';
-            if(checked) {
-                this.data.ticketsReserved[index].customer_name = this.data.order.name;
-                this.data.ticketsReserved[index].email         = this.data.order.email;
-                if (this.data.order.phone) {
-                    this.data.ticketsReserved[index].phone         = this.data.order.phone;
-                }
-            }
-        },
-        viewTickets() {
-            this.totals();
-            this.viewInfoCustomer = false;
-            this.$nextTick(() => {
-                // Espera a que el DOM se actualice
-                if (this.$refs.dataTickets) {
-                    this.$refs.dataTickets.$el.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        },
-        moreInfo() {
-            this.viewInfoCustomer = false;
-            this.$nextTick(() => {
-                // Espera a que el DOM se actualice
-                if (this.$refs.moreInfo) {
-                    this.$refs.moreInfo.$el.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        },
-        formatDate(_date) {
-            return dateEs(_date, 1, ' ');
-        },
-        formatTime(_time) {
-            return time(_time);
-        },
-        formatCurrency(value) {
-            return new Intl.NumberFormat('es-MX', {
-                style: 'currency',
-                currency: 'MXN'
-            }).format(value);
-        },
-        isNumber(evt) {
-            const charCode = evt.which ? evt.which : evt.keyCode;
-            if (charCode < 48 || charCode > 57) {
-                evt.preventDefault();
-            }
-        },
-        setExpiration() {
-            this.data.paymentData.card.exp_month = '';
-            this.data.paymentData.card.exp_year  = '';
-            if (this.data.cardExpiration.length == 5) {
-                let expiration = this.data.cardExpiration.split('/');
-                this.data.paymentData.card.exp_month = expiration[0];
-                this.data.paymentData.card.exp_year  = expiration[1];
-            }
-        },
-        validate() {
-            this.resetErrors();
-            const intRegex  = /^\d{10}$/;
-            const mailRegex =  /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/;
-            let valid       = true;
-
-            if (!this.data.order.name) {
-                this.errors.name = true;
-                valid            = false;
-            }
-            if (!this.data.order.email) {
-                this.errors.email = true;
-                valid             = false;
-            }
-            if (!this.data.order.confirm_email) {
-                this.errors.confirm_email = true;
-                valid                     = false;
-            }
-            if (!this.data.order.phone) {
-                this.errors.phone = true;
-                valid             = false;
-            }
-            if (this.data.order.email) {
-                if (!mailRegex.test(this.data.order.email)) {
-                    this.errors.email_invalid = true;
-                    valid                     = false;
-                }
-            }
-            if (this.data.order.confirm_email) {
-                if (!mailRegex.test(this.data.order.confirm_email)) {
-                    this.errors.confirm_email_invalid = true;
-                    valid                             = false;
-                }
-            }
-            if (this.data.order.email && this.data.order.confirm_email) {
-                if (this.data.order.email != this.data.order.confirm_email) {
-                    this.errors.confirm_email_invalid2 = true;
-                    valid                              = false;
-                }
-            }
-            // if (this.data.order.phone) {
-            //     if (!intRegex.test(this.data.order.phone)) {
-            //         this.errors.phone_invalid = true;
-            //         valid                     = false;
-            //     }
-            // }
-
-            this.data.ticketsReserved.forEach((t, i) => {
-                if (!t.customer_name) {
-                    this.errors.names[i] = true;
-                    valid                = false;
-                }
-            });
-
-            if (!this.data.order.payment_method) {
-                this.errors.payment_method = true;
-                valid                      = false;
-            }
-
-            if (this.data.order.payment_method == 'card') {
-                if (!this.data.paymentData.card.name) {
-                    this.errors.cardName = true;
-                    valid                = false;
-                }
-                if (!this.data.paymentData.card.number) {
-                    this.errors.cardNumber = true;
-                    valid                  = false;
-                } else {
-                    const card = this.data.paymentData.card.number.replaceAll(' ', '');
-                    if (card.length !== 16) {
-                        this.errors.cardInvalid = true;
-                        valid                   = false;
-                    }
-                }
-                if (!this.data.cardExpiration) {
-                    this.errors.expiration = true;
-                    valid                  = false;
-                }
-                if (this.data.cardExpiration) {
-                    if (this.data.cardExpiration.length == 5) {
-                        if (parseInt(this.data.paymentData.card.exp_month) < 1 || parseInt(this.data.paymentData.card.exp_month) > 12) {
-                            this.errors.month_invalid = true;
-                            valid                     = false;
-                        }
-                        let year = this.currentYear.toString();
-                        if (parseInt(this.data.paymentData.card.exp_year) < year.slice(-2)) {
-                            this.errors.year_invalid = true;
-                            valid                    = false;
-                        }
-                    }
-                }
-                if (!this.data.paymentData.card.cvc) {
-                    this.errors.cvc = true;
-                    valid           = false;
-                }
-            }
-
-            return valid;
-        },
-        resetErrors() {
-            this.errors.name                   = false;
-            this.errors.email                  = false;
-            this.errors.email_invalid          = false;
-            this.errors.confirm_email          = false;
-            this.errors.confirm_email_invalid  = false;
-            this.errors.confirm_email_invalid2 = false;
-            this.errors.phone                  = false;
-            this.errors.phone_invalid          = false;
-            this.errors.names                  = [];
-            this.errors.payment_method         = false;
-            this.errors.cardName               = false;
-            this.errors.cardNumber             = false;
-            this.errors.cardInvalid            = false;
-            this.errors.expiration             = false;
-            this.errors.month_invalid          = false;
-            this.errors.year_invalid           = false;
-            this.errors.cvc                    = false;
-        },
-        verifyPaymentMethod(value) {
-            this.data.commission = 0;
-            if (value) {
-                const paymentMethod               = this.event.payment_methods.find(pm => pm.sku === value);
-                this.data.order.payment_method_id = paymentMethod.id;
-                this.commissionTicketland         = parseFloat(paymentMethod.pivot.commission);
-                this.data.commission              = this.event.model_payment === 'separated' ? Math.round(this.data.subtotal * this.commissionTicketland) : 0;
-            }
-            if(value !== 'card') {
-                this.errors.cardName               = false;
-                this.errors.cardNumber             = false;
-                this.errors.expiration             = false;
-                this.errors.month_invalid          = false;
-                this.errors.year_invalid           = false;
-                this.errors.cvc                    = false;
-            }
-            if (value === 'paypal') {
-                if (!this.validate()) {
-                    this.data.order.payment_method = '';
-                    this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    this.$nextTick(() => {
-                        if (this.$refs.PaypalButton) {
-                            this.$refs.PaypalButton.loadSdk();
-                        }
-                    });
-                }
-            }
-        },
-        filterTickets() {
-            return this.data.tickets.filter(t => t.quantity > 0);
-        },
-        setTickets() {
-            this.event.tickets.forEach(t => {
-                this.data.tickets.push({
-                    id: t.id,
-                    name: t.name,
-                    description: t.description,
-                    price: t.price,
-                    priceWithDiscount: 0,
-                    priceDiscount: !t.promotion ? 0 : (t.price - Math.round(t.price * (t.promotion / 100))),
-                    priceUnit: this.formatCurrency(t.price) + ' MXN',
-                    subtotal: '',
-                    quantity: 0,
-                    discount: 0,
-                    available: t.available,
-                    promotion: t.promotion,
-                    code_id: null,
-                    code: '',
-                    code_discount: ''
-                });
-            });
-        },
-        resetInfo() {
-            const existingScript = document.getElementById("conekta-sdk");
-            if (existingScript) {
-                existingScript.remove();
-            }
-            this.data.tickets                    = [];
-            this.data.ticketsReserved            = [];
-            this.data.selected                   = 0;
-            this.data.subtotal                   = 0;
-            this.data.discount                   = 0;
-            this.data.discountAmount             = 0;
-            this.data.total                      = 0;
-            this.data.commission                 = 0;
-            this.data.order.name                 = '';
-            this.data.order.email                = '';
-            this.data.order.confirm_email        = '';
-            this.data.order.phone                = '';
-            this.data.order.token_id             = '';
-            this.data.order.card                 = '';
-            this.data.order.code                 = '';
-            this.data.order.paypal_order_id      = '';
-            this.data.paymentData.card.name      = '';
-            this.data.paymentData.card.number    = '';
-            this.data.paymentData.card.exp_month = '';
-            this.data.paymentData.card.exp_year  = '';
-            this.data.paymentData.card.cvc       = '';
-            this.data.cardExpiration             = '';
-            this.disabledDiscount                = false;
-            this.loadPaymentMethod();
-        },
-        loadPaymentMethod() {
-            this.data.order.payment_method = '';
-            this.disabledPaymentMethod     = false;
-            let currentDate = new Date();
-            let date        = new Date(this.event.event_dates[0].date); // formato YYYY-MM-DD
-            date.setDate(date.getDate() - 3);
-            date        = date.toISOString().split('T')[0];
-            currentDate = currentDate.toISOString().split('T')[0];
-            if (currentDate >= date) {
-                this.disabledPaymentMethod     = true;
-                // this.data.order.payment_method = 'card';
-            }
-        },
-        scrollCenterY() {
-            const elComponent = this.$refs.dataOrder;
-            if (elComponent && elComponent.$el && typeof elComponent.$el.getBoundingClientRect === 'function') {
-                const rect         = elComponent.$el.getBoundingClientRect();
-                const scrollTop    = window.scrollY || window.pageYOffset;
-                const windowHeight = window.innerHeight;
-
-                const targetY = rect.top + scrollTop - (windowHeight / 2) + (rect.height / 2);
-                window.scrollTo({
-                    top: targetY,
-                    behavior: 'smooth' // animado
-                });
-            }
-        },
-        formatInput(value) {
-            // const formatted                       = value.toUpperCase().replace(/[^A-Z0-9]/gi, '').trim();
-            // this.data.ticketsReserved[index].code = formatted;
-            const formatted = value.toUpperCase().replace(/[^A-Z0-9]/gi, '').trim();
-            this.data.order.code  = formatted;
-        },
-        handleResize() {
-            this.gutterValue  = window.innerWidth <= 768 ? 0 : 20;
-            this.gutterValue2 = window.innerWidth < 768 ? 0 : 80;
-        },
-        scrollToElementWithOffset(el, offset = 80) {
-            if (!el) return;
-            const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
-            window.scrollTo({ top, behavior: 'smooth' });
-        },
-        onPhoneChange(val) {
-            if (typeof val === 'string') {
-                this.data.order.phone = val.replaceAll(' ', '');
-            } else if (val && val.number) {
-                this.data.order.phone = val.number.replaceAll(' ', '');
-            }
-        },
-        onPhoneChangeTickets(val, index) {
-            if (val) {
-                if (typeof val === 'string') {
-                    this.data.ticketsReserved[index].phone = val.replaceAll(' ', '');
-                } else if (val && val.number) {
-                    this.data.ticketsReserved[index].phone = val.number.replaceAll(' ', '');
-                }
-            }
-        }
-    },
-    computed: {
-        filteredTickets() {
-            return this.data.tickets.filter(t => t.quantity > 0);
-        }
-    }
-}
-</script>
 <style scoped>
 .example-showcase .el-loading-mask {
     z-index: 999;

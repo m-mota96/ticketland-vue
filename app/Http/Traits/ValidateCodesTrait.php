@@ -36,8 +36,8 @@ trait ValidateCodesTrait {
             }
         }
 
-        /* Cuando la variable $save es true indica que ya estan comprando los boletos,
-        de lo contrario el cliente apenas esta llenando la información de su pedido y se valida el cupón */
+        /* Cuando la variable $save es true indica que ya estan comprando los boletos, de lo contrario
+        el cliente apenas esta llenando la información de su pedido y se valida el cupón */
         if ($save && $success) {
             switch ($request['payment_method']) {
                 case 'card':

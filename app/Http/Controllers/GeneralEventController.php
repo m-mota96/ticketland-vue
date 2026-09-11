@@ -20,31 +20,19 @@ use App\Models\Ticket;
 class GeneralEventController extends Controller {
 
     public function event($url, $ticket = null) {
-        $event = Event::with([
-            'tickets' => function($query) {
-                $query->select('*', DB::raw('quantity - (sales + reserved) available'), DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))
-                ->where('start_sale', '<=', date('Y-m-d'))
-                ->where('stop_sale', '>=', date('Y-m-d'))
-                ->whereRaw('quantity > (sales + reserved)');
-            },
-            'paymentMethods' => function($query) {
-                $query->where('active', true);
-            },
-            'eventDates', 'profile', 'logo', 'location'
-        ])->whereRaw(DB::raw('BINARY url = "'.$url.'"'))->first();
-        // dd($event->tickets);
+        $event = Event::select('id')->whereRaw(DB::raw('BINARY url = "'.$url.'"'))->first();
         if (!$event) {
             return redirect('/');
         }
         if ($ticket) {
-            $searchTicket = Ticket::where('event_id', $event->id)->where('name', $ticket)->first();
+            $searchTicket = Ticket::where('event_id', $event->id)->where('name', $ticket)->count();
             if (!$searchTicket) {
                 $ticket = null;
             }
         }
         return Inertia::render('Event/Event', [
-            'event'  => $event,
-            'ticket' => $ticket
+            'event_id'    => $event->id,
+            'name_ticket' => $ticket
         ]);
     }
 
@@ -200,6 +188,63 @@ class GeneralEventController extends Controller {
     public function createOrder(Request $request) {
         try {
             return PaypalTrait::createOrderPaypal($request->amount);
+        } catch (\Throwable $th) {
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta al organizador del evento.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+        }
+    }
+
+    public function getEvent($id) {
+        try {
+            $event = Event::select(
+                'id',
+                'name',
+                'url',
+                'description',
+                'email',
+                'phone',
+                'twitter',
+                'facebook',
+                'instagram',
+                'website',
+                'cost_type',
+                'model_payment',
+                'status'
+            )
+            ->with([
+                'eventDates',
+                'profile',
+                'logo',
+                'location',
+                'paymentMethods' => function($query) {
+                    $query->where('active', true);
+                },
+            ])
+            ->find($id);
+
+            if (!$event) {
+                return ResponseTrait::response('No se encuentra el evento solicitado.', null, true, 404);
+            }
+            
+            $tickets = Ticket::select(
+                '*',
+                DB::raw('quantity - (sales + reserved) available'),
+                DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'),
+                DB::raw('IF(CURDATE() > date_promotion, NULL, (price - ROUND(price * (promotion / 100)))) priceDiscount'),
+                DB::raw('0 AS quantity_to_purchase')
+            )
+            ->with([
+                'questions' => function($query) {
+                    $query->where('active', true);
+                },
+            ])
+            ->where('start_sale', '<=', date('Y-m-d'))
+            ->where('stop_sale', '>=', date('Y-m-d'))
+            ->whereRaw('quantity > (sales + reserved)')
+            ->where('event_id', $event->id)
+            ->orderBy('order', 'ASC')
+            ->get();
+
+            return ResponseTrait::response(null, ['event' => $event, 'tickets' => $tickets]);
         } catch (\Throwable $th) {
             return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta al organizador del evento.', 'Ocurrio un error '.$th->getMessage(), true, 500);
         }

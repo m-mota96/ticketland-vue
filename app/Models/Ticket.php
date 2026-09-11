@@ -22,6 +22,8 @@ class Ticket extends Model
         'stop_sale',
         'min_reservation',
         'max_reservation',
+        'package',
+        'number_of_access',
         'order',
         'status'
     ];

@@ -159,7 +159,7 @@ class TicketController extends Controller {
             }
 
             if(!$zip->open($filename, ZIPARCHIVE::CREATE)) {
-                return ResponseTrait::response('Error al crear archivo zip.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+                return ResponseTrait::response('Error al crear archivo zip.', null, true, 500);
             }
             for ($i = 0; $i < $request->quantity; $i++) {
                 $folio      = strtoupper(uniqid());
