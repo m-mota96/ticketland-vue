@@ -5,6 +5,13 @@ import { showNotification } from '@/notification';
 import { VueTelInput } from 'vue3-tel-input';
 import 'vue3-tel-input/dist/vue3-tel-input.css';
 
+const { totalsParent } = defineProps({
+    totalsParent: {
+        type: Function,
+        required: true
+    }
+});
+
 const viewFormTickets = defineModel();
 
 const appUrl           = window.location.origin;
@@ -71,27 +78,52 @@ const loadForm = (_event_id, _tickets, _payment_methods) => {
                     name: '',
                     email: '',
                     phone: '',
-                    question0: '', // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
-                    question1: '', // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
-                    question2: '', // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
-                    question3: '', // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
-                    question4: '', // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                    question: [
+                        {
+                            id: t.questions[0]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            response: ''
+                        },
+                        {
+                            id: t.questions[1]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            response: ''
+                        },
+                        {
+                            id: t.questions[2]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            response: ''
+                        },
+                        {
+                            id: t.questions[3]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            response: ''
+                        },
+                        {
+                            id: t.questions[4]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            response: ''
+                        },
+                    ]
                 });
             }
             pos++;
         }
     });
 
-    console.log(formTickets.value);
+    // console.log(formTickets.value);
+    if (order.value.code) {
+        verifyCodes(null, false);
+    }
     viewFormTickets.value = true;
 };
 
-const verifyCodes = async (action = null) => {
+const verifyCodes = async (action = null, view_msg = true) => {
     if (action === 'delete') {
         order.value.code_id       = null;
         order.value.code          = '';
         order.value.code_discount = 0;
-        disabledDiscount.value    = false;
+        formTickets.value.forEach(t => {
+            t.code_id       = null;
+            t.code          = '';
+            t.code_discount = 0;
+        });
+        disabledDiscount.value = false;
         return;
     }
     
@@ -109,7 +141,6 @@ const verifyCodes = async (action = null) => {
         disabledDiscount.value = true;
         // this.data.discount     = response.data.discount;
         const idsSet           = new Set(response.data.tickets);
-        console.log(idsSet);
 
         // Verifica si el cupón ingresado puede ser aplicado a alguno de los boletos que etsan comprando.
         let isApplicable = false;
@@ -122,17 +153,19 @@ const verifyCodes = async (action = null) => {
             }
         });
 
-        // this.data.tickets.forEach(t => {
-        //     if (idsSet.has(t.id)) {
-        //         t.code_id       = response.data.code_id;
-        //         t.code          = response.data.code;
-        //         t.code_discount = response.data.discount;
-        //     }
-        // });
         if (isApplicable) {
+            order.value.code_id       = response.data.code_id;
+            order.value.code          = response.data.code;
+            order.value.code_discount = response.data.discount;
             // this.totals();
-            showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
+            // Solo si aplican el cupón con el botón mostramos el mensaje, si regresan a elegir mas boletos y regresan al formulario ya no lo mostramos.
+            if (view_msg) {
+                showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
+            }
         } else {
+            order.value.code_id       = null;
+            order.value.code          = '';
+            order.value.code_discount = 0;
             showNotification('¡Atención!', 'Tu cupón es válido.<br>Pero no aplica para ningún boleto seleccionado (no se aplicaron descuentos).', 'warning', 15000);
             verifyCodes('delete');
         }
@@ -140,6 +173,7 @@ const verifyCodes = async (action = null) => {
 };
 
 const viewTickets = () => {
+    totalsParent(formTickets.value);
     viewFormTickets.value = false;
 };
 
@@ -391,21 +425,21 @@ defineExpose({
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
                                         
-                                        v-model="input[`question${qt}`]"
+                                        v-model="input.question[qt].response"
                                         v-if="question.type === 'text'"
                                         :placeholder="question.information"
                                     />
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
                                         
-                                        v-model="input[`question${qt}`]"
+                                        v-model="input.question[qt].response"
                                         v-if="question.type === 'number'"
                                         :placeholder="question.information" @keypress="isNumber($event)"
                                     />
                                     <el-select
                                         class="el-form-item mb-0 mt-1"
                                         
-                                        v-model="input[`question${qt}`]" 
+                                        v-model="input.question[qt].response" 
                                         v-if="question.type === 'select'" 
                                         :placeholder="question.information || 'Elige una opción'"
                                         :clearable="!question.required"
@@ -415,7 +449,7 @@ defineExpose({
                                     <el-mention
                                         class="el-form-item mb-0 mt-1"
                                         
-                                        v-model="input[`question${qt}`]"
+                                        v-model="input.question[qt].response"
                                         v-if="question.type === 'textarea'"
                                         type="textarea"
                                         :rows="3"

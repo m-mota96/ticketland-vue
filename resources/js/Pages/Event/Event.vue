@@ -60,15 +60,21 @@ const getInformationEvent = async () => {
 };
 
 // Calcula el total a pagar por el cliente.
-const totals = () => {
+const totals = (_tickets_purchased = []) => {
     data.value.subtotal = 0;
     data.value.total    = 0;
+
     tickets.value.forEach(t => {
-        const price = t.promotion
-            ? parseInt(t.priceDiscount) // Si el boleto tiene descuento tomamos el precio con descuento.
-            : parseInt(t.price) // Si no tiene ningún descuento tomamos el precio base.
-        
-        data.value.subtotal = data.value.subtotal + (price * t.quantity_to_purchase);
+        if (t.quantity_to_purchase > 0) {
+            const ticket        = _tickets_purchased.filter(ti => ti.id === t.id);
+            const code_discount = ticket.code && ticket.code_discount ? ticket.code_discount : 0;
+            
+            const price = t.promotion
+                ? parseInt(t.priceDiscount) // Si el boleto tiene descuento tomamos el precio con descuento.
+                : parseInt(t.price) // Si no tiene ningún descuento tomamos el precio base.
+            
+            data.value.subtotal = data.value.subtotal + (price * t.quantity_to_purchase);
+        }
     });
 
     data.value.total = data.value.subtotal;
@@ -229,7 +235,7 @@ const isNumber = (evt) => {
             </el-row>
         </el-col>
     </el-row>
-    <Tickets ref="ticketsRef" v-model="viewFormTickets" />
+    <Tickets ref="ticketsRef" v-model="viewFormTickets" :totals-parent="totals" />
     <el-row class="container-fluid has-background-white pb-6 pt-6 padding" ref="moreInfo">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue2">
