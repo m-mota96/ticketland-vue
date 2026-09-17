@@ -1,12 +1,17 @@
 <script setup lang="js">
-import { ref, onMounted, defineExpose } from 'vue';
+import { ref, defineExpose, nextTick } from 'vue';
 import apiClient from '@/apiClient';
 import { showNotification } from '@/notification';
 import { VueTelInput } from 'vue3-tel-input';
 import 'vue3-tel-input/dist/vue3-tel-input.css';
+import ConektaFrame from './ConektaFrame.vue';
 
-const { totalsParent } = defineProps({
+const { totalsParent, scrollToInfoParent } = defineProps({
     totalsParent: {
+        type: Function,
+        required: true
+    },
+    scrollToInfoParent: {
         type: Function,
         required: true
     }
@@ -14,14 +19,17 @@ const { totalsParent } = defineProps({
 
 const viewFormTickets = defineModel();
 
-const appUrl           = window.location.origin;
+const dataOrder        = ref(null);
 const gutterValue      = window.innerWidth <= 768 ? 0 : 20;
 const loading          = ref(false);
 const loadingTickets   = ref(false);
 const txtLoading       = ref('compra');
+const tickets          = ref([]);
 const formTickets      = ref([]);
 const payment_methods  = ref([]);
 const disabledDiscount = ref(false);
+const viewConektaFrame = ref(false);
+const viewPaypalFrame  = ref(false);
 const svg              = ref(`
     <path class="path" d="
     M 30 15
@@ -34,6 +42,7 @@ const svg              = ref(`
 `);
 const order = ref({
     event_id: null,
+    model_payment: '',
     name: '',
     email: '',
     confirm_email: '',
@@ -46,16 +55,29 @@ const order = ref({
     code: '',
     code_discount: 0,
     paypal_order_id: '',
-    device_session_id: ''
+    device_session_id: '',
+    subtotal: 0,
+    commission: 0
+});
+const errors = ref({
+    name: [],
+    phone: [],
+    email: [],
+    confirm_email: [],
+    payment_method: [],
 });
 
-const loadForm = (_event_id, _tickets, _payment_methods) => {
-    payment_methods.value = _payment_methods;
-    order.value.event_id  = _event_id;
-    formTickets.value     = [];
+const loadForm = (_event, _tickets) => {
+    payment_methods.value     = _event.payment_methods;
+    order.value.event_id      = _event.id;
+    order.value.model_payment = _event.model_payment;
+    order.value.subtotal      = 0;
+    tickets.value             = _tickets;
+    formTickets.value         = [];
 
     let pos = 0;
     _tickets.forEach(t => {
+        order.value.subtotal = order.value.subtotal + t.subtotal;
         for (let index = 0; index < t.quantity_to_purchase; index++) {
             formTickets.value.push({
                 id: t.id,
@@ -111,19 +133,20 @@ const loadForm = (_event_id, _tickets, _payment_methods) => {
         verifyCodes(null, false);
     }
     viewFormTickets.value = true;
+    scrollToTickets();
 };
 
 const verifyCodes = async (action = null, view_msg = true) => {
+    formTickets.value.forEach(t => {
+        t.code_id       = null;
+        t.code          = '';
+        t.code_discount = 0;
+    });
     if (action === 'delete') {
         order.value.code_id       = null;
         order.value.code          = '';
         order.value.code_discount = 0;
-        formTickets.value.forEach(t => {
-            t.code_id       = null;
-            t.code          = '';
-            t.code_discount = 0;
-        });
-        disabledDiscount.value = false;
+        disabledDiscount.value    = false;
         return;
     }
     
@@ -142,7 +165,7 @@ const verifyCodes = async (action = null, view_msg = true) => {
         // this.data.discount     = response.data.discount;
         const idsSet           = new Set(response.data.tickets);
 
-        // Verifica si el cupón ingresado puede ser aplicado a alguno de los boletos que etsan comprando.
+        // Verifica si el cupón ingresado puede ser aplicado a alguno de los boletos que estan comprando.
         let isApplicable = false;
         formTickets.value.forEach(t => {
             if (idsSet.has(t.id)) {
@@ -153,12 +176,30 @@ const verifyCodes = async (action = null, view_msg = true) => {
             }
         });
 
+        tickets.value.forEach(t => {
+            t.code_id       = null;
+            t.code          = '';
+            t.code_discount = 0;
+            if (idsSet.has(t.id)) {
+                t.code_id       = response.data.code_id;
+                t.code          = response.data.code;
+                t.code_discount = response.data.discount;
+            }
+
+            let price = t.promotion && !t.code_id
+                ? t.priceDiscount // Si el boleto tiene una promoción y no aplican cupón de descuento, tomamos el precio con descuento.
+                : t.price; // Si el boleto no tiene promoción o aplican cupón de descuento, tomamos el precio base.
+
+            price = !t.code_id ? price : t.price - Math.round(t.price * (t.code_discount / 100));
+
+            t.subtotal = price * t.quantity_to_purchase;
+        });
+
         if (isApplicable) {
             order.value.code_id       = response.data.code_id;
             order.value.code          = response.data.code;
             order.value.code_discount = response.data.discount;
-            // this.totals();
-            // Solo si aplican el cupón con el botón mostramos el mensaje, si regresan a elegir mas boletos y regresan al formulario ya no lo mostramos.
+            // Solo si aplican el cupón con el botón mostramos el mensaje, si van a elegir mas boletos y regresan al formulario ya no lo mostramos.
             if (view_msg) {
                 showNotification('¡Correcto!', 'Cupón aplicado.', 'success', 5000);
             }
@@ -175,10 +216,62 @@ const verifyCodes = async (action = null, view_msg = true) => {
 const viewTickets = () => {
     totalsParent(formTickets.value);
     viewFormTickets.value = false;
+    scrollToInfoParent();
 };
 
 const autoComplete = () => {
 
+};
+
+const verifyPaymentMethod = (value) => {
+    console.log(value);
+};
+
+const validate = () => {
+    resetErrors();
+    let valid = true;
+    if (!order.value.name) {
+        errors.value.name.push('El nombre es obligatorio.');
+        valid = false;
+    }
+    if (!order.value.phone) {
+        errors.value.phone.push('El teléfono es obligatorio.');
+        valid = false;
+    }
+    if (!order.value.email) {
+        errors.value.email.push('El correo es obligatorio.');
+        valid = false;
+    }
+    if (!order.value.confirm_email) {
+        errors.value.confirm_email.push('Confirma el correo.');
+        valid = false;
+    }
+    if (order.value.email && order.value.confirm_email) {
+        if (order.value.email !== order.value.confirm_email) {
+            errors.value.email.push('Los correos no coinciden.');
+            errors.value.confirm_email.push('Los correos no coinciden.');
+            valid = false;
+        }
+    }
+    return valid;
+};
+
+const resetErrors = () => {
+    errors.value.name           = [];
+    errors.value.phone          = [];
+    errors.value.email          = [];
+    errors.value.confirm_email  = [];
+    errors.value.payment_method = [];
+};
+
+const scrollToTickets = async () => {
+    await nextTick();
+
+    if (dataOrder.value?.$el) {
+        dataOrder.value.$el.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
 };
 
 const formatCurrency = (value) => {
@@ -253,14 +346,14 @@ defineExpose({
                     <label class="bold has-text-dark" for="name">Nombre completo <span class="has-text-danger">*</span></label>
                     <el-input
                         class="el-form-item mb-0 mt-1"
-                        
+                        :class="{'is-error': errors.name.length}"
                         name="name"
                         id="name"
                         autocomplete="name"
                         v-model="order.name"
                         placeholder="Nombre completo"
                     />
-                    <!-- <span class="text-error" v-if="errors.name">El nombre es obligatorio.</span> -->
+                    <span class="text-error" v-if="errors.name.length">{{ errors.name[0] }}</span>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
                     <label class="bold has-text-dark" for="phone">Teléfono <span class="has-text-danger">*</span></label>
@@ -268,30 +361,27 @@ defineExpose({
                         v-model="order.phone"
                         mode="international"
                         class="mt-1"
-                        
+                        :class="{'error-phone': errors.phone.length}"
                         style="color: #606266; height: 32px;"
                         :auto-format="true"
                         :input-options="{ placeholder: 'Ingresa tu número de teléfono', name: 'phone', id: 'phone', autocomplete: 'phone' }"
                         @input="onPhoneChange"
                         defaultCountry="MX"
                     />
-                    <!-- <span class="text-error" v-if="errors.phone">El teléfono es obligatorio.</span>
-                    <span class="text-error" v-if="errors.phone_invalid">Teléfono inválido.</span> -->
+                    <span class="text-error" v-if="errors.phone.length">{{ errors.phone[0] }}</span>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
                     <label class="bold has-text-dark" for="email">Correo <span class="has-text-danger">*</span></label>
                     <el-input
                         class="el-form-item mb-0 mt-1"
-                        
+                        :class="{'is-error': errors.email.length}"
                         name="email"
                         id="email"
                         autocomplete="email"
                         v-model="order.email"
                         placeholder="Correo electrónico"
                     />
-                    <!-- <span class="text-error" v-if="errors.email">El correo es obligatorio.</span>
-                    <span class="text-error" v-if="errors.email_invalid">Correo inválido.</span>
-                    <span class="text-error" v-if="errors.confirm_email_invalid2">Los correos no coinciden.</span> -->
+                    <span class="text-error" v-if="errors.email.length">{{ errors.email[0] }}</span>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mb-3">
                     <label class="bold has-text-dark" for="confirm_email">Confirmar correo <span class="has-text-danger">*</span></label>
@@ -463,11 +553,11 @@ defineExpose({
                     </el-row>
                 </el-col>
             </el-row>
-            <!-- <el-row :gutter="gutterValue" class="mb-6">
+            <el-row :gutter="gutterValue" class="mb-6">
                 <el-col :span="24" class="mb-3">
                     <el-row>
                         <el-col :xs="24" :sm="24" :md="12" :lg="18" :xl="18">
-                            <h3 class="title is-3 has-text-dark mb-2">Datos del pago</h3>
+                            <h3 class="title is-3 has-text-dark mb-2">Resúmen de compra</h3>
                         </el-col>
                         <el-col :xs="0" :sm="0" :md="12" :lg="6" :xl="6" class="has-text-right">
                             <p class="has-text-link pointer" @click="viewTickets"><font-awesome-icon :icon="['fas', 'arrow-left']" /> Regresar a boletos</p>
@@ -478,73 +568,83 @@ defineExpose({
                     </el-row>
                 </el-col>
                 <el-col :span="24">
-                    <el-table class="w-100 mb-3" :data="filteredTickets" stripe header-cell-class-name="has-text-dark" empty-text="Ningún dato disponible en esta tabla">
+                    <el-table class="w-100 mb-3" :data="tickets" stripe header-cell-class-name="has-text-dark" empty-text="Ningún dato disponible en esta tabla">
                         <el-table-column label="Producto" width="180">
                             <template #default="scope">
                                 <span>{{ scope.row.name }}</span>
                             </template>
                         </el-table-column>
-                        <el-table-column label="Cantidad" align="center">
+                        <el-table-column label="Cant." align="center">
                             <template #default="scope">
-                                {{ scope.row.quantity }}
+                                {{ scope.row.quantity_to_purchase }}
                             </template>
                         </el-table-column>
                         <el-table-column label="Precio unitario">
-                            <template #default="scope">
-                                <span v-if="!scope.row.priceWithDiscount">
-                                    <span v-if="!scope.row.promotion" class="has-text-success">{{ scope.row.priceUnit }}</span>
-                                    <del v-if="scope.row.promotion && !data.discount" class="has-text-danger">{{ scope.row.priceUnit }}</del>
-                                    <span v-if="scope.row.promotion && data.discount" class="has-text-success">{{ scope.row.priceUnit }}</span>
+                            <template #default="{row}">
+                                <span v-if="!row.promotion && !row.code" class="has-text-success">
+                                    {{ formatCurrency(row.price) }} MXN
                                 </span>
-                                <span v-if="scope.row.priceWithDiscount" class="has-text-success">
-                                    {{ formatCurrency(scope.row.priceWithDiscount) }} MXN
-                                </span>
+                                <del v-if="row.promotion || row.code" class="has-text-danger">{{ formatCurrency(row.price) }} MXN</del>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="Dto." align="center">
+                            <template #default="{row}">
+                                <span v-if="!row.promotion && !row.code" class="has-text-danger">N/A</span>
+                                <span v-if="row.promotion || row.code" class="has-text-success">{{ row.code ? row.code_discount : row.promotion }}%</span>
                             </template>
                         </el-table-column>
                         <el-table-column label="Precio c/descuento">
-                            <template #default="scope">
-                                <span v-if="scope.row.promotion && !data.discount" class="has-text-success">{{ formatCurrency(scope.row.priceDiscount) }} MXN</span>
-                                <del v-if="scope.row.promotion && data.discount" class="has-text-danger">{{ formatCurrency(scope.row.priceDiscount) }} MXN</del>
-                                <span v-if="!scope.row.promotion" class="has-text-danger"><del>N/A</del></span>
+                            <template #default="{row}">
+                                <span v-if="!row.promotion && !row.code" class="has-text-danger">N/A</span>
+                                <span v-if="row.promotion && !row.code" class="has-text-success">
+                                    {{ formatCurrency(row.priceDiscount) }} MXN
+                                </span>
+                                <span v-if="row.promotion && row.code" class="has-text-success">
+                                    {{ formatCurrency(row.price - Math.round(row.price * (row.code_discount / 100))) }} MXN
+                                </span>
                             </template>
                         </el-table-column>
                         <el-table-column label="Subtotal">
-                            <template #default="scope">
-                                {{ scope.row.subtotal }}
+                            <template #default="{row}">
+                                <span class="!text-orange-500 !font-bold">{{ formatCurrency(row.subtotal) }} MXN</span>
                             </template>
                         </el-table-column>
                     </el-table>
-                    <i class="has-text-link"><font-awesome-icon :icon="['fas', 'circle-info']" /> Si aplicas un cupón de descuento no se tomará en cuenta el precio con descuento del boleto.</i>
+                    <i class="has-text-link">
+                        <font-awesome-icon :icon="['fas', 'circle-info']" /> 
+                        Si utilizas un cupón de descuento no se tomará en cuenta el descuento del boleto.
+                    </i>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6">
                     <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
                     <el-select
-                        :class="{'is-error': errors.payment_method}"
+                        
                         class="el-form-item mb-0"
-                        v-model="data.order.payment_method"
+                        v-model="order.payment_method"
                         placeholder="Selecciona una opción"
                         id="payment_method"
                         clearable
                         @change="(val) => verifyPaymentMethod(val)"
                         >
-                            <el-option v-for="pm in event.payment_methods" :key="pm.id" :label="pm.name" :value="pm.sku" />
+                            <el-option v-for="pm in payment_methods" :key="pm.id" :label="pm.name" :value="pm.sku" />
                     </el-select>
-                    <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span>
+                    <!-- <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span> -->
                 </el-col>
                 <el-col :span="24" class="has-text-left mt-6">
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Subtotal: <b>{{ formatCurrency(data.subtotal) }} MXN</b>
+                        Subtotal: <b>{{ formatCurrency(order.subtotal) }} MXN</b>
                     </h6>
-                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="event.model_payment == 'separated'">
-                        Cargo por servicio: <b>{{ formatCurrency(data.commission) }} MXN</b>
+                    <h6 class="subtitle is-5 has-text-black mb-2" v-if="order.model_payment == 'separated'">
+                        Cargo por servicio: <b>{{ formatCurrency(order.commission) }} MXN</b>
                     </h6>
                     <h6 class="subtitle is-5 has-text-black mb-2">
-                        Total a pagar: <b class="has-text-success">{{ formatCurrency(data.subtotal + data.commission) }} MXN</b>
+                        Total a pagar: <b class="has-text-success">{{ formatCurrency(order.subtotal + order.commission) }} MXN</b>
                     </h6>
                 </el-col>
                 <el-col :span="24" class="pt-5 pb-5">
                     <el-row :gutter="gutterValue">
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
+                        <ConektaFrame v-if="viewConektaFrame" />
+                        <!-- <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
                             <label class="bold has-text-dark" for="cardName">Nombre en la tarjeta <span class="has-text-danger">*</span></label>
                             <el-input
                                 :class="{'is-error': errors.cardName}"
@@ -610,21 +710,23 @@ defineExpose({
                                 @update-orderId="data.order.paypal_order_id = $event"
                                 :handleMakePayment="payment"
                             />
-                        </el-col>
+                        </el-col> -->
                     </el-row>
                 </el-col>
-                <el-col :span="24" class="has-text-centered mt-3">
+                <!-- <el-col :span="24" class="has-text-centered mt-3">
                     <el-button type="primary" size="large" @click="payment" v-if="event.status == 1 && (data.order.payment_method === 'oxxo' || data.order.payment_method === 'card')">
                         <font-awesome-icon :icon="['fas', 'dollar-sign']" v-if="data.order.payment_method == 'card'" />
                         <font-awesome-icon :icon="['fas', 'check']" v-if="data.order.payment_method == 'oxxo'" />
                         &nbsp;&nbsp;{{ data.order.payment_method == 'card' ? 'Realizar pago' : 'Realizar pedido' }}
                     </el-button>
-                </el-col>
-            </el-row> -->
+                </el-col> -->
+            </el-row>
         </el-col>
     </el-row>
 </template>
 
 <style scoped>
-
+.error-phone {
+    border: 1px solid red !important;
+}
 </style>

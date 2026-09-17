@@ -1,5 +1,5 @@
 <script setup lang="js">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import apiClient from '@/apiClient';
 import { showNotification } from '@/notification';
 import { dateEs, time } from '@/dateEs';
@@ -17,18 +17,22 @@ const { event_id, name_ticket } = defineProps({
 });
 
 onMounted(() => {
+    tickets_purchased.value = [];
     getInformationEvent();
 });
 
-const appUrl           = window.location.origin;
-const gutterValue      = window.innerWidth <= 768 ? 0 : 20;
-const gutterValue2     = window.innerWidth < 768 ? 0 : 80;
-const ticketsRef       = ref(null);
-const event            = ref({});
-const tickets          = ref([]);
-const viewFormTickets = ref(false);
-const loading          = false;
-const data             = ref({
+const appUrl            = window.location.origin;
+const dataTickets       = ref(null);
+const moreInfo          = ref(null);
+const gutterValue       = window.innerWidth <= 768 ? 0 : 20;
+const gutterValue2      = window.innerWidth < 768 ? 0 : 80;
+const ticketsRef        = ref(null);
+const event             = ref({});
+const tickets           = ref([]);
+const viewFormTickets   = ref(false);
+const tickets_purchased = ref([]);
+const loading           = false;
+const data              = ref({
     tickets: [],
     ticketsReserved: [],
     selected: 0,
@@ -61,34 +65,54 @@ const getInformationEvent = async () => {
 
 // Calcula el total a pagar por el cliente.
 const totals = (_tickets_purchased = []) => {
+    // Si _tickets_purchased tiene datos indica que ya eligieron boletos para comprar y regresaron a comprar más.
+    if (_tickets_purchased.length) {
+        tickets_purchased.value = _tickets_purchased;
+    }
     data.value.subtotal = 0;
     data.value.total    = 0;
 
     tickets.value.forEach(t => {
         if (t.quantity_to_purchase > 0) {
-            const ticket        = _tickets_purchased.filter(ti => ti.id === t.id);
-            const code_discount = ticket.code && ticket.code_discount ? ticket.code_discount : 0;
+            t.code          = '';
+            t.code_discount = 0;
+            if (tickets_purchased.value.length) {
+                const ticket = tickets_purchased.value.find(ti => ti.id === t.id);
+                // Aquí verificamos si aplicaron algún cupón de descuento y aplica para los boletos que estan comprando.
+                t.code          = ticket?.code ? ticket.code : '';
+                t.code_discount = ticket?.code_discount ? ticket.code_discount : 0;
+            }
             
-            const price = t.promotion
-                ? parseInt(t.priceDiscount) // Si el boleto tiene descuento tomamos el precio con descuento.
-                : parseInt(t.price) // Si no tiene ningún descuento tomamos el precio base.
+            let price = t.promotion && t.code_discount === 0
+                ? parseInt(t.priceDiscount) // Si el boleto tiene descuento y no aplicaron ningún cupón, tomamos el precio con descuento.
+                : parseInt(t.price) // Si no tiene ningún descuento o aplicaron un cupón, tomamos el precio base.
             
+            // Si aplicaron un cupón calculamos el precio menos el descuento del cupón.
+            price = t.code_discount === 0 ? price : (price - Math.round(price * (t.code_discount / 100)));
+
+            t.subtotal          = price * t.quantity_to_purchase;
             data.value.subtotal = data.value.subtotal + (price * t.quantity_to_purchase);
         }
     });
-
-    data.value.total = data.value.subtotal;
 };
 
 // Hace el cálculo de los boletos que quieren comprar
 const calculate = (val, oldVal, t) => {
     const quantity = totalTickets();
+    const ticket   = tickets.value.find(ti => ti.id === t.id);
+
     if (quantity > 10) {
-        // Evitar que compren mas de 10 boletos en total.
+        // Evitar que compren más de 10 boletos en total.
         t.quantity_to_purchase = t.quantity_to_purchase - 1;
+        return false;
+    }
+    if (t.quantity_to_purchase > ticket.available) {
+        // Evitar que compren más boletos de los que quedan disponibles.
+        t.quantity_to_purchase = t.available;
+        return false;
     }
     if ((data.value.selected + (val - oldVal)) > 10) {
-        // Evitar que elijan mas de 10 veces el boleto.
+        // Evitar que elijan más de 10 veces el boleto.
         return false;
     }
     data.value.selected = data.value.selected + (val - oldVal);
@@ -112,15 +136,27 @@ const loadInfo = () => {
 
     // Obtenemos solo los boletos que quieren comprar (quantity_to_purchase > 0).
     const ticketsFiltered = tickets.value.filter(t => t.quantity_to_purchase !== 0);
-    ticketsRef.value?.loadForm(event_id, ticketsFiltered, event.value.payment_methods);
-    // this.verifyCodes();
-    // viewFormTickets.value = true;
-    // this.$nextTick(() => {
-    //     // Espera a que el DOM se actualice
-    //     if (this.$refs.dataOrder) {
-    //         this.$refs.dataOrder.$el.scrollIntoView({ behavior: 'smooth' });
-    //     }
-    // });
+    ticketsRef.value?.loadForm(event.value, ticketsFiltered);
+};
+
+const scrollToInfo = async () => {
+    await nextTick();
+
+    if (dataTickets.value?.$el) {
+        dataTickets.value.$el.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+};
+
+const scrollToInfoEvent = async () => {
+    await nextTick();
+
+    if (moreInfo.value?.$el) {
+        moreInfo.value.$el.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
 };
 
 const formatDate = (_date) => {
@@ -169,7 +205,7 @@ const isNumber = (evt) => {
                         <b><font-awesome-icon :icon="['fas', 'calendar-days']" /> Fechas:</b>
                         <p v-for="(d, index) in event.event_dates" :key="index"><b>Día {{ index + 1 }}: </b>{{ formatDate(d.date) }} - {{ formatTime(d.initial_time) }} a {{ formatTime(d.final_time) }}</p>
                     </div>
-                    <p class="bold has-text-link mt-6 mb-5 pointer" @click="moreInfo"><font-awesome-icon :icon="['fas', 'plus']" /> Más información del evento</p>
+                    <p class="bold has-text-link mt-6 mb-5 pointer" @click="scrollToInfoEvent"><font-awesome-icon :icon="['fas', 'plus']" /> Más información del evento</p>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
                     <h6 class="subtitle is-6 bold has-text-black mb-5">COMPARTE ESTE EVENTO</h6>
@@ -192,12 +228,26 @@ const isNumber = (evt) => {
                                 <el-row :class="{'card has-background-light p-5': t.name == name_ticket}">
                                     <el-col class="mb-3" :sm="24" :md="16" :lg="18" :xl="18">
                                             <h4 class="subtitle is-4 has-text-dark mb-0" v-if="!t.promotion">{{ t.name }}</h4>
-                                            <el-badge :value="`${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion">
+                                            <el-badge :value="`${t.promotion}% Descuento`" class="item" :offset="[10, 5]" v-if="t.promotion && !t.code">
                                                 <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
                                             </el-badge>
-                                            <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
-                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion">{{ formatCurrency(t.priceDiscount) }} MXN</h5>
-                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion">{{ formatCurrency(t.price) }} MXN</h5>
+                                            <el-badge class="item" :offset="[10, 5]" v-if="t.promotion && t.code">
+                                                <template #content>
+                                                    <del>{{ t.promotion }}% Descuento</del>
+                                                </template>
+                                                <h4 class="subtitle is-4 has-text-dark mb-0">{{ t.name }}</h4>
+                                            </el-badge>
+                                            <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion || t.code"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
+                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion && !t.code">{{ formatCurrency(t.priceDiscount) }} MXN</h5>
+                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion && t.code">{{ formatCurrency(t.price - Math.round(t.price * (t.code_discount / 100))) }} MXN</h5>
+                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion && !t.code">{{ formatCurrency(t.price) }} MXN</h5>
+                                            <p class="mb-0" v-if="t.code">
+                                                Cupón aplicado
+                                                <span class="text-green-500 font-bold ml-2">
+                                                    <font-awesome-icon :icon="['fas', 'tags']" />
+                                                    {{ t.code }} ({{ t.code_discount }}%)
+                                                </span>
+                                            </p>
                                             <p class="has-text-black justify mb-0 multiline-text" v-if="t.description">{{ t.description }}</p>
                                     </el-col>
                                     <el-col class="mb-6" :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
@@ -235,7 +285,7 @@ const isNumber = (evt) => {
             </el-row>
         </el-col>
     </el-row>
-    <Tickets ref="ticketsRef" v-model="viewFormTickets" :totals-parent="totals" />
+    <Tickets ref="ticketsRef" v-model="viewFormTickets" :totals-parent="totals" :scroll-to-info-parent="scrollToInfo" />
     <el-row class="container-fluid has-background-white pb-6 pt-6 padding" ref="moreInfo">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue2">
@@ -250,7 +300,12 @@ const isNumber = (evt) => {
                     </div>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="10" :xl="10" class="pr-0 mr-0">
-                    <h3 class="subtitle is-3 has-text-grey mb-2">Contacta al organizador</h3>
+                    <h3
+                        class="subtitle is-3 has-text-grey mb-2"
+                        v-if="event.email || event.phone || event.twitter || event.facebook || event.instagram || event.website"
+                    >
+                        Contacta al organizador
+                    </h3>
                     <p class="mb-1 has-text-black" v-if="event.email"><font-awesome-icon class="bold" :icon="['fas', 'envelope']" /> {{ event.email }}</p>
                     <p class="mb-1 has-text-black" v-if="event.phone"><font-awesome-icon class="bold" :icon="['fas', 'phone-flip']" /> {{ event.phone }}</p>
                     <p class="mb-1" v-if="event.twitter"><a class="has-text-black links" :href="`https://x.com/${event.twitter}`" target="_blank"><font-awesome-icon :icon="['fab', 'x-twitter']" /> X (Twitter)</a></p>

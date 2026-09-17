@@ -16,7 +16,6 @@
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
 
-        {{-- <script type="text/javascript" src="https://cdn.conekta.io/js/latest/conekta.js"></script> --}}
         <link rel="shortcut icon" href="../../general/ticketland.png" type="image/x-icon">
         <script src="../../libs/BrowserPrint-3.1.250.min.js"></script>
         <style>

@@ -230,7 +230,11 @@ class GeneralEventController extends Controller {
                 DB::raw('quantity - (sales + reserved) available'),
                 DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'),
                 DB::raw('IF(CURDATE() > date_promotion, NULL, (price - ROUND(price * (promotion / 100)))) priceDiscount'),
-                DB::raw('0 AS quantity_to_purchase')
+                DB::raw('0 AS quantity_to_purchase'),
+                DB::raw('NULL AS code_id'),
+                DB::raw('"" AS code'),
+                DB::raw('0 AS code_discount'),
+                DB::raw('0 AS subtotal')
             )
             ->with([
                 'questions' => function($query) {
