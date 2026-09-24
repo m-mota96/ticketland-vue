@@ -63,7 +63,7 @@ class TicketController extends Controller {
                 'quantity'         => $request->quantity,
                 'order'            => $order,
                 'package'          => $request->package,
-                'number_of_access' => $request->number_of_access
+                'number_of_access' => $request->number_of_access ?? 1
             ]);
             return ResponseTrait::response('El boleto se creó correctamente.');
         } catch (\Throwable $th) {
