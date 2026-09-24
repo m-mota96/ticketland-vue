@@ -24,8 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'validate_event' => \App\Http\Middleware\ValidateEvent::class,
         ]);
 
-        $middleware->validateCsrfTokens(except: [
-            // 'customer/uploadImages' // <-- exclude this route
+        $middleware->preventRequestForgery(except: [
+            'makePayment', // Excluye esta URL exacta
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -69,11 +69,27 @@ class ReservationsExport implements FromCollection, WithHeadings, WithColumnWidt
                 WHEN status = "payed" THEN "Pagado" 
                 WHEN status = "pending" THEN "Pendiente" 
             END status'),
-            DB::raw('DATE_FORMAT(created_at, "%d/%m/%Y %H:%i") AS date')
+            DB::raw('DATE_FORMAT(created_at, "%d/%m/%Y") AS date')
         )
-        ->addSelect(['total' => Access::selectRaw('SUM(price)')
-            ->whereColumn('payment_id', 'payments.id')
-            ->groupBy('payment_id')
+        ->addSelect([
+            'total' => Access::query()
+                ->from('accesses')
+                ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+                ->whereColumn('accesses.payment_id', 'payments.id')
+                ->selectRaw('
+                    SUM(
+                        CASE
+                            WHEN tickets.package = 1
+                            THEN accesses.price / (
+                                SELECT COUNT(*)
+                                FROM accesses a2
+                                WHERE a2.ticket_id = accesses.ticket_id
+                                AND a2.payment_id = accesses.payment_id
+                            )
+                            ELSE accesses.price
+                        END
+                    )
+                ')
         ])
         ->orderBy('id', 'DESC')
         ->get();

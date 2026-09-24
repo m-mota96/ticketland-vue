@@ -37,16 +37,17 @@ class GeneralEventController extends Controller {
     }
 
     public function makePayment(Request $request) {
+        $event = Event::with(['profile', 'eventDates', 'location', 'paymentMethods' => function($query) {
+            $query->where('active', true);
+        }])->where('status', 1)->find($request->order['event_id']);
+        
+        if (!$event) {
+            return ResponseTrait::response('No es posible comprar boletos para el evento seleccionado.', ['type' => 'event'], true, 404);
+        }
+
+        DB::beginTransaction();
+        $files = [];
         try {
-            $files = [];
-            $event = Event::with(['profile', 'eventDates', 'location', 'paymentMethods' => function($query) {
-                $query->where('active', true);
-            }])->where('status', 1)->find($request->order['event_id']);
-            
-            if (!$event) {
-                return ResponseTrait::response('No es posible comprar boletos para el evento seleccionado.', ['type' => 'event'], true, 404);
-            }
-            
             $paymentMethods = $event->paymentMethods->pluck('sku')->toArray();
             if (!in_array($request->order['payment_method'], $paymentMethods)) {
                 return ResponseTrait::response('Método de pago no reconocido.', ['type' => 'event'], true, 404);
@@ -67,10 +68,8 @@ class GeneralEventController extends Controller {
             //     return ResponseTrait::response('Ya no es posible realizar compras con Pago en Oxxo.', ['type' => 'event'], true, 409);
             // }
 
-            DB::beginTransaction();
-
             $discount = ['code_id' => null, 'code' => null, 'discount' => 0, 'discountInt' => 0, 'tickets' => []];
-            if ($request->order['code']) {
+            if (!empty($request->order['code'])) {
                 $proccess = ValidateCodesTrait::validateCodes($request->order, true, $request->tickets); // Valida si estan usando código de descuento y si éste es válido
                 if (!$proccess['success']) {
                     DB::rollBack();
@@ -85,7 +84,7 @@ class GeneralEventController extends Controller {
                 ];
             }
 
-            $proccess = ValidateStockTrait::validateStock($request->tickets, $request->order['payment_method'], $discount); // Valida si hay disponibilidad de los boeltos elegidos
+            $proccess = ValidateStockTrait::validateStock($request->tickets, $request->order['payment_method'], $discount); // Valida si hay disponibilidad de los boletos elegidos
             if (!$proccess['success']) {
                 DB::rollBack();
                 return ResponseTrait::response('', ['error' => $proccess['error'], 'type' => 'stock'], true, 409);
@@ -94,7 +93,7 @@ class GeneralEventController extends Controller {
             $commission = $event->model_payment === 'separated' ? round($subtotal * $commissionTicketland) : 0;
             $total      = intval($subtotal + $commission);
 
-            $proccess = ManageFilesTrait::createPdf($request->informationTickets, $event, $discount['code']); // Crea los pdf de los boletos
+            $proccess = ManageFilesTrait::createPdf($request->informationTickets, $event, $discount); // Crea los pdf de los boletos
             if (!$proccess['success']) {
                 DB::rollBack();
                 return ResponseTrait::response($proccess['msj'], ['type' => 'general'], true, 409);
@@ -113,7 +112,7 @@ class GeneralEventController extends Controller {
                     $orderClientId = $proccess['order_id']; // Id de la transacción en Conekta
                     $typeSend      = 'tickets'; // Indicador para que mande los boletos al cliente
                     $statusPayment = 'payed';
-                    $reference     = $request->order['card'];
+                    $reference     = 'N/A';
                     $txt = 'Pago realizado exitosamente.<br>Recibirás tus boletos en tu correo electrónico.<br> Si no los ves en tu bandeja de entrada, por favor revisa en Spam.';
                     break;
                 case 'oxxo':
@@ -138,7 +137,7 @@ class GeneralEventController extends Controller {
                     break;
                 case 'paypal':
                     // Se procesa el pago con Paypal
-                    $proccess = PaypalTrait::captureOrder($request->order['paypal_order_id']);
+                    $proccess = PaypalTrait::captureOrder($request->order['token_id']);
                     if (!$proccess['success']) {
                         DB::rollBack();
                         ManageFilesTrait::deleteFiles($event->id, $files);

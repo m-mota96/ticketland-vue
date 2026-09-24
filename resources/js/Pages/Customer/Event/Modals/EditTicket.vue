@@ -69,6 +69,19 @@
                             inactive-text="No"
                         />
                     </el-col>
+                    <el-col :span="24" class="mb-5" v-if="ticket.cost_type == 'paid'">
+                        <label class="bold">¿Este boleto será un paquete?</label><br>
+                        <el-switch
+                            v-model="ticket.package"
+                            inline-prompt
+                            style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                            :active-value="true"
+                            :inactive-value="false"
+                            active-text="Si"
+                            inactive-text="No"
+                            @change="ticket.number_of_access = ''"
+                        />
+                    </el-col>
                 </el-row>
             </el-col>
             <el-col :span="12">
@@ -180,7 +193,7 @@
                             </el-col>
                         </el-row>
                     </el-col>
-                    <el-col :span="24" v-if="ticket.discount">
+                    <el-col :span="24" class="mb-5" v-if="ticket.discount">
                         <el-row :gutter="20">
                             <el-col :span="12">
                                 <label class="bold" for="start_sale">Porcentaje de descuento <span class="has-text-danger">*</span></label>
@@ -210,6 +223,20 @@
                                 <span class="text-error" v-if="errors.date_promotion">La expiración es obligatoria.</span>
                             </el-col>
                         </el-row>
+                    </el-col>
+                    <el-col :span="24" class="mb-5" v-if="ticket.package">
+                        <label class="bold" for="number_of_access">Número de accesos <span class="has-text-danger">*</span></label>
+                        <el-input
+                            class="el-form-item mb-0 mt-1"
+                            :class="{'is-error': errors.number_of_access || errors.number_exceeded}"
+                            size="large"
+                            id="number_of_access"
+                            v-model="ticket.number_of_access"
+                            placeholder="Min. 2, Max. 10"
+                            @keypress="isNumber($event)"
+                        />
+                        <span class="text-error" v-if="errors.number_of_access">El número de accesos es obligatorio.</span>
+                        <span class="text-error" v-if="errors.number_exceeded">Ingrese un número entre 2 y 10.</span>
                     </el-col>
                 </el-row>
             </el-col>
@@ -256,7 +283,9 @@ export default {
                 valid: '',
                 discount: false,
                 promotion: 0,
-                date_promotion: ''
+                date_promotion: '',
+                package: false,
+                number_of_access: '',
             },
             errors: {
                 name: false,
@@ -272,7 +301,9 @@ export default {
                 valid: false,
                 promotion: false,
                 promotion_invalid: false,
-                date_promotion: false
+                date_promotion: false,
+                number_of_access: false,
+                number_exceeded: false
             }
         }
     },
@@ -365,6 +396,13 @@ export default {
                     valid                      = false;
                 }
             }
+            if (this.ticket.package && !this.ticket.number_of_access) {
+                this.errors.number_of_access = true;
+                valid                        = false;
+            } else if (this.ticket.package && (this.ticket.number_of_access < 2 || this.ticket.number_of_access > 10)) {
+                this.errors.number_exceeded = true;
+                valid                       = false;
+            }
             return valid;
         },
         showModal(_ticket = null) {
@@ -373,36 +411,40 @@ export default {
             if (_ticket) {
                 this.title = 'Editar boleto';
             }
-            this.ticket.ticket_id       = null;
-            this.ticket.name            = '';
-            this.ticket.description     = '';
-            this.ticket.price           = 0;
-            this.ticket.quantity        = 50;
-            this.ticket.start_sale      = '';
-            this.ticket.stop_sale       = '';
-            this.ticket.cost_type       = 'paid';
-            this.ticket.min_reservation = 1;
-            this.ticket.max_reservation = 10;
-            this.ticket.valid           = '';
-            this.ticket.discount        = false;
-            this.ticket.promotion       = 0;
-            this.ticket.date_promotion  = '';
+            this.ticket.ticket_id        = null;
+            this.ticket.name             = '';
+            this.ticket.description      = '';
+            this.ticket.price            = 0;
+            this.ticket.quantity         = 50;
+            this.ticket.start_sale       = '';
+            this.ticket.stop_sale        = '';
+            this.ticket.cost_type        = 'paid';
+            this.ticket.min_reservation  = 1;
+            this.ticket.max_reservation  = 10;
+            this.ticket.valid            = '';
+            this.ticket.discount         = false;
+            this.ticket.promotion        = 0;
+            this.ticket.date_promotion   = '';
+            this.ticket.package          = false;
+            this.ticket.number_of_access = '';
             if (_ticket) {
-                this.eventType              = _ticket.event.cost_type;
-                this.ticket.ticket_id       = _ticket.id;
-                this.ticket.name            = _ticket.name;
-                this.ticket.description     = _ticket.description;
-                this.ticket.valid           = _ticket.valid;
-                this.ticket.start_sale      = _ticket.start_sale;
-                this.ticket.stop_sale       = _ticket.stop_sale;
-                this.ticket.price           = _ticket.price ? _ticket.price : 0;
-                this.ticket.min_reservation = _ticket.min_reservation;
-                this.ticket.max_reservation = _ticket.max_reservation;
-                this.ticket.quantity        = _ticket.quantity;
-                this.ticket.cost_type       = _ticket.event.cost_type == 'paid' ? 'paid' : 'free';
-                this.ticket.discount        = _ticket.promotion ? true : false;
-                this.ticket.promotion       = _ticket.promotion ? _ticket.promotion : 0;
-                this.ticket.date_promotion  = _ticket.date_promotion ? _ticket.date_promotion : '';
+                this.eventType               = _ticket.event.cost_type;
+                this.ticket.ticket_id        = _ticket.id;
+                this.ticket.name             = _ticket.name;
+                this.ticket.description      = _ticket.description;
+                this.ticket.valid            = _ticket.valid;
+                this.ticket.start_sale       = _ticket.start_sale;
+                this.ticket.stop_sale        = _ticket.stop_sale;
+                this.ticket.price            = _ticket.price ? _ticket.price : 0;
+                this.ticket.min_reservation  = _ticket.min_reservation;
+                this.ticket.max_reservation  = _ticket.max_reservation;
+                this.ticket.quantity         = _ticket.quantity;
+                this.ticket.cost_type        = _ticket.event.cost_type == 'paid' ? 'paid' : 'free';
+                this.ticket.discount         = _ticket.promotion ? true : false;
+                this.ticket.promotion        = _ticket.promotion ? _ticket.promotion : 0;
+                this.ticket.date_promotion   = _ticket.date_promotion ? _ticket.date_promotion : '';
+                this.ticket.package          = _ticket.package ? true : false;
+                this.ticket.number_of_access = _ticket.number_of_access || '';
             }
             this.activeEditTicket = true;
         },
@@ -421,6 +463,8 @@ export default {
             this.errors.promotion         = false,
             this.errors.promotion_invalid = false,
             this.errors.date_promotion    = false;
+            this.errors.number_of_access  = false;
+            this.errors.number_exceeded   = false;
         },
         isNumber(evt) {
             const charCode = evt.which ? evt.which : evt.keyCode;

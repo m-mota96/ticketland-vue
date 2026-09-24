@@ -30,43 +30,136 @@ class StatisticController extends Controller {
         $event_id      = $request->event_id;
 
         for($date = $start_date; $date->lte($end_date); $date->addDay()) {
-            $payed = Access::whereDate('created_at', '=', $date->format('Y-m-d'))->whereHas('payment', function($query) use($event_id) {
-                return $query->where('status', 'payed')->where('event_id', $event_id)->whereHas('event', function($query2) {
-                    return $query2->where('user_id', auth()->user()->id);
-                });
-            })->count();
+            $payed = Access::whereDate('accesses.created_at', $date->format('Y-m-d'))
+            ->whereHas('payment', function ($query) use ($event_id) {
+                $query->where('status', 'payed')
+                ->where('event_id', $event_id);
+            })
+            ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+            ->selectRaw('
+                COUNT(DISTINCT CASE
+                    WHEN tickets.package = 1
+                    THEN CONCAT(accesses.payment_id, "-", accesses.ticket_id)
+                END)
+                +
+                COUNT(CASE
+                    WHEN tickets.package = 0
+                    THEN accesses.id
+                END) AS total
+            ')
+            ->value('total');
             $array_sales[intval($date->format('d'))] = $payed;
-            $pending = Access::whereDate('created_at', '=', $date->format('Y-m-d'))->whereHas('payment', function($query) use($event_id) {
-                return $query->where('status', 'pending')->where('event_id', $event_id)->whereHas('event', function($query2) {
-                    return $query2->where('user_id', auth()->user()->id);
-                });
-            })->count();
+
+            $pending = Access::whereDate('accesses.created_at', $date->format('Y-m-d'))
+            ->whereHas('payment', function ($query) use ($event_id) {
+                $query->where('status', 'pending')
+                ->where('event_id', $event_id);
+            })
+            ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+            ->selectRaw('
+                COUNT(DISTINCT CASE
+                    WHEN tickets.package = 1
+                    THEN CONCAT(accesses.payment_id, "-", accesses.ticket_id)
+                END)
+                +
+                COUNT(CASE
+                    WHEN tickets.package = 0
+                    THEN accesses.id
+                END) AS total
+            ')
+            ->value('total');
             $array_pending[intval($date->format('d'))] = $pending;
-            $expired = Access::whereDate('created_at', '=', $date->format('Y-m-d'))->whereHas('payment', function($query) use($event_id) {
-                return $query->where('status', 'expired')->where('event_id', $event_id)->whereHas('event', function($query2) {
-                    return $query2->where('user_id', auth()->user()->id);
-                });
-            })->count();
+
+            $expired = Access::whereDate('accesses.created_at', $date->format('Y-m-d'))
+            ->whereHas('payment', function ($query) use ($event_id) {
+                $query->where('status', 'expired')
+                ->where('event_id', $event_id);
+            })
+            ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+            ->selectRaw('
+                COUNT(DISTINCT CASE
+                    WHEN tickets.package = 1
+                    THEN CONCAT(accesses.payment_id, "-", accesses.ticket_id)
+                END)
+                +
+                COUNT(CASE
+                    WHEN tickets.package = 0
+                    THEN accesses.id
+                END) AS total
+            ')
+            ->value('total');
             $array_expired[intval($date->format('d'))] = $expired;
         }
 
-        $ticketsDiscount = Access::wherehas('payment', function($query) use($event_id) {
+        $ticketsDiscount = Access::whereHas('payment', function ($query) use ($event_id) {
             $query->where('status', 'payed')->where('event_id', $event_id);
-        })->where(function ($query) {
-            $query->whereNotNull('code_discount')->orWhereNotNull('promotion');
-        })->count();
+        })
+        ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+        ->selectRaw('
+            COUNT(DISTINCT CASE
+                WHEN tickets.package = 1
+                THEN CONCAT(accesses.payment_id, "-", accesses.ticket_id)
+            END)
+            +
+            COUNT(CASE
+                WHEN tickets.package = 0
+                THEN accesses.id
+            END) AS total
+        ')
+        ->where(function ($query) {
+            $query->whereNotNull('code_discount')->orWhereNotNull('accesses.promotion');
+        })->value('total');
 
-        $ticketsNotDiscount = Access::wherehas('payment', function($query) use($event_id) {
+        $ticketsNotDiscount = Access::whereHas('payment', function ($query) use ($event_id) {
             $query->where('status', 'payed')->where('event_id', $event_id);
-        })->whereNull('code_discount')->whereNull('promotion')->count();
+        })
+        ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+        ->selectRaw('
+            COUNT(DISTINCT CASE
+                WHEN tickets.package = 1
+                THEN CONCAT(accesses.payment_id, "-", accesses.ticket_id)
+            END)
+            +
+            COUNT(CASE
+                WHEN tickets.package = 0
+                THEN accesses.id
+            END) AS total
+        ')
+        ->whereNull('code_discount')->whereNull('accesses.promotion')->value('total');
 
-        $ticketsPending = Access::wherehas('payment', function($query) use($event_id) {
+        $ticketsPending = Access::whereHas('payment', function ($query) use ($event_id) {
             $query->where('status', 'pending')->where('event_id', $event_id);
-        })->count();
+        })
+        ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+        ->selectRaw('
+            COUNT(DISTINCT CASE
+                WHEN tickets.package = 1
+                THEN CONCAT(accesses.payment_id, "-", accesses.ticket_id)
+            END)
+            +
+            COUNT(CASE
+                WHEN tickets.package = 0
+                THEN accesses.id
+            END) AS total
+        ')
+        ->value('total');
 
-        $ticketsExpired = Access::wherehas('payment', function($query) use($event_id) {
+        $ticketsExpired = Access::whereHas('payment', function ($query) use ($event_id) {
             $query->where('status', 'expired')->where('event_id', $event_id);
-        })->count();
+        })
+        ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+        ->selectRaw('
+            COUNT(DISTINCT CASE
+                WHEN tickets.package = 1
+                THEN CONCAT(accesses.payment_id, "-", accesses.ticket_id)
+            END)
+            +
+            COUNT(CASE
+                WHEN tickets.package = 0
+                THEN accesses.id
+            END) AS total
+        ')
+        ->value('total');
 
         // $sales = Payment::selectRaw("
         //     CASE type

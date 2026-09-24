@@ -37,6 +37,14 @@ class PaymentMethodSeeder extends Seeder
             'updated_at' => date('Y-m-d H:i:s')
         ];
 
+        $payment_methods[] = [
+            'name'       => 'Cortesías',
+            'sku'        => 'free',
+            'commission' => 0.00,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
         PaymentMethod::insert($payment_methods);
     }
 }

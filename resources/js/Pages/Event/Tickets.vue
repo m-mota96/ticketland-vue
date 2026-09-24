@@ -1,12 +1,15 @@
 <script setup lang="js">
 import { ref, defineExpose, nextTick } from 'vue';
 import apiClient from '@/apiClient';
+import apiClientPayments from '@/apiClientPayments.js';
 import { showNotification } from '@/notification';
 import { VueTelInput } from 'vue3-tel-input';
 import 'vue3-tel-input/dist/vue3-tel-input.css';
 import ConektaFrame from './ConektaFrame.vue';
+import PaypalFrame from './PaypalFrame.vue';
+import { ElMessageBox, ElLoading } from 'element-plus';
 
-const { totalsParent, scrollToInfoParent } = defineProps({
+const { totalsParent, scrollToInfoParent, resetFormParent } = defineProps({
     totalsParent: {
         type: Function,
         required: true
@@ -14,11 +17,16 @@ const { totalsParent, scrollToInfoParent } = defineProps({
     scrollToInfoParent: {
         type: Function,
         required: true
+    },
+    resetFormParent: {
+        type: Function,
+        required: true
     }
 });
 
 const viewFormTickets = defineModel();
 
+const totalsRef        = ref(null);
 const dataOrder        = ref(null);
 const gutterValue      = window.innerWidth <= 768 ? 0 : 20;
 const loading          = ref(false);
@@ -42,6 +50,7 @@ const svg              = ref(`
 `);
 const order = ref({
     event_id: null,
+    event_status: null,
     model_payment: '',
     name: '',
     email: '',
@@ -54,7 +63,6 @@ const order = ref({
     code_id: null,
     code: '',
     code_discount: 0,
-    paypal_order_id: '',
     device_session_id: '',
     subtotal: 0,
     commission: 0
@@ -70,14 +78,13 @@ const errors = ref({
 const loadForm = (_event, _tickets) => {
     payment_methods.value     = _event.payment_methods;
     order.value.event_id      = _event.id;
+    order.value.event_status  = _event.status;
     order.value.model_payment = _event.model_payment;
-    order.value.subtotal      = 0;
     tickets.value             = _tickets;
     formTickets.value         = [];
 
     let pos = 0;
     _tickets.forEach(t => {
-        order.value.subtotal = order.value.subtotal + t.subtotal;
         for (let index = 0; index < t.quantity_to_purchase; index++) {
             formTickets.value.push({
                 id: t.id,
@@ -98,27 +105,39 @@ const loadForm = (_event, _tickets) => {
                 // Los datos que se piden por default son nombre, correo y teléfono.
                 formTickets.value[pos].inputs.push({
                     name: '',
+                    error_name: [],
                     email: '',
+                    error_email: [],
                     phone: '',
-                    question: [
+                    question: [ // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
                         {
-                            id: t.questions[0]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            id: t.questions[0]?.id || null,
+                            required: t.questions[0]?.required || null,
+                            error: false,
                             response: ''
                         },
                         {
-                            id: t.questions[1]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            id: t.questions[1]?.id || null,
+                            required: t.questions[1]?.required || null,
+                            error: false,
                             response: ''
                         },
                         {
-                            id: t.questions[2]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            id: t.questions[2]?.id || null,
+                            required: t.questions[2]?.required || null,
+                            error: false,
                             response: ''
                         },
                         {
-                            id: t.questions[3]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            id: t.questions[3]?.id || null,
+                            required: t.questions[3]?.required || null,
+                            error: false,
                             response: ''
                         },
                         {
-                            id: t.questions[4]?.id || null, // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
+                            id: t.questions[4]?.id || null,
+                            required: t.questions[4]?.required || null,
+                            error: false,
                             response: ''
                         },
                     ]
@@ -132,6 +151,7 @@ const loadForm = (_event, _tickets) => {
     if (order.value.code) {
         verifyCodes(null, false);
     }
+    totals();
     viewFormTickets.value = true;
     scrollToTickets();
 };
@@ -142,11 +162,17 @@ const verifyCodes = async (action = null, view_msg = true) => {
         t.code          = '';
         t.code_discount = 0;
     });
+    tickets.value.forEach(t => {
+        t.code_id       = null;
+        t.code          = '';
+        t.code_discount = 0;
+    });
     if (action === 'delete') {
         order.value.code_id       = null;
         order.value.code          = '';
         order.value.code_discount = 0;
         disabledDiscount.value    = false;
+        totals();
         return;
     }
     
@@ -195,6 +221,8 @@ const verifyCodes = async (action = null, view_msg = true) => {
             t.subtotal = price * t.quantity_to_purchase;
         });
 
+        totals();
+
         if (isApplicable) {
             order.value.code_id       = response.data.code_id;
             order.value.code          = response.data.code;
@@ -213,23 +241,144 @@ const verifyCodes = async (action = null, view_msg = true) => {
     }
 };
 
+// Calcula el total a pagar por el cliente.
+const totals = () => {
+    order.value.subtotal = 0;
+    tickets.value.forEach(t => {
+        let price = t.promotion && !t.code_id
+            ? t.priceDiscount // Si el boleto tiene una promoción y no aplican cupón de descuento, tomamos el precio con descuento.
+            : t.price; // Si el boleto no tiene promoción o aplican cupón de descuento, tomamos el precio base.
+
+        price = !t.code_id ? price : t.price - Math.round(t.price * (t.code_discount / 100));
+
+        t.subtotal = price * t.quantity_to_purchase;
+        order.value.subtotal = order.value.subtotal + t.subtotal;
+    });
+
+    if (order.value.model_payment === 'separated' && order.value.payment_method) {
+        const payment_method   = payment_methods.value.find(pm => pm.sku === order.value.payment_method);
+        order.value.commission = Math.round(order.value.subtotal * payment_method.commission);
+    }
+};
+
+const confirmMakePayment = (token = null) => {
+    order.value.token_id = token;
+
+    if (order.value.payment_method === 'oxxo' && !validate()) {
+        return
+    }
+
+    scrollToTickets();
+
+    const txt = order.value.payment_method == 'card' || order.value.payment_method == 'paypal'
+        ? `Tus boletos se enviarán al siguiente correo:<br><b>${order.value.email}</b><br>¿El correo esta correcto?<br>`
+        : `Tu ficha de pago se enviará al siguiente correo:<br><b>${order.value.email}</b><br>¿El correo esta correcto?<br>Tendrás 48 horas para realizar tu pago.<br>`;
+    const txtBtn = order.value.payment_method == 'card' || order.value.payment_method == 'paypal'
+        ? 'Si, proceder al pago'
+        : 'Si, realizar registro';
+
+        ElMessageBox.confirm(
+            txt,
+            '¡Atención!',
+            {
+                dangerouslyUseHTMLString: true,
+                confirmButtonText: txtBtn,
+                cancelButtonText: 'Cancelar',
+                type: 'warning',
+                center: true,
+                lockScroll: false
+            }
+        )
+        .then(() => {
+            makePayment();
+        });
+};
+
+const makePayment = async () => {
+    const loading = ElLoading.service({
+        lock: true,
+        text: `¡Procesando tu ${txtLoading.value}. No cierres ni actualices esta página, por favor espera!`,
+        background: 'rgba(0, 0, 0, 0.9)',
+        customClass: 'my-loading',
+    });
+
+    order.value.device_session_id = Math.random().toString(36).substring(2);
+
+    const ti = tickets.value.map((t) => ({
+        id: t.id,
+        event_id: t.event_id,
+        name: t.name,
+        code_id: t.code_id,
+        code: t.code,
+        code_discount: t.code_discount,
+        quantity_to_purchase: t.quantity_to_purchase
+    }));
+
+    const info = formTickets.value.map(({ questions, ...result }) => ({
+        ...result
+    }));
+
+    const response = await apiClientPayments('makePayment', 'POST', {
+        order: order.value,
+        tickets: ti,
+        informationTickets: info
+    });
+    loading.close();
+    if (response.error) {
+        showNotification('¡Error!', response.msj, 'error', 15000);
+        return false;
+    }
+    resetFormParent();
+    resetForm();
+    viewFormTickets.value = false;
+    showNotification('¡Correcto!', response.msj, 'success', 30000);
+};
+
 const viewTickets = () => {
     totalsParent(formTickets.value);
     viewFormTickets.value = false;
     scrollToInfoParent();
 };
 
-const autoComplete = () => {
-
-};
-
 const verifyPaymentMethod = (value) => {
-    console.log(value);
+    viewConektaFrame.value = false;
+    viewPaypalFrame.value  = false;
+    switch (value) {
+        case 'card':
+            txtLoading.value = 'compra';
+            if (!validate()) {
+                order.value.payment_method = '';
+                return
+            }
+            viewConektaFrame.value = true;
+            scrollToTotalsRef();
+            break;
+        case 'paypal':
+            txtLoading.value = 'compra';
+            if (!validate()) {
+                order.value.payment_method = '';
+                return
+            }
+            viewPaypalFrame.value = true;
+            scrollToTotalsRef();
+            break;
+        case 'oxxo':
+            txtLoading.value = 'registro';
+            break;
+    }
+    if (order.value.model_payment === 'separated') {
+        const payment_method          = payment_methods.value.find(pm => pm.sku === value);
+        order.value.commission        = Math.round(order.value.subtotal * payment_method.commission);
+        order.value.payment_method_id = payment_method.id;
+    }
 };
 
 const validate = () => {
     resetErrors();
-    let valid = true;
+    let valid       = true;
+    const mailRegex = /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/;
+
+    // Validaciones de los datos de la orden.
     if (!order.value.name) {
         errors.value.name.push('El nombre es obligatorio.');
         valid = false;
@@ -241,18 +390,70 @@ const validate = () => {
     if (!order.value.email) {
         errors.value.email.push('El correo es obligatorio.');
         valid = false;
+    } else if (!mailRegex.test(order.value.email)) {
+        errors.value.email.push('Formato del correo inválido.');
+        valid = false;
     }
     if (!order.value.confirm_email) {
         errors.value.confirm_email.push('Confirma el correo.');
         valid = false;
+    } else if (!mailRegex.test(order.value.confirm_email)) {
+        errors.value.confirm_email.push('Formato del correo inválido.');
+        valid = false;
     }
-    if (order.value.email && order.value.confirm_email) {
+    if (order.value.email && order.value.confirm_email && mailRegex.test(order.value.email) && mailRegex.test(order.value.confirm_email)) {
         if (order.value.email !== order.value.confirm_email) {
             errors.value.email.push('Los correos no coinciden.');
             errors.value.confirm_email.push('Los correos no coinciden.');
             valid = false;
         }
     }
+
+    // Validaciones de los datos de los boletos.
+    formTickets.value.forEach(t => {
+        t.inputs.forEach(i => {
+            i.error_name  = [];
+            i.error_email = [];
+            i.question[0].error = false;
+            i.question[1].error = false;
+            i.question[2].error = false;
+            i.question[3].error = false;
+            i.question[4].error = false;
+            if (!i.name) {
+                i.error_name.push('El nombre es obligatorio.');
+                valid = false;
+            }
+            if (i.email && !mailRegex.test(i.email)) {
+                i.error_email.push('Correo inválido.');
+                valid = false;
+            }
+            if (i.question[0].id && i.question[0].required && !i.question[0].response) {
+                i.question[0].error = true;
+                valid = false;
+            }
+            if (i.question[1].id && i.question[1].required && !i.question[1].response) {
+                i.question[1].error = true;
+                valid = false;
+            }
+            if (i.question[2].id && i.question[2].required && !i.question[2].response) {
+                i.question[2].error = true;
+                valid = false;
+            }
+            if (i.question[3].id && i.question[3].required && !i.question[3].response) {
+                i.question[3].error = true;
+                valid = false;
+            }
+            if (i.question[4].id && i.question[4].required && !i.question[4].response) {
+                i.question[4].error = true;
+                valid = false;
+            }
+        });
+    });
+
+    if (!valid) {
+        scrollToTickets();
+    }
+
     return valid;
 };
 
@@ -264,11 +465,38 @@ const resetErrors = () => {
     errors.value.payment_method = [];
 };
 
+const resetForm = () => {
+    order.value.name              = '';
+    order.value.phone             = '';
+    order.value.email             = '';
+    order.value.confirm_email     = '';
+    order.value.token_id          = '';
+    order.value.payment_method_id = '';
+    order.value.payment_method    = '';
+    order.value.card              = '';
+    order.value.code_id           = null;
+    order.value.code              = '';
+    order.value.code_discount     = 0;
+    order.value.device_session_id = '';
+    order.value.subtotal          = 0;
+    order.value.commission        = 0;
+};
+
 const scrollToTickets = async () => {
     await nextTick();
 
     if (dataOrder.value?.$el) {
         dataOrder.value.$el.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+};
+
+const scrollToTotalsRef = async () => {
+    await nextTick();
+
+    if (totalsRef.value?.$el) {
+        totalsRef.value.$el.scrollIntoView({
             behavior: 'smooth'
         });
     }
@@ -290,19 +518,30 @@ const isNumber = (evt) => {
 
 const onPhoneChange = (val) => {
     if (typeof val === 'string') {
-        // this.data.order.phone = val.replaceAll(' ', '');
+        order.value.phone = val.replaceAll(' ', '');
     } else if (val && val.number) {
-        // this.data.order.phone = val.number.replaceAll(' ', '');
+        order.value.phone = val.number.replaceAll(' ', '');
     }
 };
 
-const onPhoneChangeTickets = (val, index) => {
+const onPhoneChangeTickets = (val, index, index_input) => {
     if (val) {
         if (typeof val === 'string') {
-            // this.data.ticketsReserved[index].phone = val.replaceAll(' ', '');
+            formTickets.value[index].inputs[index_input].phone = val.replaceAll(' ', '');
         } else if (val && val.number) {
-            // this.data.ticketsReserved[index].phone = val.number.replaceAll(' ', '');
+            formTickets.value[index].inputs[index_input].phone = val.number.replaceAll(' ', '');
         }
+    }
+};
+
+const autoComplete = (checked, index) => {
+    formTickets.value[index].inputs[0].name  = '';
+    formTickets.value[index].inputs[0].email = '';
+    formTickets.value[index].inputs[0].phone = '';
+    if (checked) {
+        formTickets.value[index].inputs[0].name  = order.value.name;
+        formTickets.value[index].inputs[0].email = order.value.email;
+        formTickets.value[index].inputs[0].phone = order.value.phone ? order.value.phone : '';
     }
 };
 
@@ -352,6 +591,7 @@ defineExpose({
                         autocomplete="name"
                         v-model="order.name"
                         placeholder="Nombre completo"
+                        clearable
                     />
                     <span class="text-error" v-if="errors.name.length">{{ errors.name[0] }}</span>
                 </el-col>
@@ -380,6 +620,7 @@ defineExpose({
                         autocomplete="email"
                         v-model="order.email"
                         placeholder="Correo electrónico"
+                        clearable
                     />
                     <span class="text-error" v-if="errors.email.length">{{ errors.email[0] }}</span>
                 </el-col>
@@ -387,16 +628,15 @@ defineExpose({
                     <label class="bold has-text-dark" for="confirm_email">Confirmar correo <span class="has-text-danger">*</span></label>
                     <el-input
                         class="el-form-item mb-0 mt-1"
-                        
+                        :class="{'is-error': errors.confirm_email.length}"
                         name="email"
                         id="confirm_email"
                         autocomplete="email"
                         v-model="order.confirm_email"
                         placeholder="Confirmar correo electrónico"
+                        clearable
                     />
-                    <!-- <span class="text-error" v-if="errors.confirm_email">Confirme el correo.</span>
-                    <span class="text-error" v-if="errors.confirm_email_invalid">Correo inválido.</span>
-                    <span class="text-error" v-if="errors.confirm_email_invalid2">Los correos no coinciden.</span> -->
+                    <span class="text-error" v-if="errors.confirm_email.length">{{ errors.confirm_email[0] }}</span>
                 </el-col>
                 <el-col :span="24">
                     <i class="has-text-dark"><font-awesome-icon :icon="['fas', 'circle-info']" /> Debes de tener acceso al correo ya que a esta dirección se enviarán los boletos.</i>
@@ -444,7 +684,7 @@ defineExpose({
                                     <el-col :span="24">
                                         <el-row :gutter="gutterValue">
                                             <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
-                                                <span>Boleto {{ (index + 1) }} - <b class="has-text-primary">{{ t.name }}</b></span>
+                                                <span>Producto {{ (index + 1) }} - <b class="has-text-primary">{{ t.name }}</b></span>
                                                 <p v-if="t.promotion && !t.code_id">
                                                     Precio
                                                     <span class="subtitle is-6 has-text-gray mb-0"><del>{{ formatCurrency(t.price) }}</del></span>
@@ -479,22 +719,25 @@ defineExpose({
                                     <label class="bold has-text-dark">Nombre completo <span class="has-text-danger">*</span></label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
+                                        :class="{'is-error': input.error_name.length}"
                                         v-model="input.name"
                                         name="name"
                                         autocomplete="name"
                                         placeholder="Nombre completo"
                                     />
+                                    <span class="text-error" v-if="input.error_name.length">{{ input.error_name[0] }}</span>
                                 </el-col>
                                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
                                     <label class="bold has-text-dark">Correo</label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
-                                        :class="{'is-error': false}"
+                                        :class="{'is-error': input.error_email.length}"
                                         v-model="input.email"
                                         name="email"
                                         autocomplete="email"
                                         placeholder="Correo electrónico"
                                     />
+                                    <span class="text-error" v-if="input.error_email.length">{{ input.error_email[0] }}</span>
                                 </el-col>
                                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
                                     <label class="bold has-text-dark">Teléfono</label>
@@ -506,7 +749,7 @@ defineExpose({
                                         style="color: #606266; height: 32px;"
                                         :auto-format="true"
                                         :input-options="{ placeholder: 'Número de teléfono' }"
-                                        @input="(val) => onPhoneChangeTickets(val, index)"
+                                        @input="(val) => onPhoneChangeTickets(val, index, key_index)"
                                         defaultCountry="MX"
                                     />
                                 </el-col>
@@ -514,21 +757,21 @@ defineExpose({
                                     <label class="bold has-text-dark">{{ question.title }} <span class="has-text-danger" v-if="question.required">*</span></label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
-                                        
+                                        :class="{'is-error': input.question[qt].error}"
                                         v-model="input.question[qt].response"
                                         v-if="question.type === 'text'"
                                         :placeholder="question.information"
                                     />
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
-                                        
+                                        :class="{'is-error': input.question[qt].error}"
                                         v-model="input.question[qt].response"
                                         v-if="question.type === 'number'"
                                         :placeholder="question.information" @keypress="isNumber($event)"
                                     />
                                     <el-select
                                         class="el-form-item mb-0 mt-1"
-                                        
+                                        :class="{'is-error': input.question[qt].error}"
                                         v-model="input.question[qt].response" 
                                         v-if="question.type === 'select'" 
                                         :placeholder="question.information || 'Elige una opción'"
@@ -538,14 +781,14 @@ defineExpose({
                                     </el-select>
                                     <el-mention
                                         class="el-form-item mb-0 mt-1"
-                                        
+                                        :class="{'is-error': input.question[qt].error}"
                                         v-model="input.question[qt].response"
                                         v-if="question.type === 'textarea'"
                                         type="textarea"
                                         :rows="3"
                                         :placeholder="question.information"
                                     />
-                                    <!-- <span class="text-error" v-if="errors.questions[index][iq]">Este campo es obligatorio.</span> -->
+                                    <span class="text-error" v-if="input.question[qt].error">Campo requerido.</span>
                                 </el-col>
                                 <el-divider v-if="t.inputs.length > 1 && key_index !== (t.inputs.length - 1)" />
                             </el-row>
@@ -599,6 +842,9 @@ defineExpose({
                                 <span v-if="row.promotion && !row.code" class="has-text-success">
                                     {{ formatCurrency(row.priceDiscount) }} MXN
                                 </span>
+                                <span v-if="!row.promotion && row.code" class="has-text-success">
+                                    {{ formatCurrency(row.price - Math.round(row.price * (row.code_discount / 100))) }} MXN
+                                </span>
                                 <span v-if="row.promotion && row.code" class="has-text-success">
                                     {{ formatCurrency(row.price - Math.round(row.price * (row.code_discount / 100))) }} MXN
                                 </span>
@@ -615,10 +861,9 @@ defineExpose({
                         Si utilizas un cupón de descuento no se tomará en cuenta el descuento del boleto.
                     </i>
                 </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6">
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" class="mt-6" v-if="order.event_status === 1">
                     <label class="bold has-text-dark" for="payment_method">Método de pago <span class="has-text-danger">*</span></label>
                     <el-select
-                        
                         class="el-form-item mb-0"
                         v-model="order.payment_method"
                         placeholder="Selecciona una opción"
@@ -628,9 +873,8 @@ defineExpose({
                         >
                             <el-option v-for="pm in payment_methods" :key="pm.id" :label="pm.name" :value="pm.sku" />
                     </el-select>
-                    <!-- <span class="text-error" v-if="errors.payment_method">El método de pago es obligatorio.</span> -->
                 </el-col>
-                <el-col :span="24" class="has-text-left mt-6">
+                <el-col :span="24" class="has-text-left mt-6" ref="totalsRef">
                     <h6 class="subtitle is-5 has-text-black mb-2">
                         Subtotal: <b>{{ formatCurrency(order.subtotal) }} MXN</b>
                     </h6>
@@ -643,83 +887,25 @@ defineExpose({
                 </el-col>
                 <el-col :span="24" class="pt-5 pb-5">
                     <el-row :gutter="gutterValue">
-                        <ConektaFrame v-if="viewConektaFrame" />
-                        <!-- <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="cardName">Nombre en la tarjeta <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.cardName}"
-                                class="el-form-item mb-0"
-                                name="name"
-                                id="cardName"
-                                autocomplete="name"
-                                v-model="data.paymentData.card.name"
-                                placeholder="Nombre del propietario de la tarjeta"
-                                type="text"
-                            />
-                            <span class="text-error" v-if="errors.cardName">El nombre del propietario es obligatorio.</span>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="cardNumber">Número de tarjeta <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.cardNumber || errors.cardInvalid}"
-                                class="el-form-item mb-0"
-                                id="cardNumber"
-                                v-mask="'#### #### #### ####'"
-                                v-model="data.paymentData.card.number"
-                                placeholder="1234 5678 9012 3456"
-                                maxlength="19"
-                                clearable
-                            />
-                            <span class="text-error" v-if="errors.cardNumber">El número de tarjeta es obligatorio.</span>
-                            <span class="text-error" v-if="errors.cardInvalid">El número de tarjeta debe contener 16 dígitos.</span>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="expiration">Fecha de expiración <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.expiration || errors.month_invalid || errors.year_invalid}"
-                                class="el-form-item mb-0"
-                                id="expiration"
-                                v-mask="'##/##'"
-                                v-model="data.cardExpiration"
-                                placeholder="MM/AA"
-                                maxlength="5"
-                                clearable
-                                @keyup="setExpiration"
-                            />
-                            <p class="text-error" v-if="errors.expiration">Completa el mes y el año.</p>
-                            <p class="text-error" v-if="errors.month_invalid">Ingresa un mes válido.</p>
-                            <p class="text-error" v-if="errors.year_invalid">El año debe ser mayor o igual que el actual.</p>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12" v-if="data.order.payment_method == 'card'" class="mb-3">
-                            <label class="bold has-text-dark" for="cvv">CVV <span class="has-text-danger">*</span></label>
-                            <el-input
-                                :class="{'is-error': errors.cvc}"
-                                class="el-form-item mb-0"
-                                id="cvv"
-                                v-model="data.paymentData.card.cvc"
-                                placeholder="CVV"
-                                maxlength="3"
-                                @keypress="isNumber($event)"
-                            />
-                            <span class="text-error" v-if="errors.cvc">El código de seguridad es obligatorio.</span>
-                        </el-col>
-                        <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" v-if="data.order.payment_method == 'paypal'" class="text-center justify-content-center">
-                            <PaypalButton
-                                ref="PaypalButton"
-                                :amount="event.model_payment === 'separated' ? (data.subtotal + data.commission) : data.subtotal"
-                                @update-orderId="data.order.paypal_order_id = $event"
-                                :handleMakePayment="payment"
-                            />
-                        </el-col> -->
+                        <ConektaFrame
+                            ref="conektaFrameRef"
+                            v-if="viewConektaFrame"
+                            :make-payment-parent="confirmMakePayment"
+                        />
+                        <PaypalFrame
+                            ref="paypalFrameRef"
+                            v-if="viewPaypalFrame"
+                            :make-payment-parent="confirmMakePayment"
+                            :amount="order.model_payment === 'separated' ? (order.subtotal + order.commission) : order.subtotal"
+                        />
                     </el-row>
                 </el-col>
-                <!-- <el-col :span="24" class="has-text-centered mt-3">
-                    <el-button type="primary" size="large" @click="payment" v-if="event.status == 1 && (data.order.payment_method === 'oxxo' || data.order.payment_method === 'card')">
-                        <font-awesome-icon :icon="['fas', 'dollar-sign']" v-if="data.order.payment_method == 'card'" />
-                        <font-awesome-icon :icon="['fas', 'check']" v-if="data.order.payment_method == 'oxxo'" />
-                        &nbsp;&nbsp;{{ data.order.payment_method == 'card' ? 'Realizar pago' : 'Realizar pedido' }}
+                <el-col :span="24" class="has-text-centered mt-3">
+                    <el-button type="primary" size="large" @click="confirmMakePayment" v-if="order.event_status == 1 && order.payment_method === 'oxxo'">
+                        <font-awesome-icon :icon="['fas', 'check']" />
+                        &nbsp;&nbsp;Realizar pedido
                     </el-button>
-                </el-col> -->
+                </el-col>
             </el-row>
         </el-col>
     </el-row>

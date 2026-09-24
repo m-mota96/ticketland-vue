@@ -1,7 +1,5 @@
 <template>
-    <div>
-        <div class="text-center justify-content-center" id="paypal-button-container"></div>
-    </div>
+    <div class="text-center justify-content-center" id="paypal-button-container" style="width: 100% !important;"></div>
 </template>
 
 <script>
@@ -13,7 +11,7 @@ export default {
             type: Number,
             required: true,
         },
-        handleMakePayment: {
+        makePaymentParent: {
             type: Function,
             required: true
         }
@@ -24,7 +22,7 @@ export default {
         }
     },
     mounted() {
-        
+        this.loadSdk();
     },
     methods: {
         loadSdk() {
@@ -50,8 +48,8 @@ export default {
                     return res.data.order_id; // Devuelve el orderID desde Laravel
                 },
                 onApprove: async (data) => {
-                    this.$emit('update-orderId', data.orderID);
-                    this.handleMakePayment();
+                    // this.$emit('update-orderId', data.orderID);
+                    this.makePaymentParent(data.orderID);
                     // const res = await axios.post(`${window.location.origin}/captureOrder`, {
                     //     order_id: data.orderID
                     // });

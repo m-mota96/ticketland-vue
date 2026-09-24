@@ -69,3 +69,15 @@ html, body {
 .vti__dropdown-list {
     z-index: 999 !important;
 }
+.my-loading .el-loading-text {
+    font-size: 21px !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+.el-table .group-1 td {
+    background-color: #f5f7fa !important;
+}
+
+.el-table .group-2 td {
+    background-color: #ffffff !important;
+}

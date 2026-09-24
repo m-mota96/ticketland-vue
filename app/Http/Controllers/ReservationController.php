@@ -30,9 +30,25 @@ class ReservationController extends Controller {
             $offset     = ($page - 1) * $limit; // Calcular el offset
             $search     = $request->search;
             $query      = Payment::with(['accesses.ticket', 'accesses.code'])->where('event_id', $request->event_id)
-            ->addSelect(['total_order' => Access::selectRaw('SUM(price)')
-                ->whereColumn('payment_id', 'payments.id')
-                ->groupBy('payment_id')
+            ->addSelect([
+                'total_order' => Access::query()
+                    ->from('accesses')
+                    ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+                    ->whereColumn('accesses.payment_id', 'payments.id')
+                    ->selectRaw('
+                        SUM(
+                            CASE
+                                WHEN tickets.package = 1
+                                THEN accesses.price / (
+                                    SELECT COUNT(*)
+                                    FROM accesses a2
+                                    WHERE a2.ticket_id = accesses.ticket_id
+                                    AND a2.payment_id = accesses.payment_id
+                                )
+                                ELSE accesses.price
+                            END
+                        )
+                    ')
             ]);
             $count = Payment::where('event_id', $request->event_id);
 
@@ -90,7 +106,7 @@ class ReservationController extends Controller {
             }
 
             if ($proccess['error']) {
-                return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$tproccess['msj'], true, 500);
+                return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.', 'Ocurrio un error '.$proccess['msj'], true, 500);
             }
             return ResponseTrait::response($txt);
         } catch (\Throwable $th) {
@@ -112,7 +128,7 @@ class ReservationController extends Controller {
             }
 
             if(!$zip->open($filename, ZIPARCHIVE::CREATE)) {
-                return ResponseTrait::response('Error al crear archivo zip.', 'Ocurrio un error '.$th->getMessage(), true, 500);
+                return ResponseTrait::response('Error al crear archivo zip.', 'Ocurrio un error ', true, 500);
             }
 
             foreach ($payment->accesses as $key => $a) {

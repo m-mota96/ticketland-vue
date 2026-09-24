@@ -21,9 +21,25 @@ trait SendMailTrait {
 
     private static function sendTickets($payment_id) {
         $payment = Payment::with(['event.profile', 'accesses.ticket', 'event.paymentMethods'])
-        ->addSelect(['total_order' => Access::selectRaw('SUM(price)')
-            ->whereColumn('payment_id', 'payments.id')
-            ->groupBy('payment_id')
+        ->addSelect([
+            'total_order' => Access::query()
+                ->from('accesses')
+                ->join('tickets', 'tickets.id', '=', 'accesses.ticket_id')
+                ->whereColumn('accesses.payment_id', 'payments.id')
+                ->selectRaw('
+                    SUM(
+                        CASE
+                            WHEN tickets.package = 1
+                            THEN accesses.price / (
+                                SELECT COUNT(*)
+                                FROM accesses a2
+                                WHERE a2.ticket_id = accesses.ticket_id
+                                AND a2.payment_id = accesses.payment_id
+                            )
+                            ELSE accesses.price
+                        END
+                    )
+                ')
         ])
         ->find($payment_id);
         $payment->event->imgProfile = 'general/slide_ticketland.png';
@@ -41,7 +57,12 @@ trait SendMailTrait {
             }
             $infoTickets[$a->ticket_id]['ticket']   = $a->ticket->name;
             $infoTickets[$a->ticket_id]['price']    = $price;
-            $infoTickets[$a->ticket_id]['quantity'] = isset($infoTickets[$a->ticket_id]['quantity']) ? $infoTickets[$a->ticket_id]['quantity'] + 1 : 1;
+            $infoTickets[$a->ticket_id]['quantity'] = isset($infoTickets[$a->ticket_id]['quantity'])
+                ? ($a->ticket->package === 0
+                    ? $infoTickets[$a->ticket_id]['quantity'] + 1
+                    : $infoTickets[$a->ticket_id]['quantity']
+                )
+                : 1;
         }
         $infoTickets = array_values($infoTickets);
 

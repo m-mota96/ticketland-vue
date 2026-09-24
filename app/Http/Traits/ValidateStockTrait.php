@@ -21,7 +21,7 @@ trait ValidateStockTrait {
                 $errors[] = 'El boleto <b>'.$t['name'].'</b> ya no esta disponible.';
                 $success  = false;
             } else {
-                if ($ticket->available == 0 || $ticket->available < $t['quantity']) { // Ya se vendieron todos los boletos o no se ajusta la cantidad que desean comprar
+                if ($ticket->available == 0 || $ticket->available < $t['quantity_to_purchase']) { // Ya se vendieron todos los boletos o no se ajusta la cantidad que desean comprar
                     $errors[] = $ticket->available == 0 ? 
                     'Ya no hay disponibilidad del boleto <b>'.$ticket->name.'</b>.' : 
                     'Solo quedan <b>'.$ticket->available.'</b> boletos disponibles de <b>'.$ticket->name.'</b>.';
@@ -30,22 +30,25 @@ trait ValidateStockTrait {
                     switch ($payment_method) {
                         case 'card':
                         case 'paypal':
-                            $ticket->sales = $ticket->sales + $t['quantity'];
+                            $ticket->sales = $ticket->sales + $t['quantity_to_purchase'];
                             break;
                         case 'oxxo':
-                            $ticket->reserved = $ticket->reserved + $t['quantity'];
+                            $ticket->reserved = $ticket->reserved + $t['quantity_to_purchase'];
                             break;
                     }
                     $ticket->save();
+
                     $priceDiscount = $ticket->promotion
-                    ? ($ticket->price - round($ticket->price * ($ticket->promotion / 100))) // Si hay una promoción activa se calcula el precio con descuento.
-                    : 0; // Si no la hay lo dejamos en 0.
+                    ? ($ticket->price - round($ticket->price * ($ticket->promotion / 100))) // Si hay una promoción activa, se calcula el precio con descuento.
+                    : 0; // Si no la hay, lo dejamos en 0.
+
                     $price = $ticket->promotion && empty($t['code_id'])
                     ? $priceDiscount // Si hay una promoción activa y NO ingresaron cupón de descuento se toma el precio con descuento.
                     : (empty($t['code_id'])
                         ? $ticket->price // Si no hay promoción activa y NO hay cupón de descuento se toma el precio normal del boleto.
                         : ($ticket->price - round($ticket->price * ($t['code_discount'] / 100)))); // Si no hay promoción activa y SI hay un cupón, se calcula el precio menos el descuento del cupón.
-                    $totalToPay = $totalToPay + ($price * $t['quantity']);
+
+                    $totalToPay = $totalToPay + ($price * $t['quantity_to_purchase']);
                 }
             }
         }

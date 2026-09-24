@@ -130,10 +130,14 @@
                     <p class="text-blue mt-3 mb-1" style="font-size: 12px;">PRECIO DEL BOLETO</p>
                     <p class="normal" style="font-size: 12px;">${{ number_format($price, 2) }} MXN</p>
                     <hr class="w-100">
-                    <p class="text-blue mt-3 mb-1" style="font-size: 12px;">DESCUENTO</p>
+                    <p class="text-blue mt-3 mb-1" style="font-size: 12px;">CUPÓN DE DESCUENTO</p>
+                    <p class="normal" style="font-size: 12px;">{{ $code ? $code : 'N/A' }}</p>
+                    <hr class="w-100">
+                    <p class="text-blue mt-3 mb-1" style="font-size: 12px;">DESCUENTO(%)</p>
                     <p class="normal" style="font-size: 12px;">{{ $promotion ? $promotion.'%' : 'N/A' }}</p>
                     <hr class="w-100">
-                    <img class="mt-4 w-70" src="data:image/png;base64,{{$qr_code}}" alt="Ticketland">
+                    <p class="text-blue mt-3 mb-1" style="font-size: 12px;">CÓDIGO DE ACCESO</p>
+                    <img class="mt-1 w-70" src="data:image/png;base64,{{$qr_code}}" alt="Ticketland">
                 </td>
             </tr>
             {{-- <tr>

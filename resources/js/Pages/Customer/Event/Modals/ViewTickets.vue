@@ -2,12 +2,25 @@
     <el-dialog
         v-model="activeTickets"
         title="Información de los boletos"
-        width="90%"
+        width="95%"
         align-center
         style="margin-top: 3% !important;"
         :lock-scroll="false"
     >
-        <el-table class="w-100 mb-6" :data="tickets" stripe empty-text="Ningún dato disponible en esta tabla" header-cell-class-name="has-text-dark">
+        <el-table
+            class="w-100 mb-6"
+            :data="tickets"
+            :span-method="objectSpanMethod"
+            stripe
+            :row-class-name="rowClassName"
+            empty-text="Ningún dato disponible en esta tabla"
+            header-cell-class-name="has-text-dark"
+        >
+            <el-table-column label="#" width="70" align="center">
+                <template #default="scope">
+                    {{ scope.$index + 1 }}
+                </template>
+            </el-table-column>
             <el-table-column prop="ticket.name" label="Tipo de boleto" />
             <el-table-column label="Precio" align="center">
                 <template #default="scope">
@@ -87,9 +100,39 @@
         },
         methods: {
             showTickets(_tickets) {
+                // console.log(this.tickets);
                 this.tickets       = _tickets;
-                console.log(this.tickets);
                 this.activeTickets = true;
+            },
+            objectSpanMethod({ row, columnIndex, rowIndex }) {
+                const columns = [0, 1, 2, 3, 4, 5];
+
+                if (!columns.includes(columnIndex)) {
+                    return;
+                }
+
+                if (!row.ticket.package) {
+                    return;
+                }
+
+                const previousRow = this.tickets[rowIndex - 1];
+
+                // Si la fila anterior tiene el mismo ticket,
+                // esta celda queda absorbida por el rowspan anterior.
+                if (
+                    previousRow &&
+                    previousRow.ticket_id === row.ticket_id
+                ) {
+                    return {
+                        rowspan: 0,
+                        colspan: 0,
+                    };
+                }
+
+                return {
+                    rowspan: row.ticket.number_of_access,
+                    colspan: 1,
+                };
             },
             async disableAccess(event_id, access_id) {
 
@@ -100,6 +143,21 @@
                     currency: 'MXN'
                 }).format(value);
             },
+            rowClassName({ row, rowIndex }) {
+                const previousRow = rowIndex > 0
+                    ? this.tickets[rowIndex - 1]
+                    : null;
+
+                // Si pertenece al mismo grupo que la fila anterior
+                if (
+                    previousRow &&
+                    previousRow.ticket_id === row.ticket_id
+                ) {
+                    return `group-${previousRow.ticket_id}`;
+                }
+
+                return `group-${row.ticket_id}`;
+            }
         }
     }
 </script>

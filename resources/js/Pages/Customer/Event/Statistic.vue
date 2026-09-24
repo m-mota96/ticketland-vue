@@ -190,6 +190,12 @@ export default {
                         borderWidth: 0
                     }
                 },
+                credits: {
+                    enabled: false
+                },
+                accessibility: {
+                    enabled: false
+                },
                 series: [
                     {
                         name: 'Boletos pagados',

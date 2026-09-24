@@ -156,7 +156,6 @@
                                             effect="dark"
                                             content="Ver boletos de la orden"
                                             placement="top"
-                                            v-if="scope.row.status == 'payed' || scope.row.status == 'pending'"
                                         >
                                             <el-button class="pl-2 pr-2" type="success" @click="$refs.ViewTickets.showTickets(scope.row.accesses)">
                                                 <font-awesome-icon :icon="['fas', 'eye']" />

@@ -564,7 +564,7 @@ import { dateEs, time } from '@/dateEs';
 import { showNotification } from '@/notification';
 import Errors from './Modals/Errors.vue';
 import { ElMessageBox } from 'element-plus';
-import PaypalButton from './PaypalButton.vue';
+import PaypalButton from './PaypalFrame.vue/index.js';
 import { nextTick } from 'vue';
 import { VueTelInput } from 'vue3-tel-input'
 import 'vue3-tel-input/dist/vue3-tel-input.css'

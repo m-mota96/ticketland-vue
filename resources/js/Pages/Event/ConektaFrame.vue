@@ -1,12 +1,13 @@
 <script setup lang="js">
 import { onMounted, defineProps } from 'vue';
+import { showNotification } from '@/notification';
 
-// const { addPaymentMethodParent } = defineProps({
-//     addPaymentMethodParent: {
-//         type: Function,
-//         required: true
-//     }
-// });
+const { makePaymentParent } = defineProps({
+    makePaymentParent: {
+        type: Function,
+        required: true
+    }
+});
 
 const publicKey = import.meta.env.VITE_CONEKTA_PUBLIC_KEY;
 
@@ -23,11 +24,17 @@ onMounted(async () => {
             },
             callbacks: {
                 onCreateTokenSucceeded(token) {
-                    console.log(token);
-                    // addPaymentMethodParent(token);
+                    makePaymentParent(token.id);
                 },
                 onCreateTokenError(error) {
-                    console.log('ERROR', error)
+                    let msg = 'Por favor verifica que los datos de la tarjeta sean correctos.';
+                    if (error.data?.details.length) {
+                        msg = '';
+                        error.data.details.forEach(d => {
+                            msg = msg + d.message + '<br>';
+                        });
+                    }
+                    showNotification('¡Error!', msg, 'error', 8000);
                 },
                 onGetInfoSuccess(loadingTime) {
                     console.log(loadingTime)

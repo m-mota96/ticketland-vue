@@ -31,10 +31,7 @@ const event             = ref({});
 const tickets           = ref([]);
 const viewFormTickets   = ref(false);
 const tickets_purchased = ref([]);
-const loading           = false;
 const data              = ref({
-    tickets: [],
-    ticketsReserved: [],
     selected: 0,
     subtotal: 0,
     discount: 0,
@@ -55,7 +52,7 @@ const getInformationEvent = async () => {
         if (t.questions.length) { // Verificamos si ese boletos tiene campos adicionales agregados.
             t.questions.forEach(q => {
                 if (q.type === 'select') {
-                    // Si el campo es de tipo select convertimos el atring separado por comas a array.
+                    // Si el campo es de tipo select convertimos el string separado por comas a array.
                     q.options = q.options.split(',');
                 }
             });
@@ -159,6 +156,16 @@ const scrollToInfoEvent = async () => {
     }
 };
 
+const resetForm = () => {
+    data.value.selected       = 0;
+    data.value.subtotal       = 0;
+    data.value.discount       = 0;
+    data.value.discountAmount = 0;
+    data.value.total          = 0;
+    data.value.commission     = 0;
+    getInformationEvent();
+};
+
 const formatDate = (_date) => {
     return dateEs(_date, 1, ' ');
 };
@@ -239,6 +246,7 @@ const isNumber = (evt) => {
                                             </el-badge>
                                             <h5 class="subtitle is-6 has-text-gray mb-0" v-if="t.promotion || t.code"><del>{{ formatCurrency(t.price) }} MXN</del></h5>
                                             <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion && !t.code">{{ formatCurrency(t.priceDiscount) }} MXN</h5>
+                                            <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion && t.code">{{ formatCurrency(t.price - Math.round(t.price * (t.code_discount / 100))) }} MXN</h5>
                                             <h5 class="subtitle is-5 has-text-link mb-1" v-if="t.promotion && t.code">{{ formatCurrency(t.price - Math.round(t.price * (t.code_discount / 100))) }} MXN</h5>
                                             <h5 class="subtitle is-5 has-text-link mb-1" v-if="!t.promotion && !t.code">{{ formatCurrency(t.price) }} MXN</h5>
                                             <p class="mb-0" v-if="t.code">
@@ -285,7 +293,7 @@ const isNumber = (evt) => {
             </el-row>
         </el-col>
     </el-row>
-    <Tickets ref="ticketsRef" v-model="viewFormTickets" :totals-parent="totals" :scroll-to-info-parent="scrollToInfo" />
+    <Tickets ref="ticketsRef" v-model="viewFormTickets" :totals-parent="totals" :scroll-to-info-parent="scrollToInfo" :reset-form-parent="resetForm" />
     <el-row class="container-fluid has-background-white pb-6 pt-6 padding" ref="moreInfo">
         <el-col :xs="24" :sm="24" :md="24" :lg="{span: 14, offset: 5}" :xl="{span: 14, offset: 5}">
             <el-row :gutter="gutterValue2">
