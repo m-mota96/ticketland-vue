@@ -7,35 +7,36 @@ use App\Models\Ticket;
 trait ValidateStockTrait {
     public static function validateStock($tickets, $payment_method, $discount) { // Verifica si todavía quedan boletos disponibles
         $success    = true;
-        $errors     = [];
+        $errors     = '';
         $totalToPay = 0;
         // dd($tickets, $discount);
         foreach ($tickets as $key => $t) {
-            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved) AS available'), 'sales', 'reserved', 'price', DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))
+            $ticket = Ticket::select('id', 'name', DB::raw('quantity - (sales + reserved + stored) AS available'), 'sales', 'reserved', 'price', DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))
             ->where('id', $t['id'])
             ->where('status', 1)
             ->where('start_sale', '<=', date('Y-m-d'))
             ->where('stop_sale', '>=', date('Y-m-d'))
             ->first();
             if (!$ticket) { // Se esta intentando comprar el boleto fuera del rango de fechas establecidas o que ya no esta activo
-                $errors[] = 'El boleto <b>'.$t['name'].'</b> ya no esta disponible.';
-                $success  = false;
+                $errors  .= 'El boleto <b>'.$t['name'].'</b> ya no esta disponible.<br>';
+                $success = false;
             } else {
-                if ($ticket->available == 0 || $ticket->available < $t['quantity_to_purchase']) { // Ya se vendieron todos los boletos o no se ajusta la cantidad que desean comprar
-                    $errors[] = $ticket->available == 0 ? 
-                    'Ya no hay disponibilidad del boleto <b>'.$ticket->name.'</b>.' : 
-                    'Solo quedan <b>'.$ticket->available.'</b> boletos disponibles de <b>'.$ticket->name.'</b>.';
+                if ($ticket->available <= 0 || $ticket->available < $t['quantity_to_purchase']) { // Ya se vendieron todos los boletos o no se ajusta la cantidad que desean comprar
+                    $errors .= $ticket->available <= 0 ? 
+                    'Ya no hay disponibilidad del boleto <b>'.$ticket->name.'</b>.<br>' : 
+                    'Solo quedan <b>'.$ticket->available.'</b> boletos disponibles de <b>'.$ticket->name.'</b>.<br>';
                     $success  = false;
                 } else { // Correcto
-                    switch ($payment_method) {
-                        case 'card':
-                        case 'paypal':
-                            $ticket->sales = $ticket->sales + $t['quantity_to_purchase'];
-                            break;
-                        case 'oxxo':
-                            $ticket->reserved = $ticket->reserved + $t['quantity_to_purchase'];
-                            break;
-                    }
+                    // switch ($payment_method) {
+                    //     case 'card':
+                    //     case 'paypal':
+                    //         $ticket->sales = $ticket->sales + $t['quantity_to_purchase'];
+                    //         break;
+                    //     case 'oxxo':
+                    //         $ticket->reserved = $ticket->reserved + $t['quantity_to_purchase'];
+                    //         break;
+                    // }
+                    $ticket->stored = $ticket->stored + $t['quantity_to_purchase'];
                     $ticket->save();
 
                     $priceDiscount = $ticket->promotion

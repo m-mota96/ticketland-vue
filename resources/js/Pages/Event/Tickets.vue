@@ -109,6 +109,7 @@ const loadForm = (_event, _tickets) => {
                     email: '',
                     error_email: [],
                     phone: '',
+                    error_phone: [],
                     question: [ // Agregamos estos campos por si el administrador añade campos adicionales para llenar el boleto.
                         {
                             id: t.questions[0]?.id || null,
@@ -414,6 +415,7 @@ const validate = () => {
         t.inputs.forEach(i => {
             i.error_name  = [];
             i.error_email = [];
+            i.error_phone = [];
             i.question[0].error = false;
             i.question[1].error = false;
             i.question[2].error = false;
@@ -423,8 +425,15 @@ const validate = () => {
                 i.error_name.push('El nombre es obligatorio.');
                 valid = false;
             }
-            if (i.email && !mailRegex.test(i.email)) {
+            if (!i.email) {
+                i.error_email.push('El correo es obligatorio.');
+                valid = false;
+            } else if (i.email && !mailRegex.test(i.email)) {
                 i.error_email.push('Correo inválido.');
+                valid = false;
+            }
+            if (!i.phone) {
+                i.error_phone.push('El teléfono es obligatorio.');
                 valid = false;
             }
             if (i.question[0].id && i.question[0].required && !i.question[0].response) {
@@ -728,7 +737,7 @@ defineExpose({
                                     <span class="text-error" v-if="input.error_name.length">{{ input.error_name[0] }}</span>
                                 </el-col>
                                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
-                                    <label class="bold has-text-dark">Correo</label>
+                                    <label class="bold has-text-dark">Correo <span class="has-text-danger">*</span></label>
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
                                         :class="{'is-error': input.error_email.length}"
@@ -740,18 +749,20 @@ defineExpose({
                                     <span class="text-error" v-if="input.error_email.length">{{ input.error_email[0] }}</span>
                                 </el-col>
                                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3">
-                                    <label class="bold has-text-dark">Teléfono</label>
+                                    <label class="bold has-text-dark">Teléfono <span class="has-text-danger">*</span></label>
                                     <VueTelInput
                                         v-model="input.phone"
                                         :value="input.phone"
                                         mode="international"
                                         class="mt-1"
+                                        :class="{'error-phone': input.error_phone.length}"
                                         style="color: #606266; height: 32px;"
                                         :auto-format="true"
                                         :input-options="{ placeholder: 'Número de teléfono' }"
                                         @input="(val) => onPhoneChangeTickets(val, index, key_index)"
                                         defaultCountry="MX"
                                     />
+                                    <span class="text-error" v-if="input.error_phone.length">{{ input.error_phone[0] }}</span>
                                 </el-col>
                                 <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8" class="mb-3" v-for="(question, qt) in t.questions" :key="question.id">
                                     <label class="bold has-text-dark">{{ question.title }} <span class="has-text-danger" v-if="question.required">*</span></label>

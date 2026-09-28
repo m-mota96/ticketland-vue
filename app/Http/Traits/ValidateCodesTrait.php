@@ -6,6 +6,7 @@ use App\Models\Code;
 trait ValidateCodesTrait {
     public static function validateCodes($request, $save = true, $tickets = []) { // Verifica el cupón de descuento
         $code = Code::with(['tickets:id'])->where('code', $request['code'])->where('event_id', $request['event_id'])->where('status', 1)->first();
+
         if (!$code) {
             return ['success' => false, 'msj' => 'El cupón '.$request['code'].' no existe.'];
         }
@@ -15,7 +16,7 @@ trait ValidateCodesTrait {
             $codeTickets = $code->tickets->pluck('id')->toArray(); // Obtiene los boletos para los que aplica el cupón ingresado
         }
 
-        $used = $code->used + $code->reserved;
+        $used = $code->used + $code->reserved + $code->stored;
         if (($code->quantity - $used) === 0) {
             return ['success' => false, 'msj' => 'El cupón '.$code->code.' se ha agotado.'];
         }
@@ -39,17 +40,18 @@ trait ValidateCodesTrait {
         /* Cuando la variable $save es true indica que ya estan comprando los boletos, de lo contrario
         el cliente apenas esta llenando la información de su pedido y se valida el cupón */
         if ($save && $success) {
-            switch ($request['payment_method']) {
-                case 'card':
-                case 'paypal':
-                    // Cuando el método de pago es tarjeta o paypal se le suma uno a las veces que se ha usado el cupón
-                    $code->used = $code->used + 1;
-                    break;
-                case 'oxxo':
-                    // Cuando el pago es en oxxo se suma uno a reservado (en el webhook que marca el pago como payed se suma uno a used y se resta uno a reserved)
-                    $code->reserved = $code->reserved + 1;
-                    break;
-            }
+            $code->stored = $code->stored + 1;
+            // switch ($request['payment_method']) {
+            //     case 'card':
+            //     case 'paypal':
+            //         // Cuando el método de pago es tarjeta o paypal se le suma uno a las veces que se ha usado el cupón
+            //         $code->used = $code->used + 1;
+            //         break;
+            //     case 'oxxo':
+            //         // Cuando el pago es en oxxo se suma uno a reservado (en el webhook que marca el pago como payed se suma uno a used y se resta uno a reserved)
+            //         $code->reserved = $code->reserved + 1;
+            //         break;
+            // }
             $code->save();
         }
         return [

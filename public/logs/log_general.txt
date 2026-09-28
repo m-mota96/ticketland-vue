@@ -19,3 +19,4 @@
 17/04/2026 17:05:01 Error general: Indirect modification of overloaded property Illuminate\Http\Request::$order has no effect
 17/04/2026 17:05:13 Error general: Indirect modification of overloaded property Illuminate\Http\Request::$order has no effect
 17/04/2026 17:06:30 Error general: Indirect modification of overloaded property Illuminate\Http\Request::$order has no effect
+25/09/2026 10:03:25 Error general: SQLSTATE[HY000]: General error: 1205 Lock wait timeout exceeded; try restarting transaction (Connection: mysql, Host: ticketland.mx, Port: 3306, Database: ticketland_pruebas, SQL: update `tickets` set `reserved` = 1 where `id` = 2)

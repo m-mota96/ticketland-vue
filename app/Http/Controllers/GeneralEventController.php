@@ -16,6 +16,7 @@ use App\Http\Traits\ValidateCodesTrait;
 use App\Http\Traits\ValidateStockTrait;
 use App\Models\Event;
 use App\Models\Ticket;
+use PaypalServerSdkLib\Models\Order;
 
 class GeneralEventController extends Controller {
 
@@ -45,7 +46,7 @@ class GeneralEventController extends Controller {
             return ResponseTrait::response('No es posible comprar boletos para el evento seleccionado.', ['type' => 'event'], true, 404);
         }
 
-        DB::beginTransaction();
+        // DB::beginTransaction();
         $files = [];
         try {
             $paymentMethods = $event->paymentMethods->pluck('sku')->toArray();
@@ -72,7 +73,6 @@ class GeneralEventController extends Controller {
             if (!empty($request->order['code'])) {
                 $proccess = ValidateCodesTrait::validateCodes($request->order, true, $request->tickets); // Valida si estan usando código de descuento y si éste es válido
                 if (!$proccess['success']) {
-                    DB::rollBack();
                     return ResponseTrait::response($proccess['msj'], ['type' => 'codes'], true, 409);
                 }
                 $discount = [
@@ -86,8 +86,8 @@ class GeneralEventController extends Controller {
 
             $proccess = ValidateStockTrait::validateStock($request->tickets, $request->order['payment_method'], $discount); // Valida si hay disponibilidad de los boletos elegidos
             if (!$proccess['success']) {
-                DB::rollBack();
-                return ResponseTrait::response('', ['error' => $proccess['error'], 'type' => 'stock'], true, 409);
+                OrderTrait::stagedCodes($discount);
+                return ResponseTrait::response($proccess['error'], ['error' => $proccess['error'], 'type' => 'stock'], true, 409);
             }
             $subtotal   = intval($proccess['totalToPay']);
             $commission = $event->model_payment === 'separated' ? round($subtotal * $commissionTicketland) : 0;
@@ -95,17 +95,22 @@ class GeneralEventController extends Controller {
 
             $proccess = ManageFilesTrait::createPdf($request->informationTickets, $event, $discount); // Crea los pdf de los boletos
             if (!$proccess['success']) {
-                DB::rollBack();
+                OrderTrait::stagedCodes($discount);
+                OrderTrait::stagedTickets($request->tickets);
                 return ResponseTrait::response($proccess['msj'], ['type' => 'general'], true, 409);
             }
             $files = $proccess['files'];
             
+            $statusPayment = null;
+            $typeSend      = '';
+            $txt           = '';
             switch ($request->order['payment_method']) {
                 case 'card':
                     // Se procesa el cobro a la tarjeta
                     $proccess = ConektaPaymentTrait::createOrder($event->name, $total, $request->order);
                     if (!$proccess['success']) {
-                        DB::rollBack();
+                        OrderTrait::stagedCodes($discount);
+                        OrderTrait::stagedTickets($request->tickets);
                         ManageFilesTrait::deleteFiles($event->id, $files);
                         return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
                     }
@@ -118,7 +123,8 @@ class GeneralEventController extends Controller {
                 case 'oxxo':
                     $proccess = DigitalFemsaTrait::createOrder($event->name, $total, $request->order); // Crea la referencia de pago en DigitalFemsa
                     if (!$proccess['success']) {
-                        DB::rollBack();
+                        OrderTrait::stagedCodes($discount);
+                        OrderTrait::stagedTickets($request->tickets);
                         ManageFilesTrait::deleteFiles($event->id, $files);
                         return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
                     }
@@ -129,7 +135,8 @@ class GeneralEventController extends Controller {
                     $dataReference = $proccess;
                     $proccess      = ManageFilesTrait::createReference($event->id, $dataReference, $orderClientId); // Crea el pdf de la referencia de pago
                     if (!$proccess['success']) {
-                        DB::rollBack();
+                        OrderTrait::stagedCodes($discount);
+                        OrderTrait::stagedTickets($request->tickets);
                         ManageFilesTrait::deleteFiles($event->id, $files);
                         return ResponseTrait::response($proccess['msj'], ['type' => 'general'], true, 409);
                     }
@@ -139,7 +146,8 @@ class GeneralEventController extends Controller {
                     // Se procesa el pago con Paypal
                     $proccess = PaypalTrait::captureOrder($request->order['token_id']);
                     if (!$proccess['success']) {
-                        DB::rollBack();
+                        OrderTrait::stagedCodes($discount);
+                        OrderTrait::stagedTickets($request->tickets);
                         ManageFilesTrait::deleteFiles($event->id, $files);
                         return ResponseTrait::response($proccess['msj'], ['type' => 'payment'], true, 409);
                     }
@@ -153,22 +161,26 @@ class GeneralEventController extends Controller {
             // Se registra la información de pago en la DB
             $proccess   = OrderTrait::registerPayment($event->id, $request->order, $orderClientId, $subtotal, $statusPayment, $discount, $reference);
             $payment_id = $proccess['payment_id'];
-            // Se registran los accesos en la DB
-            $proccess   = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
-            // Se envían los boletos o la referencia de pago según sea el caso
-            SendMailTrait::index($typeSend, $payment_id);
 
-            DB::commit();
+            if ($payment_id) {
+                // Se registran los accesos en la DB
+                $proccess = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
+
+                // Se envían los boletos o la referencia de pago según sea el caso
+                SendMailTrait::index($typeSend, $payment_id);
+            }
+            OrderTrait::storeCodes($request->order['payment_method'], $discount);
+            OrderTrait::storeTickets($request->order['payment_method'], $request->tickets);
+
             return ResponseTrait::response($txt);
         } catch (\Throwable $th) {
-            DB::rollBack();
             $logFile = fopen("logs/log_general.txt", 'a') or die("Error creando archivo");
             fwrite($logFile, date("d/m/Y H:i:s")." Error general: ".$th->getMessage()."\n") or die("Error escribiendo en el archivo");
             fclose($logFile);
             if (sizeof($files) > 0) {
                 ManageFilesTrait::deleteFiles($event->id, $files);
             }
-            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta al organizador del evento.<br>'.$th->getMessage(), ['type' => 'general'], true, 409);
+            return ResponseTrait::response('Lo sentimos ocurrio un error.<br>Si el problema persiste contacta al organizador del evento.', ['type' => 'general'], true, 409);
         }
     }
 

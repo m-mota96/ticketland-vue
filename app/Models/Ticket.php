@@ -14,6 +14,7 @@ class Ticket extends Model
         'quantity',
         'sales',
         'reserved',
+        'stored',
         'valid',
         'use_turns',
         'promotion',
