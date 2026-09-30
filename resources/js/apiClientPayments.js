@@ -19,7 +19,7 @@ const apiClientPayments = async (url, method = 'GET', data = null) => {
             };
         }
 
-        const response = await axios(`${window.location.origin}/${url}`, options);
+        const response = await axios(`${window.location.origin}/${url}`, { timeout: 120000, ...options });
         return (response.data) ? response.data : response;
     } catch (error) {
         const defaultMsg = 'Lo sentimos ocurrió un error.<br>No es posible realizar tu pedido.';
@@ -27,8 +27,8 @@ const apiClientPayments = async (url, method = 'GET', data = null) => {
 
         return {
             error: true,
-            msj: error.response.data.msj || (defaultMsg + extraMsg),
-            data: error.response.data.data || 'Error fatal'
+            msj: error.response?.data?.msj || (defaultMsg + extraMsg),
+            data: error.response?.data?.data || 'Error fatal'
         }
     }
 }
