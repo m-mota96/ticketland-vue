@@ -33,6 +33,7 @@ const loading          = ref(false);
 const loadingTickets   = ref(false);
 const txtLoading       = ref('compra');
 const tickets          = ref([]);
+const eventUrl         = ref('');
 const formTickets      = ref([]);
 const payment_methods  = ref([]);
 const disabledDiscount = ref(false);
@@ -80,6 +81,7 @@ const loadForm = (_event, _tickets) => {
     order.value.event_id      = _event.id;
     order.value.event_status  = _event.status;
     order.value.model_payment = _event.model_payment;
+    eventUrl.value            = _event.url;
     tickets.value             = _tickets;
     formTickets.value         = [];
 
@@ -329,10 +331,35 @@ const makePayment = async () => {
         showNotification('¡Error!', response.msj, 'error', 15000);
         return false;
     }
+    rastrearCompra();
     resetFormParent();
     resetForm();
     viewFormTickets.value = false;
     showNotification('¡Correcto!', response.msj, 'success', 30000);
+};
+
+// Envía el evento purchase a Google Tag Manager con los boletos de la orden.
+const rastrearCompra = () => {
+    const commission = Math.round(order.value.subtotal * 0.12); // Cargo por servicio del 12%
+
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null }); // Limpia el historial previo
+    window.dataLayer.push({
+        event: 'purchase',
+        ecommerce: {
+            value: order.value.subtotal + commission,
+            tax: commission,
+            currency: 'MXN',
+            items: tickets.value.map(t => ({
+                item_id: t.id,
+                item_name: t.name,
+                item_category: eventUrl.value,
+                payment_method: order.value.payment_method,
+                price: t.subtotal / t.quantity_to_purchase,
+                quantity: t.quantity_to_purchase
+            }))
+        }
+    });
 };
 
 const viewTickets = () => {

@@ -133,7 +133,27 @@ const loadInfo = () => {
 
     // Obtenemos solo los boletos que quieren comprar (quantity_to_purchase > 0).
     const ticketsFiltered = tickets.value.filter(t => t.quantity_to_purchase !== 0);
+    rastrearInicioCheckout(ticketsFiltered);
     ticketsRef.value?.loadForm(event.value, ticketsFiltered);
+};
+
+// Envía el evento begin_checkout a Google Tag Manager con los boletos seleccionados.
+const rastrearInicioCheckout = (_tickets) => {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null }); // Limpia el historial previo
+    window.dataLayer.push({
+        event: 'begin_checkout',
+        ecommerce: {
+            currency: 'MXN',
+            value: data.value.subtotal,
+            items: _tickets.map(t => ({
+                item_name: t.name,
+                item_category: event.value.url,
+                price: t.subtotal / t.quantity_to_purchase,
+                quantity: t.quantity_to_purchase
+            }))
+        }
+    });
 };
 
 const scrollToInfo = async () => {
