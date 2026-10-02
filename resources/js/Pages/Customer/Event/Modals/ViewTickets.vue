@@ -105,7 +105,7 @@
                 this.activeTickets = true;
             },
             objectSpanMethod({ row, columnIndex, rowIndex }) {
-                const columns = [0, 1, 2, 3, 4, 5];
+                const columns = [0, 1, 2, 3, 4, 5, 6];
 
                 if (!columns.includes(columnIndex)) {
                     return;

@@ -516,6 +516,8 @@ const resetForm = () => {
     order.value.device_session_id = '';
     order.value.subtotal          = 0;
     order.value.commission        = 0;
+    viewConektaFrame.value        = false;
+    viewPaypalFrame.value         = false;
 };
 
 const scrollToTickets = async () => {
@@ -553,6 +555,7 @@ const isNumber = (evt) => {
 };
 
 const onPhoneChange = (val) => {
+    errors.value.phone = [];
     if (typeof val === 'string') {
         order.value.phone = val.replaceAll(' ', '');
     } else if (val && val.number) {
@@ -561,6 +564,7 @@ const onPhoneChange = (val) => {
 };
 
 const onPhoneChangeTickets = (val, index, index_input) => {
+    formTickets.value[index].inputs[index_input].error_phone = [];
     if (val) {
         if (typeof val === 'string') {
             formTickets.value[index].inputs[index_input].phone = val.replaceAll(' ', '');
@@ -627,6 +631,7 @@ defineExpose({
                         autocomplete="name"
                         v-model="order.name"
                         placeholder="Nombre completo"
+                        @input="errors.name = []"
                         clearable
                     />
                     <span class="text-error" v-if="errors.name.length">{{ errors.name[0] }}</span>
@@ -635,13 +640,14 @@ defineExpose({
                     <label class="bold has-text-dark" for="phone">Teléfono <span class="has-text-danger">*</span></label>
                     <VueTelInput
                         v-model="order.phone"
+                        :value="order.phone"
                         mode="international"
                         class="mt-1"
                         :class="{'error-phone': errors.phone.length}"
                         style="color: #606266; height: 32px;"
                         :auto-format="true"
-                        :input-options="{ placeholder: 'Ingresa tu número de teléfono', name: 'phone', id: 'phone', autocomplete: 'phone' }"
-                        @input="onPhoneChange"
+                        :input-options="{ placeholder: 'Ingresa tu número de teléfono', name: 'phone', id: 'phone', autocomplete: 'phone', maxlength: 15 }"
+                        @input="(val) => onPhoneChange(val)"
                         defaultCountry="MX"
                     />
                     <span class="text-error" v-if="errors.phone.length">{{ errors.phone[0] }}</span>
@@ -656,6 +662,7 @@ defineExpose({
                         autocomplete="email"
                         v-model="order.email"
                         placeholder="Correo electrónico"
+                        @input="errors.email = []"
                         clearable
                     />
                     <span class="text-error" v-if="errors.email.length">{{ errors.email[0] }}</span>
@@ -670,6 +677,7 @@ defineExpose({
                         autocomplete="email"
                         v-model="order.confirm_email"
                         placeholder="Confirmar correo electrónico"
+                        @input="errors.confirm_email = []"
                         clearable
                     />
                     <span class="text-error" v-if="errors.confirm_email.length">{{ errors.confirm_email[0] }}</span>
@@ -760,6 +768,7 @@ defineExpose({
                                         name="name"
                                         autocomplete="name"
                                         placeholder="Nombre completo"
+                                        @input="input.error_name = []"
                                     />
                                     <span class="text-error" v-if="input.error_name.length">{{ input.error_name[0] }}</span>
                                 </el-col>
@@ -772,6 +781,7 @@ defineExpose({
                                         name="email"
                                         autocomplete="email"
                                         placeholder="Correo electrónico"
+                                        @input="input.error_email = []"
                                     />
                                     <span class="text-error" v-if="input.error_email.length">{{ input.error_email[0] }}</span>
                                 </el-col>
@@ -785,7 +795,7 @@ defineExpose({
                                         :class="{'error-phone': input.error_phone.length}"
                                         style="color: #606266; height: 32px;"
                                         :auto-format="true"
-                                        :input-options="{ placeholder: 'Número de teléfono' }"
+                                        :input-options="{ placeholder: 'Número de teléfono', name: 'phone', id: 'phone', autocomplete: 'phone' }"
                                         @input="(val) => onPhoneChangeTickets(val, index, key_index)"
                                         defaultCountry="MX"
                                     />
@@ -799,6 +809,7 @@ defineExpose({
                                         v-model="input.question[qt].response"
                                         v-if="question.type === 'text'"
                                         :placeholder="question.information"
+                                        @input="input.question[qt].error = false"
                                     />
                                     <el-input
                                         class="el-form-item mb-0 mt-1"
@@ -806,6 +817,7 @@ defineExpose({
                                         v-model="input.question[qt].response"
                                         v-if="question.type === 'number'"
                                         :placeholder="question.information" @keypress="isNumber($event)"
+                                        @input="input.question[qt].error = false"
                                     />
                                     <el-select
                                         class="el-form-item mb-0 mt-1"
@@ -814,6 +826,7 @@ defineExpose({
                                         v-if="question.type === 'select'" 
                                         :placeholder="question.information || 'Elige una opción'"
                                         :clearable="!question.required"
+                                        @change="input.question[qt].error = false"
                                     >
                                         <el-option v-for="(o, i) in question.options" :key="i" :value="o" :label="o" />
                                     </el-select>
@@ -825,6 +838,7 @@ defineExpose({
                                         type="textarea"
                                         :rows="3"
                                         :placeholder="question.information"
+                                        @input="input.question[qt].error = false"
                                     />
                                     <span class="text-error" v-if="input.question[qt].error">Campo requerido.</span>
                                 </el-col>

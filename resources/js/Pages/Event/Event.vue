@@ -116,6 +116,18 @@ const calculate = (val, oldVal, t) => {
     totals();
 };
 
+const addPackage = (index) => {
+    tickets.value[index].quantity_to_purchase = 1;
+    data.value.selected = data.value.selected + 1;
+    totals();
+}
+
+const removePackage = (index) => {
+    tickets.value[index].quantity_to_purchase = 0;
+    data.value.selected = data.value.selected - 1;
+    totals();
+}
+
 // Calcula el total de boletos que va a comprar el cliente
 const totalTickets = () => {
     let total = 0;
@@ -280,6 +292,7 @@ const isNumber = (evt) => {
                                     </el-col>
                                     <el-col class="mb-6" :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
                                         <el-input-number
+                                            v-if="!t.package"
                                             class="w-100"
                                             v-model="t.quantity_to_purchase"
                                             size="large"
@@ -288,6 +301,25 @@ const isNumber = (evt) => {
                                             @change="(val, oldVal) => calculate(val, oldVal, t)"
                                             :controls="true"
                                         />
+                                        <el-button
+                                            v-if="t.package && t.quantity_to_purchase === 0"
+                                            size="large"
+                                            class="w-100 !bg-blue-600 !text-white"
+                                            @click="addPackage(index)"
+                                        >
+                                            <font-awesome-icon class="mr-2" :icon="['fas', 'check']" /> 
+                                            Seleccionar
+                                        </el-button>
+                                        <el-button
+                                            v-if="t.package && t.quantity_to_purchase === 1"
+                                            type="warning"
+                                            size="large"
+                                            class="w-100"
+                                            @click="removePackage(index)"
+                                        >
+                                            <font-awesome-icon class="mr-2" :icon="['fas', 'times']" /> 
+                                            Quitar selección
+                                        </el-button>
                                     </el-col>
                                 </el-row>
                             </el-col>

@@ -69,7 +69,7 @@
                             inactive-text="No"
                         />
                     </el-col>
-                    <el-col :span="24" class="mb-5" v-if="ticket.cost_type == 'paid'">
+                    <el-col :span="24" class="mb-1" v-if="ticket.cost_type == 'paid'">
                         <label class="bold">¿Este boleto será un paquete?</label><br>
                         <el-switch
                             v-model="ticket.package"
@@ -80,8 +80,15 @@
                             active-text="Si"
                             inactive-text="No"
                             @change="ticket.number_of_access = ''"
+                            :disabled="ticket.sales > 0 || ticket.reserved > 0"
                         />
                     </el-col>
+                    <span
+                        v-if="ticket.sales > 0 || ticket.reserved > 0"
+                        class="!text-xs !text-orange-500"
+                    >
+                        Ya no es posible cambiar este dato porque el boleto cuenta con ventas o reservaciones.
+                    </span>
                 </el-row>
             </el-col>
             <el-col :span="12">
@@ -234,6 +241,7 @@
                             v-model="ticket.number_of_access"
                             placeholder="Min. 2, Max. 10"
                             @keypress="isNumber($event)"
+                            :disabled="ticket.sales > 0 || ticket.reserved > 0"
                         />
                         <span class="text-error" v-if="errors.number_of_access">El número de accesos es obligatorio.</span>
                         <span class="text-error" v-if="errors.number_exceeded">Ingrese un número entre 2 y 10.</span>
@@ -286,6 +294,8 @@ export default {
                 date_promotion: '',
                 package: false,
                 number_of_access: '',
+                sales: 0,
+                reserved: 0
             },
             errors: {
                 name: false,
@@ -427,6 +437,8 @@ export default {
             this.ticket.date_promotion   = '';
             this.ticket.package          = false;
             this.ticket.number_of_access = '';
+            this.ticket.sales            = 0;
+            this.ticket.reserved         = 0;
             if (_ticket) {
                 this.eventType               = _ticket.event.cost_type;
                 this.ticket.ticket_id        = _ticket.id;
@@ -445,6 +457,8 @@ export default {
                 this.ticket.date_promotion   = _ticket.date_promotion ? _ticket.date_promotion : '';
                 this.ticket.package          = _ticket.package ? true : false;
                 this.ticket.number_of_access = _ticket.number_of_access || '';
+                this.ticket.sales            = _ticket.sales;
+                this.ticket.reserved         = _ticket.reserved;
             }
             this.activeEditTicket = true;
         },

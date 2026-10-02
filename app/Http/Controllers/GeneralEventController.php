@@ -93,13 +93,15 @@ class GeneralEventController extends Controller {
             $commission = $event->model_payment === 'separated' ? round($subtotal * $commissionTicketland) : 0;
             $total      = intval($subtotal + $commission);
 
+            $foliosEncrypted = [];
             $proccess = ManageFilesTrait::createPdf($request->informationTickets, $event, $discount); // Crea los pdf de los boletos
             if (!$proccess['success']) {
                 OrderTrait::stagedCodes($discount);
                 OrderTrait::stagedTickets($request->tickets);
                 return ResponseTrait::response($proccess['msj'], ['type' => 'general'], true, 409);
             }
-            $files = $proccess['files'];
+            $files           = $proccess['files'];
+            $foliosEncrypted = $proccess['encrypted'];
             
             $statusPayment = null;
             $typeSend      = '';
@@ -164,7 +166,7 @@ class GeneralEventController extends Controller {
 
             if ($payment_id) {
                 // Se registran los accesos en la DB
-                $proccess = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files);
+                $proccess = OrderTrait::registerAccess($proccess['payment_id'], $request->informationTickets, $files, $foliosEncrypted);
 
                 // Se envían los boletos o la referencia de pago según sea el caso
                 SendMailTrait::index($typeSend, $payment_id);
