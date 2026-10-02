@@ -51,7 +51,7 @@ class CronjobController extends Controller {
         ]);
     }
 
-    public function sendTicketsCrm() {
+    public function sendTicketsExternal() {
         $accesses = Access::select(
             'id',
             'ticket_id',
@@ -73,6 +73,13 @@ class CronjobController extends Controller {
         ->whereHas('responses')
         ->where('saved_in_crm', false)
         ->get();
+
+        if (sizeof($accesses) === 0) {
+            return response()->json([
+                'success' => true,
+                'msg'     => 'No hay registros por enviar.'
+            ]);
+        }
 
         $client = new Client();
 

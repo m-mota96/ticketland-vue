@@ -9,4 +9,4 @@ Route::post('/validatePayment', [WebHookController::class, 'validatePayment']);
 Route::get('/ticketsExpired', [CronjobController::class, 'ticketsExpired']);
 Route::get('/disableEvents', [CronjobController::class, 'disableEvents']);
 Route::get('/getCodes', [InfluencerController::class, 'getCodes']);
-Route::get('/sendTicketsCrm', [CronjobController::class, 'sendTicketsCrm']);
+Route::get('/sendTicketsExternal', [CronjobController::class, 'sendTicketsExternal']);
