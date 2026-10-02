@@ -116,13 +116,9 @@ class TicketController extends Controller {
 
     public function deleteTicket(Request $request) {
         try {
-            $ticket = Ticket::with(['access' => function($query) {
-                $query->with('payment')->whereHas('payment', function($query2) {
-                    $query2->where('status', 'payed');
-                });
-            }])->where('id', $request->ticket_id)->first();
+            $ticket = Ticket::with(['access'])->where('id', $request->ticket_id)->first();
             if (sizeof($ticket->access) > 0) {
-                return ResponseTrait::response('No se puede eliminar el boleto porque ya tiene ventas.', null, true, 409);
+                return ResponseTrait::response('No se puede eliminar el boleto porque ya tiene ventas y/o reservaciones.', null, true, 409);
             }
             $ticket->delete();
             return ResponseTrait::response('El boleto se eliminó correctamente.');

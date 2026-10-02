@@ -258,6 +258,7 @@ class GeneralEventController extends Controller {
             ->where('stop_sale', '>=', date('Y-m-d'))
             ->whereRaw('quantity > (sales + reserved)')
             ->where('event_id', $event->id)
+            ->where('status', true)
             ->orderBy('order', 'ASC')
             ->get();
 
