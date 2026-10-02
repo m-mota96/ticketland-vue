@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tickets', function (Blueprint $table) {
-            $table->string('crm_event_id')->nullable();
-            $table->timestamps();
+        Schema::table('accesses', function (Blueprint $table) {
+            $table->boolean('saved_in_crm')->nullable()->default(false)->after('date_validation');
         });
     }
 
@@ -22,10 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tickets', function (Blueprint $table) {
-            $table->dropColumn('crm_event_id');
-            $table->dropColumn('created_at');
-            $table->dropColumn('updated_at');
+        Schema::table('accesses', function (Blueprint $table) {
+            $table->dropColumn('saved_in_crm');
         });
     }
 };

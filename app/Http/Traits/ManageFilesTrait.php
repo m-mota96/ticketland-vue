@@ -16,7 +16,8 @@ trait ManageFilesTrait {
                 mkdir('events/pdf/'.$event->id, 0777, true);
             }
 
-            $files = [];
+            $files     = [];
+            $encrypted = [];
             $pos   = 0;
             foreach ($tickets as $key => $t) {
                 $ticket    = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'))->find($t['id']);
@@ -73,12 +74,13 @@ trait ManageFilesTrait {
                         'isRemoteEnabled' => true,
                     ])->loadView('pdfTicket', $data[$pos]);
                     $pdf->save('events/pdf/'.$event->id.'/'.$folio.'.pdf');
-                    $files[$pos] = $folio;
+                    $files[$pos]     = $folio;
+                    $encrypted[$pos] = $folioCrypt;
                     $pos++;
                 }
             }
 
-            return ['success' => true, 'files' => $files];
+            return ['success' => true, 'files' => $files, 'encrypted' => $encrypted];
         } catch (\Throwable $th) {
             $logFile = fopen("logs/log_pdf.txt", 'a') or die("Error creando archivo");
             fwrite($logFile, date("d/m/Y H:i:s")." Error al crear pdf: ".$th->getMessage()."\n") or die("Error escribiendo en el archivo");

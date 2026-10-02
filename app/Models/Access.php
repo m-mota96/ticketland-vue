@@ -13,6 +13,7 @@ class Access extends Model
         'code_id',
         'unification',
         'folio',
+        'folio_encrypted',
         'name',
         'email',
         'phone',
@@ -23,6 +24,7 @@ class Access extends Model
         'status',
         'quantity',
         'date_validation',
+        'saved_in_crm'
     ];
 
     public function ticket() {
@@ -39,6 +41,10 @@ class Access extends Model
 
     public function code() {
         return $this->belongsTo(Code::class);
+    }
+
+    public function responses() {
+        return $this->hasMany(Response::class);
     }
 
     protected function serializeDate(DateTimeInterface $date) {
