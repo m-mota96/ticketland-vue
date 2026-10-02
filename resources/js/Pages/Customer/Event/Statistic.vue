@@ -23,16 +23,16 @@
                     <el-col :span="12" :offset="2">
                         <el-row class="btn-totalSales has-text-centered">
                             <el-col :span="8" class="pt-4 pb-4">
+                                <h1 class="title is-2 bold text-btn-totalSales mb-1">{{ total }}</h1>
+                                <p class="text-btn-totalSales">Total</p>
+                            </el-col>
+                            <el-col :span="8" class="pt-4 pb-4">
                                 <h1 class="title is-2 bold text-btn-totalSales mb-1">{{ totalNotDiscount }}</h1>
                                 <p class="text-btn-totalSales">S/Descuento</p>
                             </el-col>
                             <el-col :span="8" class="pt-4 pb-4">
                                 <h1 class="title is-2 bold text-btn-totalSales mb-1">{{ totalDiscount }}</h1>
                                 <p class="text-btn-totalSales">C/Descuento</p>
-                            </el-col>
-                            <el-col :span="8" class="pt-4 pb-4">
-                                <h1 class="title is-2 bold text-btn-totalSales mb-1">{{ total }}</h1>
-                                <p class="text-btn-totalSales">Total</p>
                             </el-col>
                         </el-row>
                     </el-col>
@@ -103,7 +103,41 @@ export default {
             years: [new Date().getFullYear(), new Date().getFullYear() - 1],
             currentMonth: new Date().getMonth() + 1,
             event: this.$page.props.event,
-            chartOptions: {},
+            chartOptions: {
+                title: {
+                    text: 'Historial de ventas'
+                },
+                xAxis: {
+                    type: 'date',
+                    categories: [],
+                    title: {
+                        text: 'Día del mes'
+                    },
+                    crosshair: true
+                },
+                yAxis: {
+                    min: 0,
+                    title: {
+                        text: 'Boletos reservados por día'
+                    }
+                },
+                tooltip: {
+
+                },
+                plotOptions: {
+                    column: {
+                        pointPadding: 0.2,
+                        borderWidth: 0
+                    }
+                },
+                credits: {
+                    enabled: false
+                },
+                accessibility: {
+                    enabled: false
+                },
+                series: []
+            },
             months: [
                 {value: 1, label: 'Enero'},
                 {value: 2, label: 'Febrero'},
@@ -128,6 +162,16 @@ export default {
         }
     },
     beforeMount() {
+        const dates = this.getDaysInMonth(this.currentMonth, this.currentYear);
+        this.chartOptions.xAxis.categories = dates;
+        this.chartOptions.tooltip = {
+            headerFormat: `<span style="font-size:15px">{point.key}/${this.months[this.currentMonth - 1].label}/${this.currentYear}</span><table>`,
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y} </b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        };
         this.getStatistics();
     },
     mounted() {
@@ -157,66 +201,102 @@ export default {
         },
         chart(sales, pending, expired) {
             const dates = this.getDaysInMonth(this.currentMonth, this.currentYear);
-            
-            this.chartOptions = {
-                title: {
-                    text: 'Historial de ventas'
-                },
-                xAxis: {
-                    type: 'date',
-                    categories: dates,
-                    title: {
-                        text: 'Día del mes'
-                    },
-                    crosshair: true
-                },
-                yAxis: {
-                    min: 0,
-                    title: {
-                        text: 'Boletos reservados por día'
-                    }
-                },
-                tooltip: {
-                    headerFormat: `<span style="font-size:15px">{point.key}/${this.months[this.currentMonth - 1].label}/${this.currentYear}</span><table>`,
-                    pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
-                        '<td style="padding:0"><b>{point.y} </b></td></tr>',
-                    footerFormat: '</table>',
-                    shared: true,
-                    useHTML: true
-                },
-                plotOptions: {
-                    column: {
-                        pointPadding: 0.2,
-                        borderWidth: 0
-                    }
-                },
-                credits: {
-                    enabled: false
-                },
-                accessibility: {
-                    enabled: false
-                },
-                series: [
-                    {
-                        name: 'Boletos pagados',
-                        data: Object.values(sales),
-                        colorByPoint: false,
-                        color: '#22c7bf'
-                    },
-                    {
-                        name: 'Boletos pendientes',
-                        data: Object.values(pending),
-                        colorByPoint: false,
-                        color: '#ffa800'
-                    },
-                    {
-                        name: 'Boletos expirados',
-                        data: Object.values(expired),
-                        colorByPoint: false,
-                        color: '#f64e60'
-                    }
-                ]
+            this.chartOptions.xAxis.categories = dates;
+
+            dates.forEach(d => {
+                sales[d]   = sales[d] || 0;
+                pending[d] = pending[d] || 0;
+                expired[d] = expired[d] || 0;
+            });
+
+            this.chartOptions.tooltip = {
+                headerFormat: `<span style="font-size:15px">{point.key}/${this.months[this.currentMonth - 1].label}/${this.currentYear}</span><table>`,
+                pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                    '<td style="padding:0"><b>{point.y} </b></td></tr>',
+                footerFormat: '</table>',
+                shared: true,
+                useHTML: true
             };
+            
+            this.chartOptions.series = [
+                {
+                    name: 'Boletos pagados',
+                    data: Object.values(sales),
+                    colorByPoint: false,
+                    color: '#22c7bf'
+                },
+                {
+                    name: 'Boletos pendientes',
+                    data: Object.values(pending),
+                    colorByPoint: false,
+                    color: '#ffa800'
+                },
+                {
+                    name: 'Boletos expirados',
+                    data: Object.values(expired),
+                    colorByPoint: false,
+                    color: '#f64e60'
+                }
+            ];
+            // this.chartOptions = {
+            //     title: {
+            //         text: 'Historial de ventas'
+            //     },
+            //     xAxis: {
+            //         type: 'date',
+            //         categories: dates,
+            //         title: {
+            //             text: 'Día del mes'
+            //         },
+            //         crosshair: true
+            //     },
+            //     yAxis: {
+            //         min: 0,
+            //         title: {
+            //             text: 'Boletos reservados por día'
+            //         }
+            //     },
+            //     tooltip: {
+            //         headerFormat: `<span style="font-size:15px">{point.key}/${this.months[this.currentMonth - 1].label}/${this.currentYear}</span><table>`,
+            //         pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+            //             '<td style="padding:0"><b>{point.y} </b></td></tr>',
+            //         footerFormat: '</table>',
+            //         shared: true,
+            //         useHTML: true
+            //     },
+            //     plotOptions: {
+            //         column: {
+            //             pointPadding: 0.2,
+            //             borderWidth: 0
+            //         }
+            //     },
+            //     credits: {
+            //         enabled: false
+            //     },
+            //     accessibility: {
+            //         enabled: false
+            //     },
+            //     series: [
+            //         {
+            //             name: 'Boletos pagados',
+            //             data: Object.values(sales),
+            //             colorByPoint: false,
+            //             color: '#22c7bf'
+            //         },
+            //         {
+            //             name: 'Boletos pendientes',
+            //             data: Object.values(pending),
+            //             colorByPoint: false,
+            //             color: '#ffa800'
+            //         },
+            //         {
+            //             name: 'Boletos expirados',
+            //             data: Object.values(expired),
+            //             colorByPoint: false,
+            //             color: '#f64e60'
+            //         }
+            //     ]
+            // };
         },
         getDaysInMonth(month, year) {
             const days = [];

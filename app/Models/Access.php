@@ -8,7 +8,21 @@ use DateTimeInterface;
 class Access extends Model
 {
     protected $fillable = [
-        'payment_id', 'ticket_id', 'code_id', 'folio', 'name', 'email', 'phone', 'code_name', 'code_discount', 'price', 'promotion', 'status', 'quantity', 'date_validation', 
+        'payment_id',
+        'ticket_id',
+        'code_id',
+        'unification',
+        'folio',
+        'name',
+        'email',
+        'phone',
+        'code_name',
+        'code_discount',
+        'price',
+        'promotion',
+        'status',
+        'quantity',
+        'date_validation',
     ];
 
     public function ticket() {

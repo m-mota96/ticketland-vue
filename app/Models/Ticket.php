@@ -26,10 +26,10 @@ class Ticket extends Model
         'package',
         'number_of_access',
         'order',
-        'status'
+        'status',
+        'crm_event_id',
+        'saved_in_crm'
     ];
-
-    public $timestamps = false;
 
     public function event() {
         return $this->belongsTo(Event::class);

@@ -61,12 +61,15 @@ trait OrderTrait {
         try {
             $pos = 0;
             foreach ($tickets as $key => $t) {
-                $ticket = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'), 'valid')->find($t['id']);
+                $ticket = Ticket::select('id', 'name', 'price', DB::raw('IF(CURDATE() > date_promotion, NULL, promotion) promotion'), 'valid', 'package')->find($t['id']);
+                $prefix = $ticket->package === 1 ? 'P-' : 'T-';
+                $uniqid = uniqid($prefix);
                 foreach ($t['inputs'] as $key2 => $input) {
                     $access = Access::create([
                         'payment_id'    => $payment_id,
                         'ticket_id'     => $ticket->id,
                         'code_id'       => !empty($t['code_id']) ? $t['code_id'] : null,
+                        'unification'   => $uniqid,
                         'folio'         => $folios[$pos],
                         'quantity'      => $ticket->valid,
                         'name'          => $input['name'],

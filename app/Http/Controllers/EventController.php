@@ -41,7 +41,7 @@ class EventController extends Controller {
                 ->orderBy('date')->limit(1)
             ])->addSelect(['sales' => Access::whereHas('payment', function($query) {
                 $query->whereColumn('event_id', 'events.id')->where('status', 'payed');
-            })->selectRaw('COUNT(*)')])
+            })->selectRaw('COUNT(DISTINCT unification) + SUM(unification IS NULL)')])
             ->where('user_id', auth()->user()->id);
 
             $q = Event::where('user_id', auth()->user()->id);
